@@ -1,6 +1,6 @@
 # Grow Wealth
 
-USDT BEP-20 investment & member platform (React + Express + MongoDB).
+USDT BEP-20 investment & member platform — **full stack deployable on Vercel**.
 
 ## Demo logins
 
@@ -29,18 +29,74 @@ npm run seed --prefix server
 npm run seed:demo --prefix server
 ```
 
-## Vercel (frontend)
+---
 
-1. Import this repo at [Vercel](https://vercel.com/devlakshya6990-9244)
-2. Set **Root Directory** to `client`
-3. Add environment variable:
-   - `VITE_API_URL` = your live API URL (e.g. `https://your-api.onrender.com/api`)
-4. Deploy
+## Full deploy on Vercel
 
-> The Express API must be hosted separately (Render, Railway, VPS). Vercel hosts the React client only.
+Repo: https://github.com/devlakshya6990-alt/Grow_Wealth
+
+### 1. Push to GitHub
+
+```bash
+git add .
+git commit -m "Vercel full stack deploy"
+git push -u origin main
+```
+
+### 2. Import on Vercel
+
+1. Open [Vercel Dashboard](https://vercel.com/devlakshya6990-9244)
+2. **Add New → Project**
+3. Import **`devlakshya6990-alt/Grow_Wealth`**
+4. Leave **Root Directory** as `.` (project root)
+5. Vercel reads `vercel.json` automatically
+
+### 3. Environment variables (Vercel → Settings → Environment Variables)
+
+| Variable | Example | Required |
+|----------|---------|----------|
+| `MONGODB_URI` | `mongodb+srv://.../growwealth` | Yes |
+| `JWT_SECRET` | long random string | Yes |
+| `JWT_EXPIRES` | `7d` | Yes |
+| `APP_NAME` | `Grow Wealth` | Yes |
+| `JOINING_AMOUNT` | `1` | Yes |
+| `ROI_PERCENT` | `2` | Yes |
+| `FIRST_WITHDRAW_MIN` | `10` | Yes |
+| `DEPOSIT_ADDRESS` | `0xYourBep20Address` | Yes |
+| `CLIENT_URL` | `https://your-app.vercel.app` | Yes (set after first deploy) |
+
+> After first deploy, copy your Vercel URL and set `CLIENT_URL` to it, then redeploy.
+
+### 4. Deploy
+
+Click **Deploy**. One URL serves both:
+
+- **Website:** `https://your-app.vercel.app`
+- **API:** `https://your-app.vercel.app/api/health`
+
+No separate backend host needed — frontend and API run on the same Vercel project.
+
+### 5. Seed production database (run once locally)
+
+```bash
+# Use production MONGODB_URI in .env, then:
+npm run seed --prefix server
+npm run seed:demo --prefix server
+```
+
+---
+
+## Architecture on Vercel
+
+```
+your-app.vercel.app
+├── /              → React app (client/dist)
+├── /dashboard   → React SPA routes
+└── /api/*       → Express serverless (api/index.js)
+```
 
 ## Stack
 
-- **Client:** Vite + React
-- **Server:** Node.js + Express
+- **Client:** Vite + React (`client/`)
+- **API:** Express serverless (`api/` + `server/src/`)
 - **Database:** MongoDB Atlas (`growwealth`)
