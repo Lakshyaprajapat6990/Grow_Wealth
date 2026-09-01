@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+scrape/
+*.log
+.DS_Store
+dist/
+build/
+coverage/
+client/node_modules/
+server/node_modules/
+client/dist/
+server/uploads/

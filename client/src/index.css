@@ -1,0 +1,53 @@
+:root {
+  --bg: #070f1c;
+  --bg-elevated: #0b1a2e;
+  --bg-card: #10233d;
+  --bg-card-hover: #143052;
+  --border: #1e3a5f;
+  --border-strong: #2b4f7e;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent: #60a5fa;
+  --accent-soft: rgba(59, 130, 246, 0.15);
+  --text: #e8eef7;
+  --text-muted: #8ba3c7;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --radius: 14px;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --display: 'Sora', 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.25), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(14, 165, 233, 0.12), transparent 50%),
+    linear-gradient(180deg, #070f1c 0%, #0a1628 45%, #07111f 100%);
+  background-attachment: fixed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+}

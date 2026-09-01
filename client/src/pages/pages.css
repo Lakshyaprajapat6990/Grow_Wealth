@@ -1,0 +1,10 @@
+.page-title {
+  font-family: var(--display);
+  font-size: 1.65rem;
+  margin: 0 0 0.35rem;
+}
+
+.page-sub {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
