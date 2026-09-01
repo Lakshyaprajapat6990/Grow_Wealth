@@ -2,6 +2,17 @@
 
 USDT BEP-20 investment & member platform — **full stack deployable on Vercel**.
 
+## Live deployment
+
+| | URL |
+|--|-----|
+| **Website** | https://grow-wealth-neon.vercel.app |
+| **API Health** | https://grow-wealth-neon.vercel.app/api/health |
+| **GitHub** | https://github.com/Lakshyaprajapat6990/Grow_Wealth |
+| **Vercel Dashboard** | https://vercel.com/lakshyas-projects-ccb3a0a8/grow-wealth |
+
+---
+
 ## Demo logins
 
 | Role | User ID | Password |
