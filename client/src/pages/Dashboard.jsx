@@ -41,8 +41,25 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? '✅ Joined' : '⏳ Not Joined'}`}
+        subtitle={`Welcome, ${user?.name} · Status: ${
+          user?.isJoined ? '✅ Joined' : '⏳ Joining pending / not activated'
+        }`}
       />
+
+      {!user?.isJoined && (
+        <div
+          className="alert alert-error"
+          style={{
+            background: 'rgba(251,191,36,0.12)',
+            color: '#fbbf24',
+            border: '1px solid rgba(251,191,36,0.35)',
+            marginBottom: '1rem',
+          }}
+        >
+          Your joining ($1) is not active yet. If you paid at registration, wait for admin approval — or check{' '}
+          <Link to="/join">Join page</Link>.
+        </div>
+      )}
 
       <div className="dash-grid">
         {stats.map((st) => (

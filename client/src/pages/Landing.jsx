@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'What are the withdrawal rules?',
-    a: 'First withdrawal minimum is $10. After your first successful withdrawal, you can withdraw any amount to your saved crypto wallet.',
+    a: 'Withdrawals are available 24/7. First withdrawal minimum is $10. After your first successful withdrawal, you can withdraw any amount to your saved crypto wallet. Admin processes payouts manually.',
   },
 ];
 

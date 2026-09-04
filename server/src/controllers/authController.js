@@ -1,11 +1,24 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Transaction = require('../models/Transaction');
 const {
   signToken,
   generateUniqueUserId,
   generateTrxPassword,
   isValidBep20Address,
 } = require('../utils/helpers');
+
+const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
+
+async function registerInfo(_req, res) {
+  return res.json({
+    success: true,
+    joiningAmount: JOINING_AMOUNT,
+    depositAddress: process.env.DEPOSIT_ADDRESS || '0xA73EEAd1C853deF37F3B3bE1701e240d74770D8e',
+    network: 'BEP-20 (BSC)',
+    token: 'USDT',
+  });
+}
 
 async function checkSponsor(req, res) {
   const { sponsorId } = req.params;
@@ -26,7 +39,8 @@ async function checkSponsor(req, res) {
 }
 
 async function register(req, res) {
-  const { name, email, mobile, password, country, walletAddress, sponsorId, agreeTerms } = req.body;
+  const { name, email, mobile, password, country, walletAddress, sponsorId, agreeTerms, joiningTxHash } =
+    req.body;
 
   if (!name || !email || !mobile || !password) {
     return res.status(400).json({ success: false, message: 'Please fill all required fields' });
@@ -36,6 +50,23 @@ async function register(req, res) {
   }
   if (!walletAddress || !isValidBep20Address(walletAddress)) {
     return res.status(400).json({ success: false, message: 'Valid USDT BEP-20 Wallet Address is required.' });
+  }
+
+  const txHash = String(joiningTxHash || '').trim();
+  if (!txHash || txHash.length < 10) {
+    return res.status(400).json({
+      success: false,
+      message: `Joining payment Tx Hash is required. Pay $${JOINING_AMOUNT} USDT (BEP-20) first.`,
+    });
+  }
+
+  const existingTx = await Transaction.findOne({
+    type: { $in: ['joining', 'deposit'] },
+    'meta.txHash': txHash,
+    status: { $in: ['pending', 'success'] },
+  });
+  if (existingTx) {
+    return res.status(400).json({ success: false, message: 'This Tx Hash was already used' });
   }
 
   let resolvedSponsor = null;
@@ -67,6 +98,7 @@ async function register(req, res) {
     country: country || 'INDIA',
     sponsorId: resolvedSponsor ? resolvedSponsor.userId : 'GW0000001',
     walletAddress: walletAddress.trim(),
+    isJoined: false,
   });
 
   if (resolvedSponsor) {
@@ -75,13 +107,31 @@ async function register(req, res) {
     await resolvedSponsor.save();
   }
 
+  await Transaction.create({
+    userId: user.userId,
+    type: 'joining',
+    amount: JOINING_AMOUNT,
+    balanceAfter: 0,
+    status: 'pending',
+    description: `Joining $${JOINING_AMOUNT} payment submitted at registration — awaiting admin approval`,
+    meta: {
+      txHash,
+      purpose: 'registration_joining',
+      network: 'BEP-20',
+      depositAddress: process.env.DEPOSIT_ADDRESS || '',
+    },
+    createdBy: user.userId,
+  });
+
   const token = signToken(user);
   return res.status(201).json({
     success: true,
-    message: 'Registration successful',
+    message: `Registration successful. Joining $${JOINING_AMOUNT} is pending admin approval.`,
     token,
     userId: user.userId,
     transactionPassword: trxPassword,
+    joiningPending: true,
+    joiningAmount: JOINING_AMOUNT,
     user: user.toSafeJSON(),
   });
 }
@@ -121,4 +171,4 @@ async function me(req, res) {
   return res.json({ success: true, user: req.user.toSafeJSON() });
 }
 
-module.exports = { checkSponsor, register, login, me };
+module.exports = { checkSponsor, register, login, me, registerInfo };

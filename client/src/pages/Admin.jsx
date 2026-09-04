@@ -225,11 +225,12 @@ export default function Admin() {
       </div>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem', overflowX: 'auto' }}>
-        <h3 style={{ marginTop: 0 }}>Pending Deposits (verify Tx → Credit)</h3>
+        <h3 style={{ marginTop: 0 }}>Pending Payments (Joining / Deposit)</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--text-muted)' }}>
               <th style={{ padding: '0.5rem' }}>User</th>
+              <th style={{ padding: '0.5rem' }}>Type</th>
               <th style={{ padding: '0.5rem' }}>Amount</th>
               <th style={{ padding: '0.5rem' }}>Tx Hash</th>
               <th style={{ padding: '0.5rem' }}>Time</th>
@@ -239,16 +240,17 @@ export default function Admin() {
           <tbody>
             {deposits.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
-                  No pending deposits
+                <td colSpan={6} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+                  No pending payments
                 </td>
               </tr>
             )}
             {deposits.map((d) => (
               <tr key={d._id} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '0.65rem' }}>{d.userId}</td>
+                <td style={{ padding: '0.65rem' }}>{d.type === 'joining' ? 'Joining' : 'Deposit'}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(d.amount).toFixed(2)}</td>
-                <td style={{ padding: '0.65rem', maxWidth: 180, wordBreak: 'break-all', fontSize: '0.8rem' }}>
+                <td style={{ padding: '0.65rem', maxWidth: 160, wordBreak: 'break-all', fontSize: '0.8rem' }}>
                   {d.meta?.txHash || '—'}
                 </td>
                 <td style={{ padding: '0.65rem', fontSize: '0.85rem' }}>{new Date(d.createdAt).toLocaleString()}</td>

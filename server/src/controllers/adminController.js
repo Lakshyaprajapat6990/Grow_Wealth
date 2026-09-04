@@ -155,7 +155,10 @@ async function creditIncome(req, res) {
 }
 
 async function listPendingDeposits(_req, res) {
-  const deposits = await Transaction.find({ type: 'deposit', status: 'pending' })
+  const deposits = await Transaction.find({
+    status: 'pending',
+    type: { $in: ['deposit', 'joining'] },
+  })
     .sort({ createdAt: -1 })
     .limit(200);
   return res.json({ success: true, deposits });
@@ -164,8 +167,8 @@ async function listPendingDeposits(_req, res) {
 async function approveDeposit(req, res) {
   const { id } = req.params;
   const deposit = await Transaction.findById(id);
-  if (!deposit || deposit.type !== 'deposit') {
-    return res.status(404).json({ success: false, message: 'Deposit not found' });
+  if (!deposit || !['deposit', 'joining'].includes(deposit.type)) {
+    return res.status(404).json({ success: false, message: 'Payment not found' });
   }
   if (deposit.status !== 'pending') {
     return res.status(400).json({ success: false, message: 'Already processed' });
@@ -175,6 +178,42 @@ async function approveDeposit(req, res) {
   if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
   const amt = Number(deposit.amount);
+  const isJoining = deposit.type === 'joining' || deposit.meta?.purpose === 'registration_joining';
+
+  if (isJoining) {
+    if (user.isJoined) {
+      deposit.status = 'success';
+      deposit.description = 'Joining already active — payment marked success';
+      deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date() };
+      await deposit.save();
+      return res.json({
+        success: true,
+        message: `${user.userId} already joined`,
+        deposit,
+        user: user.toSafeJSON(),
+      });
+    }
+
+    user.isJoined = true;
+    user.joiningAmount = amt;
+    user.joinedAt = new Date();
+    user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
+    await user.save();
+
+    deposit.status = 'success';
+    deposit.balanceAfter = user.fundBalance;
+    deposit.description = `Joining $${amt} approved & account activated`;
+    deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date() };
+    await deposit.save();
+
+    return res.json({
+      success: true,
+      message: `Joining approved — ${user.userId} activated`,
+      deposit,
+      user: user.toSafeJSON(),
+    });
+  }
+
   user.fundBalance = Number((user.fundBalance + amt).toFixed(8));
   user.usdtBep20Balance = Number((user.usdtBep20Balance + amt).toFixed(8));
   user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
@@ -197,19 +236,19 @@ async function approveDeposit(req, res) {
 async function rejectDeposit(req, res) {
   const { id } = req.params;
   const deposit = await Transaction.findById(id);
-  if (!deposit || deposit.type !== 'deposit') {
-    return res.status(404).json({ success: false, message: 'Deposit not found' });
+  if (!deposit || !['deposit', 'joining'].includes(deposit.type)) {
+    return res.status(404).json({ success: false, message: 'Payment not found' });
   }
   if (deposit.status !== 'pending') {
     return res.status(400).json({ success: false, message: 'Already processed' });
   }
 
   deposit.status = 'rejected';
-  deposit.description = req.body.reason || 'Deposit rejected by admin';
+  deposit.description = req.body.reason || 'Payment rejected by admin';
   deposit.meta = { ...(deposit.meta || {}), rejectedBy: req.user.userId, rejectedAt: new Date() };
   await deposit.save();
 
-  return res.json({ success: true, message: 'Deposit rejected', deposit });
+  return res.json({ success: true, message: 'Payment rejected', deposit });
 }
 
 /** Admin credit or debit member fund balance */
