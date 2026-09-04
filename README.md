@@ -71,7 +71,7 @@ git push -u origin main
 | `JWT_EXPIRES` | `7d` | Yes |
 | `APP_NAME` | `Grow Wealth` | Yes |
 | `JOINING_AMOUNT` | `1` | Yes |
-| `ROI_PERCENT` | `2` | Yes |
+| `ROI_PERCENT` | `1` | Yes |
 | `FIRST_WITHDRAW_MIN` | `10` | Yes |
 | `DEPOSIT_ADDRESS` | `0xYourBep20Address` | Yes |
 | `CLIENT_URL` | `https://your-app.vercel.app` | Yes (set after first deploy) |

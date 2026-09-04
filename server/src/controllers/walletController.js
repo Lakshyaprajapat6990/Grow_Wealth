@@ -170,8 +170,8 @@ async function transferFunds(req, res) {
   }
 
   const amt = Number(amount);
-  if (!receiverUserId || !amt || amt < 1) {
-    return res.status(400).json({ success: false, message: 'Invalid transfer details. Min $1.' });
+  if (!receiverUserId || !amt || amt < 5) {
+    return res.status(400).json({ success: false, message: 'Invalid transfer details. Min $5.' });
   }
 
   const receiver = await User.findOne({ userId: String(receiverUserId).trim().toUpperCase() });

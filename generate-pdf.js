@@ -116,7 +116,7 @@ doc.addPage();
 h1('1. Document Overview');
 p('Product brand for this build is Grow Wealth. The client shared World Finance 24 (worldfinance24.online) as the UI/feature reference. This PDF captures the reference system plus Grow Wealth client rules (joining, ROI, wallet, database, brand).');
 h2('What Grow Wealth is');
-p('Grow Wealth is a web-based crypto investment / MLM platform (inspired by the reference site). Users register under a sponsor, deposit USDT on Binance Smart Chain (BEP-20) via crypto wallet, activate with $1 joining, earn 2% ROI (24/7, credited manually by admin) plus network incomes, and withdraw to their USDT wallet. Admin panel manages users, deposits, withdrawals, ROI credit, and settings.');
+p('Grow Wealth is a web-based crypto investment / MLM platform (inspired by the reference site). Users register under a sponsor, deposit USDT on Binance Smart Chain (BEP-20) via crypto wallet, activate with $1 joining, earn 1% ROI (24/7, credited manually by admin) plus network incomes, and withdraw to their USDT wallet. Admin panel manages users, deposits, withdrawals, ROI credit, and settings.');
 h2('Tech stack');
 bullet('Frontend target: React SPA (Vite), dark/gold-style theme similar to reference');
 bullet('Backend target: Node.js REST API + JWT auth');
@@ -131,9 +131,9 @@ p('These rules override the reference site package minimums and ROI marketing. B
 bullet('PRODUCT NAME = Grow Wealth');
 bullet('JOINING AMOUNT = $1 ONLY (minimum activation / ID activation starts at $1)');
 bullet('After joining with $1, user can deposit ANY amount they want (no upper lock to fixed package-only top-ups unless client adds caps later)');
-bullet('Marketing / ROI = 2% (NOT the reference site 5%)');
+bullet('Marketing / ROI = 1% (NOT the reference site 5%)');
 bullet('ROI timing = 24/7 (no restricted ROI window)');
-bullet('ROI credit mode = MANUALLY by Admin (not auto cron) — admin credits 2% ROI when due / as per operations');
+bullet('ROI credit mode = MANUALLY by Admin (not auto cron) — admin credits 1% ROI when due / as per operations');
 bullet('WITHDRAWAL: First withdrawal minimum = $10; after first successful withdrawal, user can withdraw ANY amount');
 bullet('PAYMENT METHOD = CRYPTO WALLET (USDT on BEP-20 / BSC) — MetaMask, Trust Wallet, TokenPocket, WalletConnect, etc.');
 bullet('Wallet UX = OPTION C (BOTH): (1) Connect Wallet in-app pay + (2) Deposit address + QR for manual send from any wallet app');
@@ -141,7 +141,7 @@ bullet('Deposit & Withdraw both via user crypto wallet (not bank / UPI / fiat ga
 bullet('User must connect or save their BEP-20 wallet address; deposits sent as USDT (BEP-20); withdrawals paid to same/saved wallet');
 bullet('Database = MongoDB Atlas (db: growwealth)');
 bullet('Reference site used SAVING packages from $2 / landing from $10 / FAQ $30 / 5% daily — DO NOT copy those for Grow Wealth');
-bullet('Recommended flow: Register → Connect Wallet and/or Deposit Address+QR → Deposit USDT ≥ $1 → Activate Joining ($1) → Further deposits anytime → Admin credits 2% ROI (24/7 manual) → Withdraw to crypto wallet');
+bullet('Recommended flow: Register → Connect Wallet and/or Deposit Address+QR → Deposit USDT ≥ $1 → Activate Joining ($1) → Further deposits anytime → Admin credits 1% ROI (24/7 manual) → Withdraw to crypto wallet');
 
 hr();
 h1('2. Branding & UI Design Language');
@@ -164,7 +164,7 @@ bullet('FAQ (/faq) and Community Access pages also exist in router');
 
 h2('Landing value proposition (marketing copy)');
 bullet('Claims deposits power HFT crypto trading + arbitrage + liquidity pooling');
-bullet('Guaranteed 5% Daily ROI marketing message (REFERENCE site only — Grow Wealth uses 2% ROI, 24/7, Manual)');
+bullet('Guaranteed 5% Daily ROI marketing message (REFERENCE site only — Grow Wealth uses 1% ROI, 24/7, Manual)');
 bullet('3 steps: Deposit USDT (BEP-20) → Activate Package → Earn & Withdraw');
 
 h2('Landing package table (marketing)');
@@ -185,7 +185,7 @@ p('REFERENCE ONLY (World Finance 24): FAQ ~$30 min upgrade; SAVING from $2. GROW
 h2('Landing FAQ highlights');
 bullet('Platform: decentralized crypto investment + daily ROI + referral bonuses');
 bullet('Activation: deposit USDT BEP-20, then activate package from dashboard');
-bullet('ROI: reference site = 5% daily auto | GROW WEALTH = 2% ROI · 24/7 · Manually by Admin');
+bullet('ROI: reference site = 5% daily auto | GROW WEALTH = 1% ROI · 24/7 · Manually by Admin');
 bullet('Withdrawals (landing FAQ): daily 10:00 AM – 12:00 PM IST; min ~$1–$2; active package required');
 
 doc.addPage();
@@ -254,7 +254,7 @@ bullet('2) Login → Dashboard shows balances & status (joined / not joined)');
 bullet('3) Deposit USDT BEP-20 (minimum needed for joining = $1; user may deposit more anytime)');
 bullet('4) Activate Joining with $1 only → ID becomes active');
 bullet('5) After joining: user can deposit / top-up any amount as they wish');
-bullet('6) ROI 2% credited MANUALLY by Admin (available 24/7 — no auto cron required for v1)');
+bullet('6) ROI 1% credited MANUALLY by Admin (available 24/7 — no auto cron required for v1)');
 bullet('7) Build team → Direct / Level / Fast Track / Salary / Community incomes');
 bullet('8) Withdraw income to USDT wallet (trx password; active joining required)');
 bullet('9) Optional P2P fund transfer to another User ID');
@@ -266,7 +266,7 @@ table(
     ['Product name', 'Grow Wealth'],
     ['Joining / Activation amount', '$1 ONLY'],
     ['After joining – further deposit', 'Any amount (flexible)'],
-    ['ROI rate', '2%'],
+    ['ROI rate', '1%'],
     ['ROI availability', '24/7'],
     ['ROI credit mode', 'Manually by Admin'],
     ['First withdrawal minimum', '$10'],
@@ -343,9 +343,9 @@ doc.addPage();
 h1('7. Income / MLM Modules');
 h2('A) ROI Income (Grow Wealth)');
 bullet('REFERENCE site: ~5%/day automatic package ROI');
-bullet('GROW WEALTH (client confirmed): ROI = 2%');
+bullet('GROW WEALTH (client confirmed): ROI = 1%');
 bullet('Availability: 24/7 (no time-window restriction for ROI operations)');
-bullet('Credit mode: MANUALLY by Admin from Admin Panel (select user / batch → credit 2% ROI)');
+bullet('Credit mode: MANUALLY by Admin from Admin Panel (select user / batch → credit 1% ROI)');
 bullet('Member sees ROI history on /roi-income after admin credits');
 bullet('No automatic ROI cron required for v1 (optional later if client wants automation)');
 
@@ -482,7 +482,7 @@ h1('12. Grow Wealth Scope – What We Need to Build');
 h2('Workstreams');
 bullet('1) Landing website branded Grow Wealth (Home, Joining info, FAQ, Login/Register)');
 bullet('2) Member panel with full sidebar modules listed in Section 5');
-bullet('3) Backend: Auth, Users, Sponsors/MLM tree, $1 Joining, Manual 2% ROI credit (admin), Incomes, Wallets, Withdrawals');
+bullet('3) Backend: Auth, Users, Sponsors/MLM tree, $1 Joining, Manual 1% ROI credit (admin), Incomes, Wallets, Withdrawals');
 bullet('4) BEP-20 USDT deposit watcher + Connect Wallet + Address/QR + BscScan linking');
 bullet('5) Admin Super Panel (users, finance, security, settings, approvals)');
 bullet('6) Staking/CCT module (if client wants parity with reference)');
@@ -518,11 +518,11 @@ bullet('After joining: allow any further deposit / top-up amount');
 bullet('Deposit history + BscScan tx links');
 bullet('Deliverable: User can deposit and activate $1 joining');
 
-h2('PHASE 3 — Manual ROI 2% (admin credit)');
-bullet('Admin tool: credit 2% ROI to one user or selected users (24/7 manual)');
+h2('PHASE 3 — Manual ROI 1% (admin credit)');
+bullet('Admin tool: credit 1% ROI to one user or selected users (24/7 manual)');
 bullet('ROI ledger / history on member /roi-income page');
 bullet('Income balance updates after admin credit');
-bullet('Deliverable: Admin manually pays 2% ROI; member sees it');
+bullet('Deliverable: Admin manually pays 1% ROI; member sees it');
 
 h2('PHASE 4 — Withdrawals (money out)');
 bullet('Withdraw request to saved/connected crypto wallet');
@@ -559,7 +559,7 @@ bullet('Notifications + Support ticket reply');
 bullet('Deliverable: Admin can run the platform day-to-day');
 
 h2('PHASE 9 — Landing website + polish');
-bullet('Public Home branded Grow Wealth ($1 join, 2% ROI, crypto wallet CTA)');
+bullet('Public Home branded Grow Wealth ($1 join, 1% ROI, crypto wallet CTA)');
 bullet('FAQ, Packages/Joining section, Login/Register CTAs');
 bullet('Mobile responsive + UI polish matching reference dark/gold style');
 bullet('Deliverable: Marketing site ready for demo');
@@ -580,7 +580,7 @@ h2('Confirmed by client');
 bullet('Product name = Grow Wealth');
 bullet('Joining amount = $1 only');
 bullet('After joining, deposit any amount (flexible top-up)');
-bullet('ROI = 2% · 24/7 · Manually by Admin (not auto)');
+bullet('ROI = 1% · 24/7 · Manually by Admin (not auto)');
 bullet('Withdrawal: first min $10; after that any amount');
 bullet('Payments via Crypto Wallet (USDT BEP-20) — deposit & withdraw');
 bullet('Wallet UX = Option C: Connect Wallet (in-app) + Deposit Address/QR (both)');
@@ -598,12 +598,12 @@ bullet('Legal/compliance expectations for the target jurisdiction');
 
 hr();
 h1('13. Risk / Compliance Note (for client discussion)');
-p('The reference product markets ≈5%/day auto; Grow Wealth uses 2% ROI, 24/7, manual admin credit. Still confirm legal structure before public launch.');
+p('The reference product markets ≈5%/day auto; Grow Wealth uses 1% ROI, 24/7, manual admin credit. Still confirm legal structure before public launch.');
 
 hr();
 h1('14. Summary');
 p('Grow Wealth is the client product brand. It will be a full-stack USDT (BEP-20) investment + MLM platform inspired by World Finance 24: marketing site, member dashboard, multi-income engine, P2P transfers, withdrawals, live feed, support/notifications, and Admin panel.');
-p('GROW WEALTH RULES: Brand = Grow Wealth · Joining $1 · flexible deposits · ROI 2% · 24/7 · Manual admin credit · First withdraw min $10 then any amount · Crypto Wallet USDT BEP-20 · Wallet UX Option C · MongoDB Atlas (growwealth).');
+p('GROW WEALTH RULES: Brand = Grow Wealth · Joining $1 · flexible deposits · ROI 1% · 24/7 · Manual admin credit · First withdraw min $10 then any amount · Crypto Wallet USDT BEP-20 · Wallet UX Option C · MongoDB Atlas (growwealth).');
 p('Build order: Phase 0 foundation → Auth → Deposit+$1 Join → Manual ROI → Withdraw → Wallet/Team → Admin → Landing polish → Launch.');
 p('UI/feature reference: https://worldfinance24.online/ and https://worldfinance24.online/dashboard');
 

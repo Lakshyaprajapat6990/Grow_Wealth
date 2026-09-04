@@ -107,7 +107,7 @@ export default function Admin() {
           <h1 className="page-title" style={{ marginBottom: 0 }}>
             Admin Panel
           </h1>
-          <p className="page-sub">Grow Wealth operations · Manual ROI 2% · Withdrawals</p>
+          <p className="page-sub">Grow Wealth operations · Manual ROI 1% · Withdrawals</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link className="btn btn-ghost" to="/dashboard">
@@ -142,7 +142,7 @@ export default function Admin() {
       </div>
 
       <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={creditRoi}>
-        <h3 style={{ marginTop: 0 }}>Manual ROI Credit (2% · 24/7)</h3>
+        <h3 style={{ marginTop: 0 }}>Manual ROI Credit (1% · 24/7)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div className="field">
             <label className="label">User ID</label>
@@ -153,7 +153,7 @@ export default function Admin() {
             <input className="input" type="number" value={roiBase} onChange={(e) => setRoiBase(e.target.value)} />
           </div>
         </div>
-        <button className="btn btn-primary">Credit 2% ROI</button>
+        <button className="btn btn-primary">Credit 1% ROI</button>
       </form>
 
       <IncomeCreditForm onDone={load} setMsg={setMsg} setErr={setErr} />

@@ -37,7 +37,7 @@ export default function Transfer() {
 
   return (
     <div>
-      <PageHeader title="Fund Transfer" subtitle="P2P transfer to another User ID · Min $1" />
+      <PageHeader title="Fund Transfer" subtitle="P2P transfer to another User ID · Min $5" />
       <form className="card" style={{ padding: '1.25rem', maxWidth: 480 }} onSubmit={submit}>
         {err && <div className="alert alert-error">{err}</div>}
         {msg && <div className="alert alert-success">{msg}</div>}
@@ -48,9 +48,9 @@ export default function Transfer() {
         </div>
         <div className="field">
           <label className="label">Amount ($)</label>
-          <input className="input" type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          <input className="input" type="number" min="5" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-            {[1, 5, 10, 20, 50].map((v) => (
+            {[5, 10, 20, 50, 100].map((v) => (
               <button key={v} type="button" className="btn btn-ghost" style={{ flex: 1, padding: '0.4rem' }} onClick={() => setAmount(String(v))}>
                 ${v}
               </button>

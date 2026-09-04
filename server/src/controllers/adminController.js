@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
 
-const ROI_PERCENT = Number(process.env.ROI_PERCENT || 2);
+const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
 async function dashboard(_req, res) {
   const [users, joined, pendingWithdrawals, totalDepositedAgg] = await Promise.all([
@@ -24,7 +24,7 @@ async function dashboard(_req, res) {
   });
 }
 
-/** Manual ROI credit — 2%, 24/7, by admin */
+/** Manual ROI credit — 1%, 24/7, by admin */
 async function creditRoi(req, res) {
   const { userId, baseAmount } = req.body;
   if (!userId) {

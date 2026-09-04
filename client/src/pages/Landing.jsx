@@ -5,7 +5,7 @@ import './Landing.css';
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto investment platform on USDT BEP-20. Join from $1, deposit any amount after activation, earn 2% ROI credited manually 24/7, and withdraw to your crypto wallet.',
+    a: 'Grow Wealth is a crypto investment platform on USDT BEP-20. Join from $1, deposit any amount after activation, earn 1% ROI credited manually 24/7, and withdraw to your crypto wallet.',
   },
   {
     q: 'How do I activate my account?',
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'What is the ROI?',
-    a: 'Grow Wealth offers 2% ROI. Credits are processed manually by admin and are available 24/7 — not limited to a short daily window.',
+    a: 'Grow Wealth offers 1% ROI. Credits are processed manually by admin and are available 24/7 — not limited to a short daily window.',
   },
   {
     q: 'How do deposits work?',
@@ -98,7 +98,7 @@ export default function Landing() {
             </h1>
             <p className="lp-lead">
               Start with just <strong>$1 joining</strong>. Deposit any amount after activation. Earn{' '}
-              <strong>2% ROI</strong> — credited manually, available <strong>24/7</strong>. Withdraw to your USDT
+              <strong>1% ROI</strong> — credited manually, available <strong>24/7</strong>. Withdraw to your USDT
               BEP-20 wallet.
             </p>
             <div className="lp-hero-actions">
@@ -122,7 +122,7 @@ export default function Landing() {
             <div className="lp-hero-card">
               <div className="lp-hero-card-top">
                 <span>Live Snapshot</span>
-                <strong>2% ROI</strong>
+                <strong>1% ROI</strong>
               </div>
               <div className="lp-meter">
                 <div className="lp-meter-fill" />
@@ -154,7 +154,7 @@ export default function Landing() {
             <h2>
               The Engine Behind Your
               <br />
-              <span>Daily 2% Returns</span>
+              <span>Daily 1% Returns</span>
             </h2>
             <p>
               Grow Wealth pools member liquidity for structured crypto market strategies. A portion of platform
@@ -196,7 +196,7 @@ export default function Landing() {
                 <span>3</span>
                 <div>
                   <h4>Earn & Withdraw</h4>
-                  <p>Receive 2% ROI (manual 24/7) and withdraw to your wallet.</p>
+                  <p>Receive 1% ROI (manual 24/7) and withdraw to your wallet.</p>
                 </div>
               </div>
             </div>
@@ -230,14 +230,14 @@ export default function Landing() {
                 <tr>
                   <td>Joining</td>
                   <td>$1 only</td>
-                  <td>2%</td>
+                  <td>1%</td>
                   <td>Manual · 24/7</td>
                   <td>First min $10</td>
                 </tr>
                 <tr>
                   <td>Top-up</td>
                   <td>Any amount</td>
-                  <td>2%</td>
+                  <td>1%</td>
                   <td>Manual · 24/7</td>
                   <td>Any after first</td>
                 </tr>
@@ -281,7 +281,7 @@ export default function Landing() {
       <section className="lp-cta">
         <div className="lp-wrap lp-cta-inner">
           <h2>Start Your Growth Journey Today</h2>
-          <p>Join Grow Wealth now to unlock 2% ROI and build with crypto on BEP-20.</p>
+          <p>Join Grow Wealth now to unlock 1% ROI and build with crypto on BEP-20.</p>
           <Link to="/register" className="btn btn-primary lp-btn-lg">
             Create Free Account
           </Link>
