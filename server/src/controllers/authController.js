@@ -155,6 +155,27 @@ async function login(req, res) {
     return res.status(401).json({ success: false, message: 'Invalid User ID or password' });
   }
 
+  // Option A: members cannot login until $1 joining is approved (isJoined)
+  if (user.role !== 'admin' && !user.isJoined) {
+    const pendingJoin = await Transaction.findOne({
+      userId: user.userId,
+      type: 'joining',
+      status: 'pending',
+    });
+    if (pendingJoin) {
+      return res.status(403).json({
+        success: false,
+        joiningPending: true,
+        message:
+          'Your $1 joining payment is pending admin approval. Login will work only after approval.',
+      });
+    }
+    return res.status(403).json({
+      success: false,
+      message: 'Account not activated. Pay $1 joining and wait for admin approval before login.',
+    });
+  }
+
   user.lastLoginAt = new Date();
   await user.save();
 

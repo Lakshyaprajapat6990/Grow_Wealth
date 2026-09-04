@@ -116,7 +116,7 @@ export default function Register() {
     return (
       <div className="auth-page">
         <div className="card auth-card">
-          <div className="alert alert-success">Account created successfully</div>
+          <div className="alert alert-success">Registration submitted</div>
           <p>
             Your User ID: <strong>{success.userId}</strong>
           </p>
@@ -124,13 +124,21 @@ export default function Register() {
             Transaction Password: <strong>{success.transactionPassword}</strong>
           </p>
           {success.joiningPending && (
-            <div className="alert alert-error" style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.35)' }}>
-              Joining ${success.joiningAmount} is pending admin approval. After approval your ID will be activated.
+            <div
+              className="alert alert-error"
+              style={{
+                background: 'rgba(251,191,36,0.12)',
+                color: '#fbbf24',
+                border: '1px solid rgba(251,191,36,0.35)',
+              }}
+            >
+              Save your User ID. Login will work only after admin approves your ${success.joiningAmount} joining
+              payment.
             </div>
           )}
-          <p className="muted">Save these details. You will need the transaction password for withdraw/transfer.</p>
-          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/dashboard')}>
-            Go to Dashboard
+          <p className="muted">Save these details safely.</p>
+          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/login')}>
+            Go to Login
           </button>
         </div>
       </div>

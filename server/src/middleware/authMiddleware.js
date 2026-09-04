@@ -17,6 +17,11 @@ async function protect(req, res, next) {
       throw new Error('Not authorized');
     }
 
+    if (user.role !== 'admin' && !user.isJoined) {
+      res.status(403);
+      throw new Error('Joining not approved. Account locked until admin approves $1 payment.');
+    }
+
     req.user = user;
     next();
   } catch (err) {
