@@ -23,31 +23,55 @@ async function getWalletInfo(req, res) {
   });
 }
 
-/** Temporary/manual deposit credit for Phase 2 scaffolding (admin or self-test) */
-async function creditDeposit(req, res) {
+/** Member submits deposit proof — admin must approve before fund credit */
+async function requestDeposit(req, res) {
   const amount = Number(req.body.amount);
+  const txHash = String(req.body.txHash || '').trim();
+
   if (!amount || amount <= 0) {
     return res.status(400).json({ success: false, message: 'Invalid amount' });
   }
+  if (!txHash || txHash.length < 10) {
+    return res.status(400).json({ success: false, message: 'Transaction hash (Tx Hash) is required' });
+  }
+
+  const existing = await Transaction.findOne({
+    type: 'deposit',
+    'meta.txHash': txHash,
+    status: { $in: ['pending', 'success'] },
+  });
+  if (existing) {
+    return res.status(400).json({ success: false, message: 'This Tx Hash was already submitted' });
+  }
 
   const user = req.user;
-  user.fundBalance = Number((user.fundBalance + amount).toFixed(8));
-  user.usdtBep20Balance = Number((user.usdtBep20Balance + amount).toFixed(8));
-  user.totalDeposited = Number((user.totalDeposited + amount).toFixed(8));
-  await user.save();
-
-  await Transaction.create({
+  const deposit = await Transaction.create({
     userId: user.userId,
     type: 'deposit',
     amount,
     balanceAfter: user.fundBalance,
-    status: 'success',
-    description: 'USDT BEP-20 deposit credited',
-    meta: { txHash: req.body.txHash || null, method: req.body.method || 'manual' },
+    status: 'pending',
+    description: 'USDT BEP-20 deposit submitted — awaiting admin approval',
+    meta: {
+      txHash,
+      method: req.body.method || 'address_qr',
+      network: 'BEP-20',
+      depositAddress: process.env.DEPOSIT_ADDRESS || '',
+    },
     createdBy: user.userId,
   });
 
-  return res.json({ success: true, message: 'Deposit credited', user: user.toSafeJSON() });
+  return res.json({
+    success: true,
+    message: 'Deposit submitted. Admin will credit after verifying Tx Hash.',
+    deposit,
+    user: user.toSafeJSON(),
+  });
+}
+
+/** @deprecated use requestDeposit — kept name for route compatibility */
+async function creditDeposit(req, res) {
+  return requestDeposit(req, res);
 }
 
 async function activateJoining(req, res) {
@@ -151,8 +175,9 @@ async function walletHistory(req, res) {
 async function getDepositAddress(req, res) {
   return res.json({
     success: true,
-    address: process.env.DEPOSIT_ADDRESS || '0xGrowWealthDepositAddressReplaceMe00000001',
+    address: process.env.DEPOSIT_ADDRESS || '0xA73EEAd1C853deF37F3B3bE1701e240d74770D8e',
     network: 'BEP-20 (BSC)',
+    token: 'USDT',
   });
 }
 
@@ -227,6 +252,7 @@ async function transferFunds(req, res) {
 module.exports = {
   getWalletInfo,
   creditDeposit,
+  requestDeposit,
   activateJoining,
   requestWithdraw,
   walletHistory,

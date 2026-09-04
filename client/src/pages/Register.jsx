@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -26,9 +26,10 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [sponsorMsg, setSponsorMsg] = useState('');
 
-  function set(key, value) {
-    setForm((f) => ({ ...f, [key]: value }));
-  }
+  useEffect(() => {
+    if (form.sponsorId) verifySponsor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function verifySponsor() {
     if (!form.sponsorId) return;

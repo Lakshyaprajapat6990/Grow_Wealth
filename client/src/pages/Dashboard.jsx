@@ -54,12 +54,18 @@ export default function Dashboard() {
       </div>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
-        <h3 style={{ marginTop: 0, color: '#93c5fd' }}>Referral Link</h3>
+        <h3 style={{ marginTop: 0, color: '#93c5fd' }}>Your Team Referral Link</h3>
+        <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+          Share this link — new members register under your ID as sponsor.
+        </p>
         <code style={{ color: '#60a5fa', wordBreak: 'break-all', fontSize: '0.88rem' }}>{refLink}</code>
-        <div style={{ marginTop: '0.75rem' }}>
-          <button className="btn btn-ghost" onClick={() => navigator.clipboard.writeText(refLink)}>
-            Copy Referral Link
+        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button className="btn btn-ghost" type="button" onClick={() => navigator.clipboard.writeText(refLink)}>
+            Copy Team Link
           </button>
+          <Link className="btn btn-primary" to="/direct-team">
+            View Direct Team
+          </Link>
         </div>
       </div>
 

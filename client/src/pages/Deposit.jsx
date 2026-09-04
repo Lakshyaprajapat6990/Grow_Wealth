@@ -12,10 +12,21 @@ export default function Deposit() {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [walletInfo, setWalletInfo] = useState(null);
+  const [pending, setPending] = useState([]);
+
+  async function load() {
+    const [addr, info, hist] = await Promise.all([
+      api.get('/wallet/deposit-address'),
+      api.get('/wallet/info'),
+      api.get('/wallet/history'),
+    ]);
+    setDepositAddress(addr.data.address);
+    setWalletInfo(info.data);
+    setPending((hist.data.history || []).filter((h) => h.type === 'deposit' && h.status === 'pending'));
+  }
 
   useEffect(() => {
-    api.get('/wallet/deposit-address').then((r) => setDepositAddress(r.data.address)).catch(() => {});
-    api.get('/wallet/info').then((r) => setWalletInfo(r.data)).catch(() => {});
+    load().catch(() => {});
   }, []);
 
   const qrUrl = useMemo(
@@ -53,13 +64,13 @@ export default function Deposit() {
         }
         return;
       }
-      setMsg(`Wallet connected: ${accounts[0]} — send USDT then submit amount below to credit (Phase 2 watcher coming next).`);
+      setMsg(`Wallet connected: ${accounts[0]}. Send USDT (BEP-20) to the deposit address, then submit Tx Hash below.`);
     } catch (e) {
       setErr(e.message || 'Wallet connect failed');
     }
   }
 
-  async function creditDemoDeposit(e) {
+  async function submitDeposit(e) {
     e.preventDefault();
     setErr('');
     setMsg('');
@@ -67,13 +78,13 @@ export default function Deposit() {
     try {
       const { data } = await api.post('/wallet/deposit', {
         amount: Number(amount),
-        txHash: txHash || undefined,
+        txHash: txHash.trim(),
         method: tab === 'connect' ? 'wallet_connect' : 'address_qr',
       });
       refreshUser(data.user);
-      setMsg(`Deposit $${Number(amount).toFixed(2)} credited to fund balance`);
-      const info = await api.get('/wallet/info');
-      setWalletInfo(info.data);
+      setMsg(data.message);
+      setTxHash('');
+      await load();
     } catch (error) {
       setErr(error.response?.data?.message || 'Deposit failed');
     } finally {
@@ -84,7 +95,7 @@ export default function Deposit() {
   return (
     <div>
       <h1 className="page-title">Deposit USDT</h1>
-      <p className="page-sub">Option C — Connect Wallet + Address/QR · Network: BEP-20 (BSC)</p>
+      <p className="page-sub">Send USDT on BEP-20 (BSC) only · Admin credits after Tx verify</p>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -101,29 +112,34 @@ export default function Deposit() {
 
         {tab === 'qr' ? (
           <div style={{ display: 'grid', gap: '1rem', justifyItems: 'start' }}>
-            <img src={qrUrl} alt="Deposit QR" style={{ borderRadius: 12, background: '#fff', padding: 8 }} />
+            {qrUrl && (
+              <img src={qrUrl} alt="Deposit QR" style={{ borderRadius: 12, background: '#fff', padding: 8 }} />
+            )}
             <div>
-              <div className="label">Deposit Address (BEP-20)</div>
+              <div className="label">Company Deposit Address (USDT · BEP-20)</div>
               <code style={{ wordBreak: 'break-all', color: 'var(--accent)' }}>{depositAddress || 'Loading...'}</code>
             </div>
-            <button className="btn btn-ghost" onClick={copyAddress}>
+            <button className="btn btn-ghost" type="button" onClick={copyAddress}>
               Copy Address
             </button>
+            <p style={{ color: '#fbbf24', fontSize: '0.85rem', margin: 0 }}>
+              Send only USDT on BNB Smart Chain (BEP-20). Other networks = permanent loss.
+            </p>
           </div>
         ) : (
           <div>
             <p style={{ color: 'var(--text-muted)' }}>
-              Connect MetaMask / Trust (WalletConnect-ready UI). Ensure network is BSC.
+              Connect MetaMask / Trust Wallet. Network must be BSC (BEP-20), then send USDT to company address.
             </p>
-            <button className="btn btn-primary" onClick={connectWallet}>
+            <button className="btn btn-primary" type="button" onClick={connectWallet}>
               Connect Wallet
             </button>
           </div>
         )}
       </div>
 
-      <form className="card" style={{ padding: '1.25rem' }} onSubmit={creditDemoDeposit}>
-        <h3 style={{ marginTop: 0 }}>Credit deposit to account</h3>
+      <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={submitDeposit}>
+        <h3 style={{ marginTop: 0 }}>Submit Deposit Proof</h3>
         <p style={{ color: 'var(--text-muted)' }}>
           Fund balance: ${(walletInfo?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)}
         </p>
@@ -131,16 +147,44 @@ export default function Deposit() {
         {msg && <div className="alert alert-success">{msg}</div>}
         <div className="field">
           <label className="label">Amount (USDT)</label>
-          <input className="input" type="number" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <input
+            className="input"
+            type="number"
+            min="1"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
         </div>
         <div className="field">
-          <label className="label">Tx Hash (optional)</label>
-          <input className="input" value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder="0x..." />
+          <label className="label">Tx Hash (required)</label>
+          <input
+            className="input"
+            value={txHash}
+            onChange={(e) => setTxHash(e.target.value)}
+            placeholder="0x..."
+            required
+          />
         </div>
         <button className="btn btn-success" disabled={loading}>
-          {loading ? 'Processing…' : 'Confirm Deposit Credit'}
+          {loading ? 'Submitting…' : 'Submit for Admin Approval'}
         </button>
       </form>
+
+      {pending.length > 0 && (
+        <div className="card" style={{ padding: '1.25rem' }}>
+          <h3 style={{ marginTop: 0 }}>Pending Deposits</h3>
+          {pending.map((p) => (
+            <div key={p._id} style={{ borderTop: '1px solid var(--border)', padding: '0.65rem 0' }}>
+              <strong>${Number(p.amount).toFixed(2)}</strong> · {p.status} · {new Date(p.createdAt).toLocaleString()}
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                {p.meta?.txHash}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

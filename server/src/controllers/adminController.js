@@ -117,7 +117,8 @@ async function listUsers(_req, res) {
 }
 
 async function creditIncome(req, res) {
-  const { userId, amount, incomeType, description } = req.body;
+  const { userId, amount, description } = req.body;
+  const incomeType = req.body.incomeType || req.body.type;
   const typeMap = {
     direct: { field: 'directIncome', total: 'totalDirectIncome', tx: 'direct_income' },
     level: { field: 'levelIncome', total: 'totalLevelIncome', tx: 'level_income' },
@@ -153,6 +154,107 @@ async function creditIncome(req, res) {
   return res.json({ success: true, message: `Credited $${amt} ${incomeType} income`, user: user.toSafeJSON() });
 }
 
+async function listPendingDeposits(_req, res) {
+  const deposits = await Transaction.find({ type: 'deposit', status: 'pending' })
+    .sort({ createdAt: -1 })
+    .limit(200);
+  return res.json({ success: true, deposits });
+}
+
+async function approveDeposit(req, res) {
+  const { id } = req.params;
+  const deposit = await Transaction.findById(id);
+  if (!deposit || deposit.type !== 'deposit') {
+    return res.status(404).json({ success: false, message: 'Deposit not found' });
+  }
+  if (deposit.status !== 'pending') {
+    return res.status(400).json({ success: false, message: 'Already processed' });
+  }
+
+  const user = await User.findOne({ userId: deposit.userId });
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const amt = Number(deposit.amount);
+  user.fundBalance = Number((user.fundBalance + amt).toFixed(8));
+  user.usdtBep20Balance = Number((user.usdtBep20Balance + amt).toFixed(8));
+  user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
+  await user.save();
+
+  deposit.status = 'success';
+  deposit.balanceAfter = user.fundBalance;
+  deposit.description = 'USDT BEP-20 deposit approved & credited';
+  deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date() };
+  await deposit.save();
+
+  return res.json({
+    success: true,
+    message: `Deposit $${amt} credited to ${user.userId}`,
+    deposit,
+    user: user.toSafeJSON(),
+  });
+}
+
+async function rejectDeposit(req, res) {
+  const { id } = req.params;
+  const deposit = await Transaction.findById(id);
+  if (!deposit || deposit.type !== 'deposit') {
+    return res.status(404).json({ success: false, message: 'Deposit not found' });
+  }
+  if (deposit.status !== 'pending') {
+    return res.status(400).json({ success: false, message: 'Already processed' });
+  }
+
+  deposit.status = 'rejected';
+  deposit.description = req.body.reason || 'Deposit rejected by admin';
+  deposit.meta = { ...(deposit.meta || {}), rejectedBy: req.user.userId, rejectedAt: new Date() };
+  await deposit.save();
+
+  return res.json({ success: true, message: 'Deposit rejected', deposit });
+}
+
+/** Admin credit or debit member fund balance */
+async function adjustFund(req, res) {
+  const { userId, amount, action, remark } = req.body;
+  const amt = Number(amount);
+  if (!userId || !amt || amt <= 0 || !['credit', 'debit'].includes(action)) {
+    return res.status(400).json({
+      success: false,
+      message: 'userId, amount, and action (credit|debit) required',
+    });
+  }
+
+  const user = await User.findOne({ userId: String(userId).toUpperCase() });
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  if (action === 'debit' && user.fundBalance < amt) {
+    return res.status(400).json({ success: false, message: 'Insufficient fund balance' });
+  }
+
+  if (action === 'credit') {
+    user.fundBalance = Number((user.fundBalance + amt).toFixed(8));
+    user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
+  } else {
+    user.fundBalance = Number((user.fundBalance - amt).toFixed(8));
+  }
+  await user.save();
+
+  await Transaction.create({
+    userId: user.userId,
+    type: action === 'credit' ? 'admin_credit' : 'admin_debit',
+    amount: amt,
+    balanceAfter: user.fundBalance,
+    status: 'success',
+    description: remark || `Admin ${action} $${amt}`,
+    createdBy: req.user.userId,
+  });
+
+  return res.json({
+    success: true,
+    message: `Fund ${action} $${amt} for ${user.userId}`,
+    user: user.toSafeJSON(),
+  });
+}
+
 module.exports = {
   dashboard,
   creditRoi,
@@ -160,4 +262,8 @@ module.exports = {
   listWithdrawals,
   approveWithdrawal,
   listUsers,
+  listPendingDeposits,
+  approveDeposit,
+  rejectDeposit,
+  adjustFund,
 };
