@@ -26,6 +26,10 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [sponsorMsg, setSponsorMsg] = useState('');
 
+  function set(key, value) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
   useEffect(() => {
     if (form.sponsorId) verifySponsor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,12 +52,22 @@ export default function Register() {
       setError('Passwords do not match');
       return;
     }
+    if (!form.agreeTerms) {
+      setError('Please agree to the terms of service.');
+      return;
+    }
+    const wallet = form.walletAddress.trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      setError('Valid USDT BEP-20 Wallet Address is required (0x + 40 hex characters).');
+      return;
+    }
     setLoading(true);
     try {
       const data = await register({
         ...form,
         sponsorId: form.sponsorId.trim().toUpperCase(),
-        walletAddress: form.walletAddress.trim(),
+        walletAddress: wallet,
+        agreeTerms: true,
       });
       setSuccess({
         userId: data.userId,
@@ -171,9 +185,10 @@ export default function Register() {
             className="input"
             value={form.walletAddress}
             onChange={(e) => set('walletAddress', e.target.value)}
-            placeholder="0x..."
+            placeholder="0x + 40 characters (e.g. 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)"
             required
           />
+          <small className="hint">Must start with 0x and be exactly 42 characters (BSC / BEP-20)</small>
         </div>
 
         <label className="check">
