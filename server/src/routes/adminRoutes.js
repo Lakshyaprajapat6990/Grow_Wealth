@@ -13,6 +13,7 @@ const {
 } = require('../controllers/adminController');
 const { adminList, adminReply } = require('../controllers/supportController');
 const { adminCreate } = require('../controllers/notificationController');
+const { adminDeleteUser } = require('../controllers/deleteAccountController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -20,6 +21,7 @@ const router = express.Router();
 router.use(protect, adminOnly);
 router.get('/dashboard', dashboard);
 router.get('/users', listUsers);
+router.delete('/users/:userId', adminDeleteUser);
 router.post('/roi/credit', creditRoi);
 router.post('/income/credit', creditIncome);
 router.get('/withdrawals', listWithdrawals);

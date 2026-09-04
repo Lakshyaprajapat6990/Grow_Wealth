@@ -183,6 +183,18 @@ export default function Admin() {
     }
   }
 
+  async function deleteUser(userId) {
+    if (!window.confirm(`Delete user ${userId} permanently? Their team will move to their sponsor.`)) return;
+    setErr('');
+    try {
+      const { data } = await api.delete(`/admin/users/${userId}`);
+      setMsg(data.message);
+      await load();
+    } catch (error) {
+      setErr(error.response?.data?.message || 'Delete failed');
+    }
+  }
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
@@ -335,6 +347,7 @@ export default function Admin() {
               <th style={{ padding: '0.5rem' }}>Joined</th>
               <th style={{ padding: '0.5rem' }}>Fund</th>
               <th style={{ padding: '0.5rem' }}>Income</th>
+              <th style={{ padding: '0.5rem' }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -346,6 +359,16 @@ export default function Admin() {
                 <td style={{ padding: '0.65rem' }}>{u.isJoined ? 'Yes' : 'No'}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.fundBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.incomeBalance || 0).toFixed(2)}</td>
+                <td style={{ padding: '0.65rem' }}>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    style={{ color: '#fca5a5', borderColor: 'rgba(248,113,113,0.45)' }}
+                    onClick={() => deleteUser(u.userId)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
