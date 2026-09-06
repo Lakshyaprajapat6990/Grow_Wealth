@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,6 @@ const empty = {
   country: 'INDIA',
   walletAddress: '',
   sponsorId: '',
-  joiningTxHash: '',
   agreeTerms: false,
 };
 
@@ -26,32 +25,15 @@ export default function Register() {
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sponsorMsg, setSponsorMsg] = useState('');
-  const [info, setInfo] = useState({
-    joiningAmount: 1,
-    depositAddress: '',
-    network: 'BEP-20 (BSC)',
-  });
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   useEffect(() => {
-    api
-      .get('/auth/register-info')
-      .then((r) => setInfo(r.data))
-      .catch(() => {});
     if (form.sponsorId) verifySponsor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const qrUrl = useMemo(
-    () =>
-      info.depositAddress
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(info.depositAddress)}`
-        : '',
-    [info.depositAddress]
-  );
 
   async function verifySponsor() {
     if (!form.sponsorId) return;
@@ -61,12 +43,6 @@ export default function Register() {
     } catch {
       setSponsorMsg('Could not verify sponsor');
     }
-  }
-
-  async function copyAddress() {
-    if (!info.depositAddress) return;
-    await navigator.clipboard.writeText(info.depositAddress);
-    setSponsorMsg((m) => m || '✓ Address copied');
   }
 
   async function onSubmit(e) {
@@ -85,25 +61,17 @@ export default function Register() {
       setError('Valid USDT BEP-20 Wallet Address is required (0x + 40 hex characters).');
       return;
     }
-    const txHash = form.joiningTxHash.trim();
-    if (!txHash || txHash.length < 10) {
-      setError(`Pay $${info.joiningAmount} USDT joining fee and paste the Tx Hash.`);
-      return;
-    }
     setLoading(true);
     try {
       const data = await register({
         ...form,
         sponsorId: form.sponsorId.trim().toUpperCase(),
         walletAddress: wallet,
-        joiningTxHash: txHash,
         agreeTerms: true,
       });
       setSuccess({
         userId: data.userId,
         transactionPassword: data.transactionPassword,
-        joiningPending: data.joiningPending,
-        joiningAmount: data.joiningAmount || info.joiningAmount,
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
@@ -116,29 +84,16 @@ export default function Register() {
     return (
       <div className="auth-page">
         <div className="card auth-card">
-          <div className="alert alert-success">Registration submitted</div>
+          <div className="alert alert-success">Account created successfully</div>
           <p>
             Your User ID: <strong>{success.userId}</strong>
           </p>
           <p>
             Transaction Password: <strong>{success.transactionPassword}</strong>
           </p>
-          {success.joiningPending && (
-            <div
-              className="alert alert-error"
-              style={{
-                background: 'rgba(251,191,36,0.12)',
-                color: '#fbbf24',
-                border: '1px solid rgba(251,191,36,0.35)',
-              }}
-            >
-              Save your User ID. Login will work only after admin approves your ${success.joiningAmount} joining
-              payment.
-            </div>
-          )}
-          <p className="muted">Save these details safely.</p>
-          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/login')}>
-            Go to Login
+          <p className="muted">Save these details. Next: login → dashboard → pay $1 to join.</p>
+          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/dashboard')}>
+            Go to Dashboard
           </button>
         </div>
       </div>
@@ -151,7 +106,7 @@ export default function Register() {
         <div className="auth-brand">
           <span className="logo-mark" />
           <h1>Grow Wealth</h1>
-          <p>Create Account · Joining ${info.joiningAmount} USDT</p>
+          <p>Create Free Account</p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -236,31 +191,6 @@ export default function Register() {
           <small className="hint">Your withdrawal wallet (must be BEP-20)</small>
         </div>
 
-        <div className="join-pay-box">
-          <h3>Pay Joining Amount — ${info.joiningAmount} USDT</h3>
-          <p>Send exactly <strong>${info.joiningAmount} USDT</strong> on <strong>{info.network}</strong> to company address, then paste Tx Hash below.</p>
-          <div className="join-pay-row">
-            {qrUrl && <img src={qrUrl} alt="Joining payment QR" />}
-            <div>
-              <div className="label">Company Deposit Address</div>
-              <code>{info.depositAddress || 'Loading...'}</code>
-              <button type="button" className="btn btn-ghost" style={{ marginTop: '0.5rem' }} onClick={copyAddress}>
-                Copy Address
-              </button>
-            </div>
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label className="label">Joining Tx Hash (required)</label>
-            <input
-              className="input"
-              value={form.joiningTxHash}
-              onChange={(e) => set('joiningTxHash', e.target.value)}
-              placeholder="0x... paste after paying $1 USDT"
-              required
-            />
-          </div>
-        </div>
-
         <label className="check">
           <input
             type="checkbox"
@@ -271,7 +201,7 @@ export default function Register() {
         </label>
 
         <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.75rem' }} disabled={loading}>
-          {loading ? 'Creating…' : `REGISTER & SUBMIT $${info.joiningAmount} JOINING`}
+          {loading ? 'Creating…' : 'REGISTER NOW'}
         </button>
 
         <p className="auth-foot">

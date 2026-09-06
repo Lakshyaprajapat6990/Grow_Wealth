@@ -41,23 +41,31 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle={`Welcome, ${user?.name} · Status: ${
-          user?.isJoined ? '✅ Joined' : '⏳ Joining pending / not activated'
-        }`}
+        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? '✅ Joined' : '⏳ Not Joined — pay $1'}`}
       />
 
       {!user?.isJoined && (
         <div
-          className="alert alert-error"
+          className="card"
           style={{
-            background: 'rgba(251,191,36,0.12)',
-            color: '#fbbf24',
-            border: '1px solid rgba(251,191,36,0.35)',
+            padding: '1.25rem',
             marginBottom: '1rem',
+            borderColor: 'rgba(251,191,36,0.45)',
+            background: 'rgba(251,191,36,0.08)',
           }}
         >
-          Your joining ($1) is not active yet. If you paid at registration, wait for admin approval — or check{' '}
-          <Link to="/join">Join page</Link>.
+          <h3 style={{ marginTop: 0, color: '#fbbf24' }}>Activate Joining — $1 USDT</h3>
+          <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+            Your account is ready. Deposit at least $1, then activate joining to unlock earnings and withdrawals.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Link className="btn btn-primary" to="/deposit">
+              1. Deposit USDT
+            </Link>
+            <Link className="btn btn-success" to="/join">
+              2. Join $1 Now
+            </Link>
+          </div>
         </div>
       )}
 

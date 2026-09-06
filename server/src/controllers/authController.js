@@ -1,6 +1,5 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const Transaction = require('../models/Transaction');
 const {
   signToken,
   generateUniqueUserId,
@@ -39,8 +38,7 @@ async function checkSponsor(req, res) {
 }
 
 async function register(req, res) {
-  const { name, email, mobile, password, country, walletAddress, sponsorId, agreeTerms, joiningTxHash } =
-    req.body;
+  const { name, email, mobile, password, country, walletAddress, sponsorId, agreeTerms } = req.body;
 
   if (!name || !email || !mobile || !password) {
     return res.status(400).json({ success: false, message: 'Please fill all required fields' });
@@ -50,23 +48,6 @@ async function register(req, res) {
   }
   if (!walletAddress || !isValidBep20Address(walletAddress)) {
     return res.status(400).json({ success: false, message: 'Valid USDT BEP-20 Wallet Address is required.' });
-  }
-
-  const txHash = String(joiningTxHash || '').trim();
-  if (!txHash || txHash.length < 10) {
-    return res.status(400).json({
-      success: false,
-      message: `Joining payment Tx Hash is required. Pay $${JOINING_AMOUNT} USDT (BEP-20) first.`,
-    });
-  }
-
-  const existingTx = await Transaction.findOne({
-    type: { $in: ['joining', 'deposit'] },
-    'meta.txHash': txHash,
-    status: { $in: ['pending', 'success'] },
-  });
-  if (existingTx) {
-    return res.status(400).json({ success: false, message: 'This Tx Hash was already used' });
   }
 
   let resolvedSponsor = null;
@@ -107,30 +88,13 @@ async function register(req, res) {
     await resolvedSponsor.save();
   }
 
-  await Transaction.create({
-    userId: user.userId,
-    type: 'joining',
-    amount: JOINING_AMOUNT,
-    balanceAfter: 0,
-    status: 'pending',
-    description: `Joining $${JOINING_AMOUNT} payment submitted at registration — awaiting admin approval`,
-    meta: {
-      txHash,
-      purpose: 'registration_joining',
-      network: 'BEP-20',
-      depositAddress: process.env.DEPOSIT_ADDRESS || '',
-    },
-    createdBy: user.userId,
-  });
-
   const token = signToken(user);
   return res.status(201).json({
     success: true,
-    message: `Registration successful. Joining $${JOINING_AMOUNT} is pending admin approval.`,
+    message: 'Registration successful. Login and activate $1 joining from dashboard.',
     token,
     userId: user.userId,
     transactionPassword: trxPassword,
-    joiningPending: true,
     joiningAmount: JOINING_AMOUNT,
     user: user.toSafeJSON(),
   });
@@ -153,27 +117,6 @@ async function login(req, res) {
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) {
     return res.status(401).json({ success: false, message: 'Invalid User ID or password' });
-  }
-
-  // Option A: members cannot login until $1 joining is approved (isJoined)
-  if (user.role !== 'admin' && !user.isJoined) {
-    const pendingJoin = await Transaction.findOne({
-      userId: user.userId,
-      type: 'joining',
-      status: 'pending',
-    });
-    if (pendingJoin) {
-      return res.status(403).json({
-        success: false,
-        joiningPending: true,
-        message:
-          'Your $1 joining payment is pending admin approval. Login will work only after approval.',
-      });
-    }
-    return res.status(403).json({
-      success: false,
-      message: 'Account not activated. Pay $1 joining and wait for admin approval before login.',
-    });
   }
 
   user.lastLoginAt = new Date();

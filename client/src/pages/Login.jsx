@@ -62,10 +62,6 @@ export default function Login() {
           {loading ? 'Signing in…' : 'LOGIN NOW'}
         </button>
 
-        <p className="auth-foot" style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
-          New IDs can login only after $1 joining is approved by admin.
-        </p>
-
         <p className="auth-foot">
           New here? <Link to="/register">Create account</Link>
         </p>

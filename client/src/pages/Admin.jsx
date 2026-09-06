@@ -337,13 +337,17 @@ export default function Admin() {
       </div>
 
       <div className="card" style={{ padding: '1.25rem', overflowX: 'auto' }}>
-        <h3 style={{ marginTop: 0 }}>Users</h3>
+        <h3 style={{ marginTop: 0 }}>Users (all details except password)</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--text-muted)' }}>
               <th style={{ padding: '0.5rem' }}>ID</th>
               <th style={{ padding: '0.5rem' }}>Name</th>
+              <th style={{ padding: '0.5rem' }}>Mobile</th>
+              <th style={{ padding: '0.5rem' }}>Email</th>
               <th style={{ padding: '0.5rem' }}>Sponsor</th>
+              <th style={{ padding: '0.5rem' }}>Country</th>
+              <th style={{ padding: '0.5rem' }}>Wallet</th>
               <th style={{ padding: '0.5rem' }}>Joined</th>
               <th style={{ padding: '0.5rem' }}>Fund</th>
               <th style={{ padding: '0.5rem' }}>Income</th>
@@ -355,7 +359,13 @@ export default function Admin() {
               <tr key={u.userId} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '0.65rem' }}>{u.userId}</td>
                 <td style={{ padding: '0.65rem' }}>{u.name}</td>
+                <td style={{ padding: '0.65rem' }}>{u.mobile || '—'}</td>
+                <td style={{ padding: '0.65rem', fontSize: '0.85rem' }}>{u.email || '—'}</td>
                 <td style={{ padding: '0.65rem' }}>{u.sponsorId || '—'}</td>
+                <td style={{ padding: '0.65rem' }}>{u.country || '—'}</td>
+                <td style={{ padding: '0.65rem', maxWidth: 120, wordBreak: 'break-all', fontSize: '0.75rem' }}>
+                  {u.walletAddress || '—'}
+                </td>
                 <td style={{ padding: '0.65rem' }}>{u.isJoined ? 'Yes' : 'No'}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.fundBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.incomeBalance || 0).toFixed(2)}</td>

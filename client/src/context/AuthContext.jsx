@@ -47,14 +47,6 @@ export function AuthProvider({ children }) {
       },
       async register(payload) {
         const { data } = await api.post('/auth/register', payload);
-        // Option A: do not keep session until joining is approved
-        if (data.joiningPending) {
-          localStorage.removeItem('gw_token');
-          localStorage.removeItem('gw_user');
-          setToken(null);
-          setUser(null);
-          return data;
-        }
         localStorage.setItem('gw_token', data.token);
         localStorage.setItem('gw_user', JSON.stringify(data.user));
         setToken(data.token);
