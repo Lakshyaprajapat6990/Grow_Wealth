@@ -16,7 +16,7 @@ export default function PlanDetails() {
           <tbody>
             <tr><td>Joining Amount</td><td>$1 only</td></tr>
             <tr><td>After Joining Deposit</td><td>Any amount (flexible)</td></tr>
-            <tr><td>ROI</td><td>1% · Admin manual credit · 24/7</td></tr>
+            <tr><td>ROI</td><td>1% · Automatic daily · 24/7</td></tr>
             <tr><td>Network</td><td>USDT BEP-20 (BSC)</td></tr>
             <tr><td>Withdrawals</td><td>24/7 · Admin manual payout</td></tr>
             <tr><td>First Withdrawal</td><td>Min $10</td></tr>
@@ -28,7 +28,7 @@ export default function PlanDetails() {
       <div className="card" style={{ padding: '1.25rem' }}>
         <h3 style={{ marginTop: 0, color: '#93c5fd' }}>Income Types</h3>
         <ul style={{ color: '#8ba3c7', lineHeight: 2 }}>
-          <li>ROI Income — 1% · admin manual credit · 24/7</li>
+          <li>ROI Income — 1% automatic daily credit · 24/7</li>
           <li>Direct Income — admin manual credit</li>
           <li>Level Income — admin manual credit</li>
           <li>Monthly Salary — admin manual credit</li>

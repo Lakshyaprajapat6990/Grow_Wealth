@@ -17,6 +17,7 @@ const supportRoutes = require('./routes/supportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const feedRoutes = require('./routes/feedRoutes');
 const marketRoutes = require('./routes/marketRoutes');
+const { dailyRoiCron } = require('./controllers/cronController');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -76,6 +77,8 @@ app.use('/api/support', supportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/market', marketRoutes);
+app.get('/api/cron/daily-roi', dailyRoiCron);
+app.post('/api/cron/daily-roi', dailyRoiCron);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -155,6 +155,18 @@ export default function Admin() {
     }
   }
 
+  async function runDailyRoi() {
+    setErr('');
+    setMsg('');
+    try {
+      const { data } = await api.post('/admin/roi/run-daily');
+      setMsg(data.message);
+      await load();
+    } catch (error) {
+      setErr(error.response?.data?.message || 'Daily ROI run failed');
+    }
+  }
+
   async function approve(id) {
     await api.post(`/admin/withdrawals/${id}/approve`);
     setMsg('Withdrawal approved / paid');
@@ -202,7 +214,7 @@ export default function Admin() {
           <h1 className="page-title" style={{ marginBottom: 0 }}>
             Admin Panel
           </h1>
-          <p className="page-sub">Live ops · Deposits · Fund credit/debit · ROI 1% · Withdrawals</p>
+          <p className="page-sub">Live ops · Deposits · Fund credit/debit · Auto Daily ROI 1% · Withdrawals</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link className="btn btn-ghost" to="/dashboard">
@@ -282,8 +294,19 @@ export default function Admin() {
 
       <FundAdjustForm onDone={load} setMsg={setMsg} setErr={setErr} />
 
+      <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
+        <h3 style={{ marginTop: 0 }}>Automatic Daily ROI (1%)</h3>
+        <p style={{ color: 'var(--text-muted)' }}>
+          Runs every day at 00:00 UTC for all joined members (base = max of total deposited / joining). Same day will not
+          double-credit.
+        </p>
+        <button className="btn btn-success" type="button" onClick={runDailyRoi}>
+          Run Daily ROI Now
+        </button>
+      </div>
+
       <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={creditRoi}>
-        <h3 style={{ marginTop: 0 }}>Manual ROI Credit (1% · 24/7)</h3>
+        <h3 style={{ marginTop: 0 }}>Manual ROI Credit (optional · 1%)</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div className="field">
             <label className="label">User ID</label>

@@ -14,6 +14,7 @@ const {
 const { adminList, adminReply } = require('../controllers/supportController');
 const { adminCreate } = require('../controllers/notificationController');
 const { adminDeleteUser } = require('../controllers/deleteAccountController');
+const { runDailyRoiAdmin } = require('../controllers/cronController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.get('/dashboard', dashboard);
 router.get('/users', listUsers);
 router.delete('/users/:userId', adminDeleteUser);
 router.post('/roi/credit', creditRoi);
+router.post('/roi/run-daily', runDailyRoiAdmin);
 router.post('/income/credit', creditIncome);
 router.get('/withdrawals', listWithdrawals);
 router.post('/withdrawals/:id/approve', approveWithdrawal);

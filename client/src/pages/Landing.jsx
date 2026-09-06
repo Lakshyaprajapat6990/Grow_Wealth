@@ -5,7 +5,7 @@ import './Landing.css';
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto investment platform on USDT BEP-20. Join from $1, deposit any amount after activation, earn 1% ROI credited manually 24/7, and withdraw to your crypto wallet.',
+    a: 'Grow Wealth is a crypto investment platform on USDT BEP-20. Join from $1, deposit any amount after activation, earn 1% ROI credited automatically every day, and withdraw to your crypto wallet.',
   },
   {
     q: 'How do I activate my account?',
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'What is the ROI?',
-    a: 'Grow Wealth offers 1% ROI. Credits are processed manually by admin and are available 24/7 — not limited to a short daily window.',
+    a: 'Grow Wealth offers 1% ROI credited automatically every day (24/7). Credits are based on your deposited amount.',
   },
   {
     q: 'How do deposits work?',
@@ -98,7 +98,7 @@ export default function Landing() {
             </h1>
             <p className="lp-lead">
               Start with just <strong>$1 joining</strong>. Deposit any amount after activation. Earn{' '}
-              <strong>1% ROI</strong> — credited manually, available <strong>24/7</strong>. Withdraw to your USDT
+              <strong>1% ROI</strong> — credited automatically every day. Withdraw to your USDT
               BEP-20 wallet.
             </p>
             <div className="lp-hero-actions">
@@ -138,7 +138,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <span>Credit mode</span>
-                  <b>Manual 24/7</b>
+                  <b>Auto Daily 1%</b>
                 </li>
               </ul>
             </div>
@@ -196,7 +196,7 @@ export default function Landing() {
                 <span>3</span>
                 <div>
                   <h4>Earn & Withdraw</h4>
-                  <p>Receive 1% ROI (manual 24/7) and withdraw to your wallet.</p>
+                  <p>Receive 1% ROI automatically every day and withdraw to your wallet.</p>
                 </div>
               </div>
             </div>
@@ -231,14 +231,14 @@ export default function Landing() {
                   <td>Joining</td>
                   <td>$1 only</td>
                   <td>1%</td>
-                  <td>Manual · 24/7</td>
+                  <td>Auto Daily</td>
                   <td>First min $10</td>
                 </tr>
                 <tr>
                   <td>Top-up</td>
                   <td>Any amount</td>
                   <td>1%</td>
-                  <td>Manual · 24/7</td>
+                  <td>Auto Daily</td>
                   <td>Any after first</td>
                 </tr>
               </tbody>
