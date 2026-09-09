@@ -59,11 +59,11 @@ export default function Dashboard() {
             Your account is ready. Deposit at least $1, then activate joining to unlock earnings and withdrawals.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link className="btn btn-primary" to="/deposit">
-              1. Deposit USDT
+            <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
+              Pay $1 Joining
             </Link>
-            <Link className="btn btn-success" to="/join">
-              2. Join $1 Now
+            <Link className="btn btn-primary" to="/join">
+              Activate $1 Joining
             </Link>
           </div>
         </div>

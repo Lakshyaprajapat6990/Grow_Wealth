@@ -43,11 +43,21 @@ export default function Join() {
               Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong>
             </p>
             <p style={{ color: 'var(--text-muted)' }}>
-              Need at least $1 in fund balance. <Link to="/deposit">Deposit USDT first</Link>, then activate here.
+              Need at least $1 in fund balance. Pay $1 first, then activate joining.
             </p>
-            <button className="btn btn-primary" onClick={activate} disabled={loading || (user?.fundBalance || 0) < 1}>
-              {loading ? 'Activating…' : 'Activate $1 Joining'}
-            </button>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+              <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
+                Pay $1 Joining
+              </Link>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={activate}
+                disabled={loading || (user?.fundBalance || 0) < 1}
+              >
+                {loading ? 'Activating…' : 'Activate $1 Joining'}
+              </button>
+            </div>
           </>
         )}
       </div>

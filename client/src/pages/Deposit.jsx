@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Deposit() {
   const { user, refreshUser } = useAuth();
+  const [params] = useSearchParams();
+  const purpose = params.get('purpose') || '';
   const [tab, setTab] = useState('qr');
-  const [amount, setAmount] = useState('10');
+  const [amount, setAmount] = useState(params.get('amount') || '10');
   const [txHash, setTxHash] = useState('');
   const [depositAddress, setDepositAddress] = useState('');
   const [msg, setMsg] = useState('');
@@ -94,8 +97,12 @@ export default function Deposit() {
 
   return (
     <div>
-      <h1 className="page-title">Deposit USDT</h1>
-      <p className="page-sub">Send USDT on BEP-20 (BSC) only · Admin credits after Tx verify</p>
+      <h1 className="page-title">{purpose === 'joining' ? 'Pay $1 Joining' : 'Deposit USDT'}</h1>
+      <p className="page-sub">
+        {purpose === 'joining'
+          ? 'Send $1 USDT (BEP-20) · Admin credits → then Activate Joining'
+          : 'Send USDT on BEP-20 (BSC) only · Admin credits after Tx verify'}
+      </p>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
