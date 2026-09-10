@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 import Withdraw from './Withdraw';
 
 export default function WithdrawalsPage() {
-  const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
@@ -17,7 +15,7 @@ export default function WithdrawalsPage() {
   if (showForm) {
     return (
       <div>
-        <PageHeader title="Request Withdrawal" subtitle="USDT BEP-20 to your wallet" />
+        <PageHeader title="Request Withdrawal" subtitle="Min $10 · 10% fee · USDT BEP-20" />
         <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setShowForm(false)}>
           ← Back to History
         </button>
@@ -30,7 +28,7 @@ export default function WithdrawalsPage() {
     <div>
       <PageHeader
         title="Withdrawals"
-        subtitle={user?.hasCompletedFirstWithdrawal ? 'Any amount allowed' : 'First withdrawal min $10'}
+        subtitle="Min $10 · 10% fee on every withdrawal"
         action={
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>
             New Withdrawal
@@ -39,9 +37,14 @@ export default function WithdrawalsPage() {
       />
       <DataTable
         columns={[
-          { key: 'amount', label: 'Amount', render: (r) => `$${Number(r.amount).toFixed(2)}` },
+          {
+            key: 'requested',
+            label: 'Requested',
+            render: (r) => `$${Number(r.requestedAmount ?? r.amount).toFixed(2)}`,
+          },
+          { key: 'fee', label: 'Fee', render: (r) => `$${Number(r.fee || 0).toFixed(2)}` },
+          { key: 'amount', label: 'Net', render: (r) => `$${Number(r.amount).toFixed(2)}` },
           { key: 'status', label: 'Status' },
-          { key: 'first', label: 'First?', render: (r) => (r.isFirstWithdrawal ? 'Yes' : 'No') },
           { key: 'wallet', label: 'Wallet', render: (r) => `${r.walletAddress?.slice(0, 8)}...` },
           { key: 'date', label: 'Date', render: (r) => new Date(r.createdAt).toLocaleString() },
         ]}

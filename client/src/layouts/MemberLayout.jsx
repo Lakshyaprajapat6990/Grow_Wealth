@@ -38,6 +38,7 @@ const menu = [
     items: [
       { to: '/wallet-history', label: 'Wallet History' },
       { to: '/withdrawals', label: 'Withdrawals' },
+      { to: '/compound', label: 'Manual Compound' },
       { to: '/transfer', label: 'Fund Transfer' },
       { to: '/support', label: 'Support Ticket' },
       { to: '/notifications', label: 'Notifications' },

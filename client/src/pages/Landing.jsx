@@ -1,27 +1,28 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CertificatesSection from '../components/CertificatesSection';
 import './Landing.css';
 
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto investment platform on USDT BEP-20. Join from $1, deposit any amount after activation, earn 1% ROI credited automatically every day, and withdraw to your crypto wallet.',
+    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn 1% daily ROI (capped at 2× investment), get 5% direct income, and withdraw with a 10% fee.',
   },
   {
     q: 'How do I activate my account?',
-    a: 'Register, add your BEP-20 wallet, deposit USDT, then activate joining with only $1 from the dashboard.',
+    a: 'Register with your BEP-20 wallet, deposit at least $10 USDT, then activate joining from the dashboard. Your sponsor earns 5% direct income on your joining.',
   },
   {
     q: 'What is the ROI?',
-    a: 'Grow Wealth offers 1% ROI credited automatically every day (24/7). Credits are based on your deposited amount.',
+    a: '1% daily ROI is credited automatically all 7 days of the week, based on your deposit/fund base. Total ROI stops at 2× your investment. Compounding is manual.',
   },
   {
     q: 'How do deposits work?',
-    a: 'Deposit USDT on the BEP-20 (BSC) network using Connect Wallet or Address/QR. After joining, you can deposit any amount you want.',
+    a: 'Deposit USDT on BEP-20 (BSC) via Connect Wallet or Address/QR. Package range: min $10, $1 increments, max $50,000. Admin credits after Tx Hash verification.',
   },
   {
     q: 'What are the withdrawal rules?',
-    a: 'Withdrawals are available 24/7. First withdrawal minimum is $10. After your first successful withdrawal, you can withdraw any amount to your saved crypto wallet. Admin processes payouts manually.',
+    a: 'Minimum withdrawal is always $10. Every withdrawal has a 10% fee; net amount is paid to your saved crypto wallet after admin approval.',
   },
 ];
 
@@ -33,6 +34,9 @@ export default function Landing() {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
+    if (window.location.pathname === '/certificates' || window.location.hash === '#certificates') {
+      setTimeout(() => document.getElementById('certificates')?.scrollIntoView({ behavior: 'smooth' }), 80);
+    }
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -61,6 +65,9 @@ export default function Landing() {
             </button>
             <button type="button" onClick={() => go('plans')}>
               Plans
+            </button>
+            <button type="button" onClick={() => go('certificates')}>
+              Certificates
             </button>
             <button type="button" onClick={() => go('faq')}>
               FAQ
@@ -97,9 +104,9 @@ export default function Landing() {
               <span>WEALTH</span>
             </h1>
             <p className="lp-lead">
-              Start with just <strong>$1 joining</strong>. Deposit any amount after activation. Earn{' '}
-              <strong>1% ROI</strong> — credited automatically every day. Withdraw to your USDT
-              BEP-20 wallet.
+              Stake from <strong>$10</strong> (max $50,000). Earn <strong>1% daily ROI</strong> (2×
+              cap) · <strong>5% direct</strong> · L1–L7 level income. Manual compound. Withdraw min $10
+              with 10% fee.
             </p>
             <div className="lp-hero-actions">
               <Link to="/register" className="btn btn-primary lp-btn-lg">
@@ -111,8 +118,8 @@ export default function Landing() {
             </div>
             <div className="lp-hero-pills">
               <span>USDT BEP-20</span>
-              <span>Connect Wallet + QR</span>
-              <span>First WD min $10</span>
+              <span>Min package $10</span>
+              <span>WD fee 10%</span>
             </div>
           </div>
 
@@ -129,16 +136,16 @@ export default function Landing() {
               </div>
               <ul>
                 <li>
-                  <span>Joining</span>
-                  <b>$1</b>
+                  <span>Package</span>
+                  <b>$10–$50k</b>
                 </li>
                 <li>
                   <span>Network</span>
                   <b>BEP-20</b>
                 </li>
                 <li>
-                  <span>Credit mode</span>
-                  <b>Auto Daily 1%</b>
+                  <span>ROI Cap</span>
+                  <b>2× investment</b>
                 </li>
               </ul>
             </div>
@@ -182,21 +189,21 @@ export default function Landing() {
                 <span>1</span>
                 <div>
                   <h4>Deposit USDT</h4>
-                  <p>Add funds using Connect Wallet or Address/QR on BEP-20.</p>
+                  <p>Add funds ($10–$50,000) using Connect Wallet or Address/QR on BEP-20.</p>
                 </div>
               </div>
               <div className="lp-step">
                 <span>2</span>
                 <div>
                   <h4>Activate Joining</h4>
-                  <p>Upgrade with only $1 to unlock earning & withdrawals.</p>
+                  <p>Activate with $10 from fund balance to unlock ROI, direct 5%, and withdrawals.</p>
                 </div>
               </div>
               <div className="lp-step">
                 <span>3</span>
                 <div>
                   <h4>Earn & Withdraw</h4>
-                  <p>Receive 1% ROI automatically every day and withdraw to your wallet.</p>
+                  <p>1% daily ROI (2× cap), manual compound, withdraw min $10 with 10% fee.</p>
                 </div>
               </div>
             </div>
@@ -210,43 +217,56 @@ export default function Landing() {
           <div className="lp-section-head center">
             <p className="lp-kicker">Plans</p>
             <h2>
-              Simple Entry. <span>Flexible Growth.</span>
+              Package Rules. <span>Clear Structure.</span>
             </h2>
-            <p>No heavy package lock for entry — join light, deposit as you grow.</p>
+            <p>Min $10 stake · $1 steps · Max $50,000 · Full L1–L7 income table in Plan Details.</p>
           </div>
 
           <div className="lp-table-wrap">
             <table className="lp-table">
               <thead>
                 <tr>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>ROI</th>
-                  <th>Credit</th>
-                  <th>Withdraw</th>
+                  <th>Rule</th>
+                  <th>Amount / %</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Joining</td>
-                  <td>$1 only</td>
-                  <td>1%</td>
-                  <td>Auto Daily</td>
-                  <td>First min $10</td>
+                  <td>Package</td>
+                  <td>$10 – $50,000</td>
+                  <td>$1 increments</td>
                 </tr>
                 <tr>
-                  <td>Top-up</td>
-                  <td>Any amount</td>
+                  <td>Daily ROI</td>
                   <td>1%</td>
-                  <td>Auto Daily</td>
-                  <td>Any after first</td>
+                  <td>All 7 days · Cap 2×</td>
+                </tr>
+                <tr>
+                  <td>Direct Income</td>
+                  <td>5%</td>
+                  <td>On joining / stake</td>
+                </tr>
+                <tr>
+                  <td>Withdrawal</td>
+                  <td>Min $10</td>
+                  <td>Fee 10% always</td>
+                </tr>
+                <tr>
+                  <td>Compound</td>
+                  <td>Manual</td>
+                  <td>Income → Fund</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p className="lp-table-note">* After joining, deposit any amount you want via crypto wallet (USDT BEP-20).</p>
+          <p className="lp-table-note">
+            * Level income L1–L7: 10% / 12% / 15% / 17% / 20% / 23% / 25% with ROI targets — see member Plan Details.
+          </p>
         </div>
       </section>
+
+      <CertificatesSection />
 
       {/* FAQ */}
       <section className="lp-section" id="faq">
@@ -281,7 +301,7 @@ export default function Landing() {
       <section className="lp-cta">
         <div className="lp-wrap lp-cta-inner">
           <h2>Start Your Growth Journey Today</h2>
-          <p>Join Grow Wealth now to unlock 1% ROI and build with crypto on BEP-20.</p>
+          <p>Join Grow Wealth — $10 package, 1% daily ROI (2× cap), USDT BEP-20.</p>
           <Link to="/register" className="btn btn-primary lp-btn-lg">
             Create Free Account
           </Link>

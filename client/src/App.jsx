@@ -26,6 +26,7 @@ import Transfer from './pages/Transfer';
 import Support from './pages/Support';
 import Notifications from './pages/Notifications';
 import WithdrawalsPage from './pages/WithdrawalsPage';
+import Compound from './pages/Compound';
 import './styles/ui.css';
 import './pages/pages.css';
 
@@ -34,15 +35,17 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/certificates" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<MemberLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/deposit" element={<Deposit />} />
               <Route path="/join" element={<Join />} />
+              <Route path="/compound" element={<Compound />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/wallet-history" element={<WalletHistory />} />
               <Route path="/deposit-history" element={<DepositHistory />} />

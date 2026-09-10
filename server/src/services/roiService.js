@@ -2,9 +2,10 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
+const ROI_CAP_MULTIPLIER = Number(process.env.ROI_CAP_MULTIPLIER || 2);
 
 function todayKey(date = new Date()) {
-  return date.toISOString().slice(0, 10); // YYYY-MM-DD UTC
+  return date.toISOString().slice(0, 10);
 }
 
 function roiBase(user) {
@@ -13,8 +14,16 @@ function roiBase(user) {
   return Math.max(deposited, joining, 0);
 }
 
+function remainingRoiCap(user) {
+  const base = roiBase(user);
+  const cap = base * ROI_CAP_MULTIPLIER;
+  const earned = Number(user.totalRoiIncome || 0);
+  return Math.max(0, Number((cap - earned).toFixed(8)));
+}
+
 /**
  * Credit 1% daily ROI to all joined members (once per UTC day).
+ * Stops when total ROI reaches 2X of investment.
  */
 async function runDailyRoi({ createdBy = 'system' } = {}) {
   const day = todayKey();
@@ -32,6 +41,12 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
       continue;
     }
 
+    const remaining = remainingRoiCap(user);
+    if (remaining <= 0) {
+      skipped += 1;
+      continue;
+    }
+
     const already = await Transaction.findOne({
       userId: user.userId,
       type: 'roi',
@@ -44,7 +59,8 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
       continue;
     }
 
-    const amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
+    let amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
+    if (amount > remaining) amount = remaining;
     if (amount <= 0) {
       skipped += 1;
       continue;
@@ -62,12 +78,14 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
       amount,
       balanceAfter: user.incomeBalance,
       status: 'success',
-      description: `Daily auto ROI ${ROI_PERCENT}% on $${base} (${day})`,
+      description: `Daily auto ROI ${ROI_PERCENT}% on $${base} (${day}) · cap 2X`,
       meta: {
         baseAmount: base,
         roiPercent: ROI_PERCENT,
         roiDay: day,
         autoDaily: true,
+        roiCapMultiplier: ROI_CAP_MULTIPLIER,
+        remainingAfter: remainingRoiCap(user),
       },
       createdBy,
     });
@@ -89,4 +107,4 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
   };
 }
 
-module.exports = { runDailyRoi, ROI_PERCENT, todayKey, roiBase };
+module.exports = { runDailyRoi, ROI_PERCENT, ROI_CAP_MULTIPLIER, todayKey, roiBase, remainingRoiCap };

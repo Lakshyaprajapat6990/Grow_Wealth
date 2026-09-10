@@ -3,8 +3,13 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
 
-const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
+const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 10);
 const FIRST_WITHDRAW_MIN = Number(process.env.FIRST_WITHDRAW_MIN || 10);
+const WITHDRAW_MIN = Number(process.env.WITHDRAW_MIN || 10);
+const WITHDRAW_FEE_PERCENT = Number(process.env.WITHDRAW_FEE_PERCENT || 10);
+const DIRECT_INCOME_PERCENT = Number(process.env.DIRECT_INCOME_PERCENT || 5);
+const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 10);
+const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
 
 async function getWalletInfo(req, res) {
   const u = req.user;
@@ -18,9 +23,47 @@ async function getWalletInfo(req, res) {
     isJoined: u.isJoined,
     totalDeposited: u.totalDeposited,
     hasCompletedFirstWithdrawal: u.hasCompletedFirstWithdrawal,
-    firstWithdrawMin: u.hasCompletedFirstWithdrawal ? 0 : FIRST_WITHDRAW_MIN,
+    withdrawMin: WITHDRAW_MIN,
+    firstWithdrawMin: WITHDRAW_MIN,
+    withdrawFeePercent: WITHDRAW_FEE_PERCENT,
     joiningAmount: JOINING_AMOUNT,
+    minDeposit: MIN_DEPOSIT,
+    maxDeposit: MAX_DEPOSIT,
+    directIncomePercent: DIRECT_INCOME_PERCENT,
   });
+}
+
+async function creditDirectIncome(sponsorId, fromUserId, baseAmount) {
+  if (!sponsorId || sponsorId === 'GW0000001' || sponsorId === 'ADMIN') {
+    const company = await User.findOne({ userId: 'GW0000001' });
+    // still allow company admin to receive if they are a user-like sponsor; skip if no real sponsor member
+    if (!company || company.role === 'admin') return null;
+  }
+
+  const sponsor = await User.findOne({ userId: sponsorId, isBlocked: false });
+  if (!sponsor || sponsor.role === 'admin') return null;
+
+  const amt = Number(((baseAmount * DIRECT_INCOME_PERCENT) / 100).toFixed(8));
+  if (amt <= 0) return null;
+
+  sponsor.directIncome = Number(((sponsor.directIncome || 0) + amt).toFixed(8));
+  sponsor.totalDirectIncome = Number(((sponsor.totalDirectIncome || 0) + amt).toFixed(8));
+  sponsor.incomeBalance = Number((sponsor.incomeBalance + amt).toFixed(8));
+  sponsor.totalEarnings = Number((sponsor.totalEarnings + amt).toFixed(8));
+  await sponsor.save();
+
+  await Transaction.create({
+    userId: sponsor.userId,
+    type: 'direct_income',
+    amount: amt,
+    balanceAfter: sponsor.incomeBalance,
+    status: 'success',
+    description: `Direct income ${DIRECT_INCOME_PERCENT}% from ${fromUserId}`,
+    meta: { fromUserId, baseAmount, percent: DIRECT_INCOME_PERCENT },
+    createdBy: 'system',
+  });
+
+  return amt;
 }
 
 /** Member submits deposit proof — admin must approve before fund credit */
@@ -28,8 +71,21 @@ async function requestDeposit(req, res) {
   const amount = Number(req.body.amount);
   const txHash = String(req.body.txHash || '').trim();
 
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ success: false, message: 'Invalid amount' });
+  if (!amount || amount < MIN_DEPOSIT) {
+    return res.status(400).json({
+      success: false,
+      message: `Minimum deposit is $${MIN_DEPOSIT}`,
+    });
+  }
+  if (amount > MAX_DEPOSIT) {
+    return res.status(400).json({
+      success: false,
+      message: `Maximum deposit is $${MAX_DEPOSIT}`,
+    });
+  }
+  // increments of $1
+  if (!Number.isInteger(amount) && Math.abs(amount - Math.round(amount)) > 0.001) {
+    return res.status(400).json({ success: false, message: 'Deposit amount must be in $1 increments' });
   }
   if (!txHash || txHash.length < 10) {
     return res.status(400).json({ success: false, message: 'Transaction hash (Tx Hash) is required' });
@@ -57,6 +113,7 @@ async function requestDeposit(req, res) {
       method: req.body.method || 'address_qr',
       network: 'BEP-20',
       depositAddress: process.env.DEPOSIT_ADDRESS || '',
+      purpose: req.body.purpose || null,
     },
     createdBy: user.userId,
   });
@@ -69,7 +126,6 @@ async function requestDeposit(req, res) {
   });
 }
 
-/** @deprecated use requestDeposit — kept name for route compatibility */
 async function creditDeposit(req, res) {
   return requestDeposit(req, res);
 }
@@ -90,6 +146,9 @@ async function activateJoining(req, res) {
   user.isJoined = true;
   user.joiningAmount = JOINING_AMOUNT;
   user.joinedAt = new Date();
+  if ((user.totalDeposited || 0) < JOINING_AMOUNT) {
+    user.totalDeposited = Number((user.totalDeposited + JOINING_AMOUNT).toFixed(8));
+  }
   await user.save();
 
   await Transaction.create({
@@ -102,7 +161,12 @@ async function activateJoining(req, res) {
     createdBy: user.userId,
   });
 
-  return res.json({ success: true, message: 'Joining activated', user: user.toSafeJSON() });
+  if (user.sponsorId) {
+    await creditDirectIncome(user.sponsorId, user.userId, JOINING_AMOUNT);
+  }
+
+  const fresh = await User.findOne({ userId: user.userId });
+  return res.json({ success: true, message: 'Joining activated', user: fresh.toSafeJSON() });
 }
 
 async function requestWithdraw(req, res) {
@@ -113,17 +177,10 @@ async function requestWithdraw(req, res) {
   if (!user.isJoined) {
     return res.status(400).json({ success: false, message: 'Activate joining first' });
   }
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ success: false, message: 'Invalid amount' });
-  }
-
-  const minRequired = user.hasCompletedFirstWithdrawal ? 0.01 : FIRST_WITHDRAW_MIN;
-  if (amount < minRequired) {
+  if (!amount || amount < WITHDRAW_MIN) {
     return res.status(400).json({
       success: false,
-      message: user.hasCompletedFirstWithdrawal
-        ? 'Invalid amount'
-        : `First withdrawal minimum is $${FIRST_WITHDRAW_MIN}`,
+      message: `Minimum withdrawal is $${WITHDRAW_MIN}`,
     });
   }
 
@@ -136,16 +193,21 @@ async function requestWithdraw(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid Transaction Password' });
   }
 
+  const fee = Number(((amount * WITHDRAW_FEE_PERCENT) / 100).toFixed(8));
+  const netAmount = Number((amount - fee).toFixed(8));
+
   user.incomeBalance = Number((user.incomeBalance - amount).toFixed(8));
-  user.pendingWithdrawals = Number((user.pendingWithdrawals + amount).toFixed(8));
+  user.pendingWithdrawals = Number((user.pendingWithdrawals + netAmount).toFixed(8));
   await user.save();
 
   const withdrawal = await Withdrawal.create({
     userId: user.userId,
-    amount,
+    amount: netAmount,
     walletAddress: user.walletAddress,
     status: 'pending',
     isFirstWithdrawal: !user.hasCompletedFirstWithdrawal,
+    fee,
+    requestedAmount: amount,
   });
 
   await Transaction.create({
@@ -154,15 +216,60 @@ async function requestWithdraw(req, res) {
     amount,
     balanceAfter: user.incomeBalance,
     status: 'pending',
-    description: 'Withdrawal requested',
-    meta: { withdrawalId: withdrawal._id },
+    description: `Withdrawal requested $${amount} · fee ${WITHDRAW_FEE_PERCENT}% ($${fee}) · net $${netAmount}`,
+    meta: {
+      withdrawalId: withdrawal._id,
+      fee,
+      feePercent: WITHDRAW_FEE_PERCENT,
+      netAmount,
+      requestedAmount: amount,
+    },
     createdBy: user.userId,
   });
 
   return res.json({
     success: true,
-    message: 'Withdrawal submitted',
+    message: `Withdrawal submitted. Fee ${WITHDRAW_FEE_PERCENT}% ($${fee}). Net payout $${netAmount}`,
     withdrawal,
+    fee,
+    netAmount,
+    user: user.toSafeJSON(),
+  });
+}
+
+/** Manual compounding — move income balance to fund balance */
+async function compoundIncome(req, res) {
+  const amount = Number(req.body.amount);
+  const user = req.user;
+
+  if (!user.isJoined) {
+    return res.status(400).json({ success: false, message: 'Activate joining first' });
+  }
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ success: false, message: 'Invalid amount' });
+  }
+  if (user.incomeBalance < amount) {
+    return res.status(400).json({ success: false, message: 'Insufficient income balance' });
+  }
+
+  user.incomeBalance = Number((user.incomeBalance - amount).toFixed(8));
+  user.fundBalance = Number((user.fundBalance + amount).toFixed(8));
+  user.totalDeposited = Number((user.totalDeposited + amount).toFixed(8));
+  await user.save();
+
+  await Transaction.create({
+    userId: user.userId,
+    type: 'compound',
+    amount,
+    balanceAfter: user.fundBalance,
+    status: 'success',
+    description: `Manual compound $${amount} from income to fund`,
+    createdBy: user.userId,
+  });
+
+  return res.json({
+    success: true,
+    message: `Compounded $${amount} to fund balance`,
     user: user.toSafeJSON(),
   });
 }
@@ -178,6 +285,8 @@ async function getDepositAddress(req, res) {
     address: process.env.DEPOSIT_ADDRESS || '0xA73EEAd1C853deF37F3B3bE1701e240d74770D8e',
     network: 'BEP-20 (BSC)',
     token: 'USDT',
+    minDeposit: MIN_DEPOSIT,
+    maxDeposit: MAX_DEPOSIT,
   });
 }
 
@@ -255,6 +364,7 @@ module.exports = {
   requestDeposit,
   activateJoining,
   requestWithdraw,
+  compoundIncome,
   walletHistory,
   getDepositAddress,
   getWithdrawals,

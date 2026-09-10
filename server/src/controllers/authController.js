@@ -7,7 +7,7 @@ const {
   isValidBep20Address,
 } = require('../utils/helpers');
 
-const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
+const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 10);
 
 async function registerInfo(_req, res) {
   return res.json({

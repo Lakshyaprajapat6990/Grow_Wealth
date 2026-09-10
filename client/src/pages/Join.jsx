@@ -26,14 +26,14 @@ export default function Join() {
 
   return (
     <div>
-      <h1 className="page-title">Activate Joining — $1</h1>
-      <p className="page-sub">Pay joining from your fund balance after deposit.</p>
+      <h1 className="page-title">Activate Joining — $10</h1>
+      <p className="page-sub">Pay joining from your fund balance after deposit (min package $10).</p>
 
       <div className="card" style={{ padding: '1.25rem', maxWidth: 520 }}>
         {user?.isJoined ? (
           <div className="alert alert-success">
-            Already joined on {user.joinedAt ? new Date(user.joinedAt).toLocaleString() : '—'}. You can deposit any
-            amount anytime.
+            Already joined on {user.joinedAt ? new Date(user.joinedAt).toLocaleString() : '—'}. You can deposit
+            $10–$50,000 anytime ($1 steps).
           </div>
         ) : (
           <>
@@ -43,19 +43,20 @@ export default function Join() {
               Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong>
             </p>
             <p style={{ color: 'var(--text-muted)' }}>
-              Need at least $1 in fund balance. Pay $1 first, then activate joining.
+              Need at least $10 in fund balance. Deposit $10+, then activate joining. Sponsor earns 5% direct
+              income.
             </p>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-              <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
-                Pay $1 Joining
+              <Link className="btn btn-success" to="/deposit?amount=10&purpose=joining">
+                Pay $10 Joining
               </Link>
               <button
                 className="btn btn-primary"
                 type="button"
                 onClick={activate}
-                disabled={loading || (user?.fundBalance || 0) < 1}
+                disabled={loading || (user?.fundBalance || 0) < 10}
               >
-                {loading ? 'Activating…' : 'Activate $1 Joining'}
+                {loading ? 'Activating…' : 'Activate $10 Joining'}
               </button>
             </div>
           </>

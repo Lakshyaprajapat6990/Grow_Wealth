@@ -214,7 +214,7 @@ export default function Admin() {
           <h1 className="page-title" style={{ marginBottom: 0 }}>
             Admin Panel
           </h1>
-          <p className="page-sub">Live ops · Deposits · Fund credit/debit · Auto Daily ROI 1% · Withdrawals</p>
+          <p className="page-sub">Live ops · Deposits · Fund credit/debit · Auto Daily ROI 1% (2× cap) · Withdrawals 10% fee</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Link className="btn btn-ghost" to="/dashboard">
@@ -297,8 +297,8 @@ export default function Admin() {
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
         <h3 style={{ marginTop: 0 }}>Automatic Daily ROI (1%)</h3>
         <p style={{ color: 'var(--text-muted)' }}>
-          Runs every day at 00:00 UTC for all joined members (base = max of total deposited / joining). Same day will not
-          double-credit.
+          Runs every day at 00:00 UTC for all joined members (base = max of total deposited / joining). Stops at 2×
+          investment. Same day will not double-credit.
         </p>
         <button className="btn btn-success" type="button" onClick={runDailyRoi}>
           Run Daily ROI Now

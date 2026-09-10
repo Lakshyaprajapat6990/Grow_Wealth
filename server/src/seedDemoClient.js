@@ -13,8 +13,8 @@ const DEMO = {
   mobile: '8888888888',
   walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
   sponsorId: 'GW0000001',
-  fundBalance: 50,
-  totalDeposited: 50,
+  fundBalance: 0,
+  totalDeposited: 1,
   isJoined: true,
   joiningAmount: 1,
 };

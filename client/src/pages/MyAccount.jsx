@@ -32,8 +32,9 @@ export default function MyAccount() {
         <h3 style={{ marginTop: 0, color: '#93c5fd' }}>Actions</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
           <Link className="btn btn-primary" to="/deposit">Deposit USDT</Link>
-          {!user?.isJoined && <Link className="btn btn-success" to="/join">Activate $1 Joining</Link>}
+          {!user?.isJoined && <Link className="btn btn-success" to="/join">Activate $10 Joining</Link>}
           <Link className="btn btn-ghost" to="/withdrawals">Withdraw</Link>
+          <Link className="btn btn-ghost" to="/compound">Compound</Link>
           <Link className="btn btn-ghost" to="/profile">View Profile</Link>
         </div>
       </div>

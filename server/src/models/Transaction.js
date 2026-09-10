@@ -20,6 +20,7 @@ const transactionSchema = new mongoose.Schema(
         'withdraw_reject',
         'admin_credit',
         'admin_debit',
+        'compound',
       ],
     },
     amount: { type: Number, required: true },

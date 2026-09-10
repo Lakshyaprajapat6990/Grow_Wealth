@@ -91,7 +91,7 @@ export default function Register() {
           <p>
             Transaction Password: <strong>{success.transactionPassword}</strong>
           </p>
-          <p className="muted">Save these details. Next: login → dashboard → pay $1 to join.</p>
+          <p className="muted">Save these details. Next: login → dashboard → pay $10 to join.</p>
           <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/dashboard')}>
             Go to Dashboard
           </button>

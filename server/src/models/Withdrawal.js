@@ -11,6 +11,8 @@ const withdrawalSchema = new mongoose.Schema(
       default: 'pending',
     },
     isFirstWithdrawal: { type: Boolean, default: false },
+    fee: { type: Number, default: 0 },
+    requestedAmount: { type: Number, default: null },
     adminNote: { type: String, default: '' },
     processedAt: { type: Date, default: null },
     processedBy: { type: String, default: null },
