@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CertificatesSection from '../components/CertificatesSection';
+import PlanPdfViewer from '../components/PlanPdfViewer';
 import './Landing.css';
 
 const faqs = [
@@ -211,58 +212,17 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* PLANS */}
+      {/* PLANS — real client PDF */}
       <section className="lp-section lp-section-alt" id="plans">
         <div className="lp-wrap">
           <div className="lp-section-head center">
-            <p className="lp-kicker">Plans</p>
+            <p className="lp-kicker">Business Plan</p>
             <h2>
-              Package Rules. <span>Clear Structure.</span>
+              Official Plan <span>Document</span>
             </h2>
-            <p>Min $10 stake · $1 steps · Max $50,000 · Full L1–L7 income table in Plan Details.</p>
+            <p>Blockchain BEP-20 Staking &amp; Referral Compensation.</p>
           </div>
-
-          <div className="lp-table-wrap">
-            <table className="lp-table">
-              <thead>
-                <tr>
-                  <th>Rule</th>
-                  <th>Amount / %</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Package</td>
-                  <td>$10 – $50,000</td>
-                  <td>$1 increments</td>
-                </tr>
-                <tr>
-                  <td>Daily ROI</td>
-                  <td>1%</td>
-                  <td>All 7 days · Cap 2×</td>
-                </tr>
-                <tr>
-                  <td>Direct Income</td>
-                  <td>5%</td>
-                  <td>On joining / stake</td>
-                </tr>
-                <tr>
-                  <td>Withdrawal</td>
-                  <td>Min $10</td>
-                  <td>Fee 10% always</td>
-                </tr>
-                <tr>
-                  <td>Compound</td>
-                  <td>Manual</td>
-                  <td>Income → Fund</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="lp-table-note">
-            * Level income L1–L7: 10% / 12% / 15% / 17% / 20% / 23% / 25% with ROI targets — see member Plan Details.
-          </p>
+          <PlanPdfViewer />
         </div>
       </section>
 

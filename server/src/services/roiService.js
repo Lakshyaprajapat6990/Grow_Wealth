@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const { creditLevelIncomeFromRoi } = require('./levelIncomeService');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 const ROI_CAP_MULTIPLIER = Number(process.env.ROI_CAP_MULTIPLIER || 2);
@@ -24,6 +25,7 @@ function remainingRoiCap(user) {
 /**
  * Credit 1% daily ROI to all joined members (once per UTC day).
  * Stops when total ROI reaches 2X of investment.
+ * Then distributes L1–L7 ROI-ka-ROI level income to qualifying uplines.
  */
 async function runDailyRoi({ createdBy = 'system' } = {}) {
   const day = todayKey();
@@ -32,6 +34,8 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
   let credited = 0;
   let skipped = 0;
   let totalAmount = 0;
+  let levelCredited = 0;
+  let levelTotalAmount = 0;
   const details = [];
 
   for (const user of users) {
@@ -90,9 +94,23 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
       createdBy,
     });
 
+    const levelResult = await creditLevelIncomeFromRoi({
+      fromUserId: user.userId,
+      roiAmount: amount,
+      roiDay: day,
+      createdBy,
+    });
+    levelCredited += levelResult.credited;
+    levelTotalAmount += levelResult.totalAmount;
+
     credited += 1;
     totalAmount += amount;
-    details.push({ userId: user.userId, amount, base });
+    details.push({
+      userId: user.userId,
+      amount,
+      base,
+      levelIncome: levelResult,
+    });
   }
 
   return {
@@ -102,8 +120,10 @@ async function runDailyRoi({ createdBy = 'system' } = {}) {
     credited,
     skipped,
     totalAmount: Number(totalAmount.toFixed(8)),
+    levelCredited,
+    levelTotalAmount: Number(levelTotalAmount.toFixed(8)),
     details,
-    message: `Daily ROI ${ROI_PERCENT}% done for ${day}: ${credited} users, $${totalAmount.toFixed(2)} total`,
+    message: `Daily ROI ${ROI_PERCENT}% done for ${day}: ${credited} users, $${totalAmount.toFixed(2)} ROI · ${levelCredited} level credits, $${levelTotalAmount.toFixed(2)}`,
   };
 }
 

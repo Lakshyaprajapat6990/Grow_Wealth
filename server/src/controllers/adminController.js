@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
+const { creditLevelIncomeFromRoi } = require('../services/levelIncomeService');
+const { remainingRoiCap, roiBase, ROI_CAP_MULTIPLIER } = require('../services/roiService');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
@@ -24,7 +26,7 @@ async function dashboard(_req, res) {
   });
 }
 
-/** Manual ROI credit — 1%, 24/7, by admin */
+/** Manual ROI credit — 1%, with 2X cap + L1–L7 ROI-ka-ROI */
 async function creditRoi(req, res) {
   const { userId, baseAmount } = req.body;
   if (!userId) {
@@ -37,12 +39,25 @@ async function creditRoi(req, res) {
     return res.status(400).json({ success: false, message: 'User has not joined yet' });
   }
 
-  const base = Number(baseAmount ?? user.totalDeposited ?? user.joiningAmount ?? 0);
+  const base = Number(baseAmount ?? roiBase(user));
   if (!base || base <= 0) {
     return res.status(400).json({ success: false, message: 'Invalid ROI base amount' });
   }
 
-  const amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
+  const remaining = remainingRoiCap(user);
+  if (remaining <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: `ROI cap reached (max ${ROI_CAP_MULTIPLIER}X investment)`,
+    });
+  }
+
+  let amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
+  if (amount > remaining) amount = remaining;
+  if (amount <= 0) {
+    return res.status(400).json({ success: false, message: 'No ROI amount to credit' });
+  }
+
   user.roiIncome = Number((user.roiIncome + amount).toFixed(8));
   user.totalRoiIncome = Number((user.totalRoiIncome + amount).toFixed(8));
   user.incomeBalance = Number((user.incomeBalance + amount).toFixed(8));
@@ -55,15 +70,22 @@ async function creditRoi(req, res) {
     amount,
     balanceAfter: user.incomeBalance,
     status: 'success',
-    description: `Manual ROI ${ROI_PERCENT}% on $${base}`,
-    meta: { baseAmount: base, roiPercent: ROI_PERCENT },
+    description: `Manual ROI ${ROI_PERCENT}% on $${base} · cap 2X`,
+    meta: { baseAmount: base, roiPercent: ROI_PERCENT, manual: true },
+    createdBy: req.user.userId,
+  });
+
+  const levelResult = await creditLevelIncomeFromRoi({
+    fromUserId: user.userId,
+    roiAmount: amount,
     createdBy: req.user.userId,
   });
 
   return res.json({
     success: true,
-    message: `Credited $${amount} ROI (${ROI_PERCENT}%)`,
+    message: `Credited $${amount} ROI (${ROI_PERCENT}%) · level income $${levelResult.totalAmount}`,
     amount,
+    levelIncome: levelResult,
     user: user.toSafeJSON(),
   });
 }

@@ -298,7 +298,7 @@ export default function Admin() {
         <h3 style={{ marginTop: 0 }}>Automatic Daily ROI (1%)</h3>
         <p style={{ color: 'var(--text-muted)' }}>
           Runs every day at 00:00 UTC for all joined members (base = max of total deposited / joining). Stops at 2×
-          investment. Same day will not double-credit.
+          investment. Also credits L1–L7 level income (ROI ka ROI) to uplines who meet ROI / TARGET.
         </p>
         <button className="btn btn-success" type="button" onClick={runDailyRoi}>
           Run Daily ROI Now
