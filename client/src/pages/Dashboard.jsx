@@ -28,7 +28,7 @@ export default function Dashboard() {
 
   const quick = [
     { to: '/deposit', icon: '💰', label: 'Deposit' },
-    { to: '/join', icon: '✅', label: 'Join $10' },
+    { to: '/join', icon: '✅', label: 'Join $1' },
     { to: '/withdrawals', icon: '💸', label: 'Withdraw' },
     { to: '/compound', icon: '♻️', label: 'Compound' },
     { to: '/transfer', icon: '🔄', label: 'Transfer' },
@@ -42,7 +42,7 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? '✅ Joined' : '⏳ Not Joined — pay $10'}`}
+        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? '✅ Joined' : '⏳ Not Joined — pay $1'}`}
       />
 
       {!user?.isJoined && (
@@ -55,17 +55,17 @@ export default function Dashboard() {
             background: 'rgba(251,191,36,0.08)',
           }}
         >
-          <h3 style={{ marginTop: 0, color: '#fbbf24' }}>Activate Joining — $10 USDT</h3>
+          <h3 style={{ marginTop: 0, color: '#fbbf24' }}>Activate Joining - $1 USDT</h3>
           <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
-            Your account is ready. Deposit at least $10, then activate joining to unlock 1% daily ROI (2× cap),
-            direct 5%, and withdrawals.
+            Deposit at least $1 (or use existing fund balance), then activate joining. Example: if you already have
+            $40 fund, just click Activate — $1 is used for joining.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link className="btn btn-success" to="/deposit?amount=10&purpose=joining">
-              Pay $10 Joining
+            <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
+              Pay $1 Joining
             </Link>
             <Link className="btn btn-primary" to="/join">
-              Activate $10 Joining
+              Activate $1 Joining
             </Link>
           </div>
         </div>

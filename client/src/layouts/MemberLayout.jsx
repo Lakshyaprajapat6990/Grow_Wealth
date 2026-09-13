@@ -56,6 +56,20 @@ export default function MemberLayout() {
     api.get('/notifications/me').then((r) => setUnread(r.data.unread || 0)).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle('menu-locked', open);
+    return () => document.body.classList.remove('menu-locked');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
     <div className="member-shell">
       <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -104,7 +118,12 @@ export default function MemberLayout() {
 
       <div className="member-main">
         <header className="topbar">
-          <button className="btn btn-ghost menu-btn" onClick={() => setOpen((v) => !v)}>
+          <button
+            className="btn btn-ghost menu-btn"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Open menu"
+            aria-expanded={open}
+          >
             ☰ Menu
           </button>
           <div className="user-chip">

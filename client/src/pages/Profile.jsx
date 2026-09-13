@@ -53,10 +53,8 @@ export default function Profile() {
         {rows.map(([k, v]) => (
           <div
             key={k}
+            className="profile-grid"
             style={{
-              display: 'grid',
-              gridTemplateColumns: '160px 1fr',
-              gap: '0.75rem',
               padding: '0.9rem 0',
               borderBottom: '1px solid var(--border)',
             }}

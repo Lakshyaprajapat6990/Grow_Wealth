@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,700;1,500&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #111; font-family: 'DM Sans', sans-serif; }
+    .wrap { width: 1200px; height: 848; }
+    .cert { width: 100%; height: 100%; overflow: hidden; position: relative; }
+
+    .cert-classic { background: #f4f6fa; color: #1a1f2b; }
+    .cert-classic-frame {
+      height: 100%;
+      padding: 12px;
+      background: linear-gradient(180deg, #f97316 0%, #f97316 12%, #2563eb 88%, #1d4ed8 100%);
+    }
+    .cert-classic-inner {
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.05), transparent 40%),
+        repeating-linear-gradient(-18deg, transparent, transparent 28px, rgba(37, 99, 235, 0.035) 28px, rgba(37, 99, 235, 0.035) 56px),
+        #fff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      clip-path: polygon(0 18px, 18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+      padding: 48px 56px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .cert-classic-org { font-weight: 800; letter-spacing: 0.04em; font-size: 22px; text-transform: uppercase; color: #222938; }
+    .cert-classic-award { margin-top: 10px; font-family: 'Playfair Display', Georgia, serif; font-style: italic; color: #4b5568; font-size: 18px; }
+    .cert-classic-name { margin-top: 18px; font-family: 'Great Vibes', cursive; font-size: 64px; line-height: 1.1; color: #111827; }
+    .cert-classic-of { margin-top: 6px; color: #6b7280; font-size: 15px; }
+    .cert-classic-title { margin-top: 10px; font-size: 32px; font-weight: 800; color: #0f172a; }
+    .cert-classic-body { margin-top: 16px; max-width: 720px; color: #4b5563; font-size: 15px; line-height: 1.55; }
+    .cert-classic-foot { margin-top: auto; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 24px; }
+    .cert-classic-logo { display: flex; align-items: center; gap: 12px; text-align: left; }
+    .cert-classic-logo strong { display: block; font-size: 13px; letter-spacing: 0.06em; }
+    .cert-classic-logo small { display: block; font-size: 11px; color: #6b7280; letter-spacing: 0.08em; }
+    .cert-seal-mark {
+      width: 48px; height: 48px; border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, #93c5fd, transparent 45%), linear-gradient(135deg, #f97316, #2563eb);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    }
+    .cert-classic-meta { text-align: right; display: grid; gap: 4px; font-size: 13px; color: #374151; justify-items: end; }
+    .cert-badge {
+      margin-top: 6px; display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 8px;
+      font-weight: 800; font-size: 14px; color: #fff; background: linear-gradient(135deg, #f97316, #2563eb);
+    }
+    .cert-classic-verify { margin-top: 16px; font-size: 12px; color: #9ca3af; width: 100%; text-align: left; }
+
+    .cert-modern {
+      color: #f8fafc;
+      background: linear-gradient(135deg, #0b1f3a 0%, #1e3a8a 48%, #0ea5e9 100%);
+      padding: 48px 56px 40px;
+      display: flex; flex-direction: column;
+    }
+    .cert-modern-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: 0.04em; }
+    .cert-modern-orb {
+      width: 32px; height: 32px; border-radius: 999px; border: 2px solid rgba(255,255,255,0.85);
+      background: conic-gradient(from 40deg, transparent 0 20%, #fff 20% 25%, transparent 25% 45%, #fff 45% 50%, transparent 50%),
+        radial-gradient(circle at center, rgba(255,255,255,0.25), transparent 60%);
+    }
+    .cert-modern-top h3 { margin: 22px 0 14px; font-size: 42px; font-weight: 700; }
+    .cert-modern-meta-row {
+      display: flex; flex-wrap: wrap; gap: 12px 28px; padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.45); font-size: 15px;
+    }
+    .cert-modern-meta-row em { font-style: normal; opacity: 0.75; margin-right: 6px; }
+    .cert-modern-mid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; padding: 28px 0 22px; }
+    .cert-modern-label { margin-bottom: 6px; font-size: 14px; opacity: 0.8; }
+    .cert-modern-recipient { font-size: 28px; font-weight: 800; }
+    .cert-modern-program { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .cert-modern-desc { font-size: 14px; line-height: 1.5; opacity: 0.88; max-width: 42ch; }
+    .cert-modern-bottom { margin-top: auto; display: flex; justify-content: space-between; gap: 20px; align-items: flex-end; }
+    .cert-modern-stats { display: grid; gap: 12px; }
+    .cert-modern-stats strong { display: block; font-size: 16px; }
+    .cert-modern-stats small { color: rgba(255,255,255,0.7); font-size: 13px; }
+    .cert-modern-sign { text-align: right; }
+    .cert-modern-sign strong { display: block; font-size: 16px; }
+    .cert-modern-sign small { color: rgba(255,255,255,0.7); font-size: 13px; }
+    .cert-signature { margin: 8px 0 6px; font-family: 'Great Vibes', cursive; font-size: 40px; line-height: 1; }
+    .cert-modern-signed { font-size: 13px; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div id="classic" class="wrap">
+    <article class="cert cert-classic">
+      <div class="cert-classic-frame">
+        <div class="cert-classic-inner">
+          <p class="cert-classic-org">Grow Wealth Certification Board</p>
+          <p class="cert-classic-award">The Board of Directors hereby awards</p>
+          <p class="cert-classic-name">Grow Wealth Platform</p>
+          <p class="cert-classic-of">the credential of</p>
+          <h3 class="cert-classic-title">Certified Digital Asset Professional</h3>
+          <p class="cert-classic-body">
+            Having agreed to uphold the Code of Ethics and Operations Standard, and having completed the competency
+            examination for USDT BEP-20 staking systems, this credential remains valid subject to annual review.
+          </p>
+          <div class="cert-classic-foot">
+            <div class="cert-classic-logo">
+              <span class="cert-seal-mark"></span>
+              <div>
+                <strong>GROW WEALTH</strong>
+                <small>CERTIFICATION BOARD</small>
+              </div>
+            </div>
+            <div class="cert-classic-meta">
+              <span>Issued: 2025-01-15</span>
+              <span>Certificate No: GW-DAP-8F2A91</span>
+              <span class="cert-badge">DAP</span>
+            </div>
+          </div>
+          <p class="cert-classic-verify">Verify authenticity: grow-wealth-neon.vercel.app/certificates#GW-DAP-8F2A91</p>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div id="modern" class="wrap" style="margin-top:40px">
+    <article class="cert cert-modern">
+      <div class="cert-modern-top">
+        <div class="cert-modern-brand">
+          <span class="cert-modern-orb"></span>
+          <span>Grow Wealth</span>
+        </div>
+        <h3>Certified Crypto Trader</h3>
+        <div class="cert-modern-meta-row">
+          <span><em>No:</em> 5984308245245</span>
+          <span><em>Date:</em> 09.07.2025</span>
+          <span><em>Verify:</em> grow-wealth-neon.vercel.app</span>
+        </div>
+      </div>
+      <div class="cert-modern-mid">
+        <div>
+          <p class="cert-modern-label">Awarded to</p>
+          <p class="cert-modern-recipient">Grow Wealth Operations</p>
+        </div>
+        <div>
+          <p class="cert-modern-label">For completing the</p>
+          <p class="cert-modern-program">BEP-20 Staking &amp; Liquidity Program</p>
+          <p class="cert-modern-desc">
+            The program included fundamental &amp; technical analysis, trading psychology, DeFi strategies, and yield
+            optimization techniques on USDT BEP-20.
+          </p>
+        </div>
+      </div>
+      <div class="cert-modern-bottom">
+        <div class="cert-modern-stats">
+          <div>
+            <strong>16-Week Intensive Training (72 Hours)</strong>
+            <small>Training Duration</small>
+          </div>
+          <div>
+            <strong>Simulated Portfolio Growth: +31%</strong>
+            <small>Performance Metric</small>
+          </div>
+        </div>
+        <div class="cert-modern-sign">
+          <div>
+            <strong>Alexandra R. Hayes</strong>
+            <small>Director / Senior Analyst</small>
+          </div>
+          <p class="cert-signature">A. Hayes</p>
+          <span class="cert-modern-signed">Signed: 09.23.2025</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

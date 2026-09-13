@@ -30,6 +30,7 @@
 }
 
 .lp-nav-inner {
+  position: relative;
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto;
   display: flex;
@@ -90,6 +91,14 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
+}
+
+.lp-btn-register {
+  white-space: nowrap;
+  min-height: 42px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .lp-burger {
@@ -640,6 +649,11 @@
 }
 
 @media (max-width: 900px) {
+  .lp-nav.is-solid {
+    backdrop-filter: none;
+    background: rgba(7, 15, 28, 0.96);
+  }
+
   .lp-hero-grid {
     grid-template-columns: 1fr;
   }
@@ -685,17 +699,82 @@
   }
 
   .lp-btn-login {
-    display: none;
+    display: inline-flex;
+    min-height: 42px;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.88rem;
+    line-height: 1;
+  }
+
+  .lp-btn-register {
+    min-height: 42px;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.88rem;
   }
 }
 
 @media (max-width: 600px) {
+  .lp-wrap {
+    width: min(1120px, calc(100% - 1.25rem));
+  }
+
+  .lp-brand {
+    font-size: 0.92rem;
+    gap: 0.45rem;
+  }
+
+  .lp-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .lp-nav-cta {
+    gap: 0.4rem;
+  }
+
+  .lp-btn-login,
+  .lp-btn-register {
+    min-height: 40px;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.84rem;
+  }
+
   .lp-hero {
-    padding-top: 7rem;
+    padding-top: 6.5rem;
+    padding-bottom: 2.5rem;
     min-height: auto;
   }
 
+  .lp-hero-copy h1 {
+    font-size: clamp(1.7rem, 8vw, 2.2rem);
+  }
+
+  .lp-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-hero-actions .btn {
+    width: 100%;
+  }
+
+  .lp-hero-visual {
+    min-height: 220px;
+  }
+
   .lp-section {
-    padding: 3.5rem 0;
+    padding: 2.75rem 0;
+  }
+
+  .lp-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-orb,
+  .lp-meter-fill {
+    animation: none !important;
   }
 }

@@ -8,7 +8,7 @@ export default function Deposit() {
   const [params] = useSearchParams();
   const purpose = params.get('purpose') || '';
   const [tab, setTab] = useState('qr');
-  const [amount, setAmount] = useState(params.get('amount') || '10');
+  const [amount, setAmount] = useState(params.get('amount') || (params.get('purpose') === 'joining' ? '1' : '10'));
   const [txHash, setTxHash] = useState('');
   const [depositAddress, setDepositAddress] = useState('');
   const [msg, setMsg] = useState('');
@@ -97,11 +97,11 @@ export default function Deposit() {
 
   return (
     <div>
-      <h1 className="page-title">{purpose === 'joining' ? 'Pay $10 Joining' : 'Deposit USDT'}</h1>
+      <h1 className="page-title">{purpose === 'joining' ? 'Pay $1 Joining' : 'Deposit USDT'}</h1>
       <p className="page-sub">
         {purpose === 'joining'
-          ? 'Send $10+ USDT (BEP-20) · Admin credits → then Activate Joining'
-          : 'Send USDT on BEP-20 (BSC) · Min $10 · Max $50,000 · $1 steps · Admin credits after Tx verify'}
+          ? 'Send $1+ USDT (BEP-20) · Admin credits → then Activate Joining'
+          : 'Send USDT on BEP-20 (BSC) · Min $1 · Max $50,000 · Admin credits after Tx verify'}
       </p>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
@@ -157,7 +157,7 @@ export default function Deposit() {
           <input
             className="input"
             type="number"
-            min="10"
+            min="1"
             max="50000"
             step="1"
             value={amount}

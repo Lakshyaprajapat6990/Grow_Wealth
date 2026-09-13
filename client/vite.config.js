@@ -12,4 +12,16 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          axios: ['axios'],
+        },
+      },
+    },
+  },
 });

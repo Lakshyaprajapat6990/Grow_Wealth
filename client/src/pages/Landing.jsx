@@ -34,12 +34,17 @@ export default function Landing() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
     if (window.location.pathname === '/certificates' || window.location.hash === '#certificates') {
       setTimeout(() => document.getElementById('certificates')?.scrollIntoView({ behavior: 'smooth' }), 80);
     }
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle('menu-locked', menuOpen);
+    return () => document.body.classList.remove('menu-locked');
+  }, [menuOpen]);
 
   function go(id) {
     setMenuOpen(false);
@@ -82,10 +87,16 @@ export default function Landing() {
             <Link to="/login" className="btn btn-ghost lp-btn-login">
               Login
             </Link>
-            <Link to="/register" className="btn btn-primary">
-              Create Free Account
+            <Link to="/register" className="btn btn-primary lp-btn-register">
+              Sign Up
             </Link>
-            <button type="button" className="lp-burger" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu">
+            <button
+              type="button"
+              className="lp-burger"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+            >
               <span />
               <span />
               <span />

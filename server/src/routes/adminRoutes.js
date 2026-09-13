@@ -6,10 +6,13 @@ const {
   listWithdrawals,
   approveWithdrawal,
   listUsers,
+  getTeamHierarchy,
   listPendingDeposits,
   approveDeposit,
   rejectDeposit,
   adjustFund,
+  forceJoinUsersAdmin,
+  getUserHistory,
 } = require('../controllers/adminController');
 const { adminList, adminReply } = require('../controllers/supportController');
 const { adminCreate } = require('../controllers/notificationController');
@@ -22,6 +25,9 @@ const router = express.Router();
 router.use(protect, adminOnly);
 router.get('/dashboard', dashboard);
 router.get('/users', listUsers);
+router.get('/users/:userId/history', getUserHistory);
+router.get('/team-hierarchy', getTeamHierarchy);
+router.post('/users/force-join', forceJoinUsersAdmin);
 router.delete('/users/:userId', adminDeleteUser);
 router.post('/roi/credit', creditRoi);
 router.post('/roi/run-daily', runDailyRoiAdmin);

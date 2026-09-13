@@ -3,12 +3,12 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
 
-const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 10);
+const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
 const FIRST_WITHDRAW_MIN = Number(process.env.FIRST_WITHDRAW_MIN || 10);
 const WITHDRAW_MIN = Number(process.env.WITHDRAW_MIN || 10);
 const WITHDRAW_FEE_PERCENT = Number(process.env.WITHDRAW_FEE_PERCENT || 10);
 const DIRECT_INCOME_PERCENT = Number(process.env.DIRECT_INCOME_PERCENT || 5);
-const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 10);
+const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 1);
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
 
 async function getWalletInfo(req, res) {

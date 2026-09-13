@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import TeamHierarchy from './TeamHierarchy';
 
 function IncomeCreditForm({ onDone, setMsg, setErr }) {
   const [userId, setUserId] = useState('');
@@ -30,7 +31,7 @@ function IncomeCreditForm({ onDone, setMsg, setErr }) {
   return (
     <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={submit}>
       <h3 style={{ marginTop: 0 }}>Credit Other Income</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+      <div className="form-grid-3">
         <div className="field">
           <label className="label">User ID</label>
           <input className="input" value={userId} onChange={(e) => setUserId(e.target.value)} required />
@@ -84,7 +85,7 @@ function FundAdjustForm({ onDone, setMsg, setErr }) {
   return (
     <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={submit}>
       <h3 style={{ marginTop: 0 }}>Fund Credit / Debit</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+      <div className="form-grid-3">
         <div className="field">
           <label className="label">User ID</label>
           <input className="input" value={userId} onChange={(e) => setUserId(e.target.value)} required />
@@ -122,6 +123,10 @@ export default function Admin() {
   const [roiBase, setRoiBase] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [hierarchyFocus, setHierarchyFocus] = useState('');
+  const [historyUser, setHistoryUser] = useState(null);
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   async function load() {
     const [d, u, w, dep] = await Promise.all([
@@ -207,16 +212,31 @@ export default function Admin() {
     }
   }
 
+  async function openHistory(userId) {
+    setHistoryLoading(true);
+    setErr('');
+    try {
+      const { data } = await api.get(`/admin/users/${userId}/history`);
+      setHistoryUser(data.user);
+      setHistoryRows(data.history || []);
+      setTimeout(() => document.getElementById('user-history-jump')?.scrollIntoView({ behavior: 'smooth' }), 50);
+    } catch (error) {
+      setErr(error.response?.data?.message || 'History load failed');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
+    <div className="admin-page">
+      <div className="admin-header">
         <div>
           <h1 className="page-title" style={{ marginBottom: 0 }}>
             Admin Panel
           </h1>
           <p className="page-sub">Live ops · Deposits · Fund credit/debit · Auto Daily ROI 1% (2× cap) · Withdrawals 10% fee</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="admin-header-actions">
           <Link className="btn btn-ghost" to="/dashboard">
             Member View
           </Link>
@@ -297,8 +317,9 @@ export default function Admin() {
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
         <h3 style={{ marginTop: 0 }}>Automatic Daily ROI (1%)</h3>
         <p style={{ color: 'var(--text-muted)' }}>
-          Runs every day at 00:00 UTC for all joined members (base = max of total deposited / joining). Stops at 2×
-          investment. Also credits L1–L7 level income (ROI ka ROI) to uplines who meet ROI / TARGET.
+          <strong>Auto:</strong> Vercel cron runs every day at 00:00 UTC — credits 1% ROI to all Joined members (cap
+          2×), then L1–L7 ROI-ka-ROI. <strong>Button:</strong> optional manual run if you need to credit today early /
+          retry. Same day will not double-pay.
         </p>
         <button className="btn btn-success" type="button" onClick={runDailyRoi}>
           Run Daily ROI Now
@@ -307,7 +328,7 @@ export default function Admin() {
 
       <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={creditRoi}>
         <h3 style={{ marginTop: 0 }}>Manual ROI Credit (optional · 1%)</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className="form-grid-2">
           <div className="field">
             <label className="label">User ID</label>
             <input className="input" value={roiUserId} onChange={(e) => setRoiUserId(e.target.value)} required />
@@ -321,6 +342,66 @@ export default function Admin() {
       </form>
 
       <IncomeCreditForm onDone={load} setMsg={setMsg} setErr={setErr} />
+
+      <div id="team-hierarchy-jump">
+        <TeamHierarchy focusUserId={hierarchyFocus} />
+      </div>
+
+      <div id="user-history-jump" className="card" style={{ padding: '1.25rem', marginBottom: '1rem', overflowX: 'auto' }}>
+        <h3 style={{ marginTop: 0 }}>User Deposit &amp; Credit History</h3>
+        <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+          Click <strong>History</strong> on any user row to load deposits, admin credits, ROI, and other transactions.
+        </p>
+        {historyLoading && <p style={{ color: 'var(--text-muted)' }}>Loading…</p>}
+        {historyUser && (
+          <p style={{ marginBottom: '0.75rem' }}>
+            Showing: <strong>{historyUser.name}</strong> ({historyUser.userId}) · Joined:{' '}
+            {historyUser.isJoined ? 'Yes' : 'No'} · Fund: ${Number(historyUser.fundBalance || 0).toFixed(2)} · Income: $
+            {Number(historyUser.incomeBalance || 0).toFixed(2)}
+          </p>
+        )}
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', color: 'var(--text-muted)' }}>
+              <th style={{ padding: '0.5rem' }}>Date</th>
+              <th style={{ padding: '0.5rem' }}>Type</th>
+              <th style={{ padding: '0.5rem' }}>Amount</th>
+              <th style={{ padding: '0.5rem' }}>Status</th>
+              <th style={{ padding: '0.5rem' }}>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!historyUser && (
+              <tr>
+                <td colSpan={5} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+                  No user selected yet
+                </td>
+              </tr>
+            )}
+            {historyUser && historyRows.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+                  No transactions for this user
+                </td>
+              </tr>
+            )}
+            {historyRows.map((h) => (
+              <tr key={h._id} style={{ borderTop: '1px solid var(--border)' }}>
+                <td style={{ padding: '0.65rem', whiteSpace: 'nowrap' }}>
+                  {new Date(h.createdAt).toLocaleString()}
+                </td>
+                <td style={{ padding: '0.65rem' }}>{h.type}</td>
+                <td style={{ padding: '0.65rem' }}>${Number(h.amount || 0).toFixed(2)}</td>
+                <td style={{ padding: '0.65rem' }}>{h.status}</td>
+                <td style={{ padding: '0.65rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {h.description || '—'}
+                  {h.meta?.txHash ? ` · Tx: ${h.meta.txHash}` : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem', overflowX: 'auto' }}>
         <h3 style={{ marginTop: 0 }}>Pending Withdrawals</h3>
@@ -393,14 +474,29 @@ export default function Admin() {
                 <td style={{ padding: '0.65rem' }}>${Number(u.fundBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.incomeBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>
-                  <button
-                    className="btn btn-ghost"
-                    type="button"
-                    style={{ color: '#fca5a5', borderColor: 'rgba(248,113,113,0.45)' }}
-                    onClick={() => deleteUser(u.userId)}
-                  >
-                    Delete
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    <button className="btn btn-ghost" type="button" onClick={() => openHistory(u.userId)}>
+                      History
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      type="button"
+                      onClick={() => {
+                        setHierarchyFocus(u.userId);
+                        document.getElementById('team-hierarchy-jump')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      Tree
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      type="button"
+                      style={{ color: '#fca5a5', borderColor: 'rgba(248,113,113,0.45)' }}
+                      onClick={() => deleteUser(u.userId)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

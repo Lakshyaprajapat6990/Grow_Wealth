@@ -326,9 +326,10 @@
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    width: 280px;
+    width: min(280px, 86vw);
     transform: translateX(-105%);
     transition: transform 0.25s ease;
+    will-change: transform;
   }
 
   .sidebar.open { transform: translateX(0); }
@@ -340,8 +341,67 @@
     background: rgba(0, 0, 0, 0.55);
     z-index: 30;
   }
+
+  .topbar {
+    padding: 0.75rem 1rem;
+  }
+
+  .user-chip {
+    max-width: 55%;
+  }
+
+  .user-chip span,
+  .user-chip strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .mp-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mp-title {
+    font-size: 1.35rem;
+  }
 }
 
 @media (max-width: 500px) {
-  .dash-grid { grid-template-columns: 1fr 1fr; }
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 0.85rem;
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-card .value,
+  .mp-stat strong {
+    font-size: 1.2rem;
+  }
+
+  .mp-table {
+    min-width: 480px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    backdrop-filter: none;
+  }
+
+  .topbar {
+    backdrop-filter: none;
+    background: rgba(7, 15, 28, 0.96);
+  }
 }

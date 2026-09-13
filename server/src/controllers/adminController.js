@@ -3,6 +3,8 @@ const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
 const { creditLevelIncomeFromRoi } = require('../services/levelIncomeService');
 const { remainingRoiCap, roiBase, ROI_CAP_MULTIPLIER } = require('../services/roiService');
+const { autoJoinOnPayment, forceJoinUsers } = require('../services/joiningService');
+const { getUsdtTransferFromTx } = require('../utils/bscUsdt');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
@@ -131,10 +133,101 @@ async function listUsers(_req, res) {
   const users = await User.find({ role: 'user' })
     .select('-password -transactionPassword')
     .sort({ createdAt: -1 })
-    .limit(200);
+    .limit(500);
   return res.json({
     success: true,
     users: users.map((u) => u.toSafeJSON()),
+  });
+}
+
+/**
+ * Team hierarchy tree for admin.
+ * ?userId=GW123 → tree rooted at that member
+ * no userId → top-level members (sponsor admin / missing / unknown)
+ */
+async function getTeamHierarchy(req, res) {
+  const rootId = String(req.query.userId || '')
+    .trim()
+    .toUpperCase();
+
+  const all = await User.find({ role: 'user' })
+    .select(
+      'userId name sponsorId isJoined fundBalance incomeBalance totalDeposited joiningAmount createdAt mobile email'
+    )
+    .lean();
+
+  const byId = new Map(all.map((u) => [u.userId, u]));
+  const childrenOf = new Map();
+  for (const u of all) {
+    const sid = u.sponsorId || '';
+    if (!childrenOf.has(sid)) childrenOf.set(sid, []);
+    childrenOf.get(sid).push(u);
+  }
+
+  function countDescendants(nodes) {
+    let n = 0;
+    for (const node of nodes) {
+      n += 1 + countDescendants(node.children || []);
+    }
+    return n;
+  }
+
+  function buildNode(user, depth = 0, pathSet = new Set()) {
+    if (!user || pathSet.has(user.userId) || depth > 25) return null;
+    const nextPath = new Set(pathSet);
+    nextPath.add(user.userId);
+    const kids = (childrenOf.get(user.userId) || [])
+      .map((c) => buildNode(c, depth + 1, nextPath))
+      .filter(Boolean)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    return {
+      userId: user.userId,
+      name: user.name,
+      sponsorId: user.sponsorId || null,
+      isJoined: !!user.isJoined,
+      fundBalance: user.fundBalance || 0,
+      incomeBalance: user.incomeBalance || 0,
+      totalDeposited: user.totalDeposited || 0,
+      joiningAmount: user.joiningAmount || 0,
+      directCount: kids.length,
+      teamCount: countDescendants(kids),
+      mobile: user.mobile || '',
+      email: user.email || '',
+      createdAt: user.createdAt,
+      depth,
+      children: kids,
+    };
+  }
+
+  if (rootId) {
+    const root = byId.get(rootId);
+    if (!root) {
+      return res.status(404).json({ success: false, message: `User ${rootId} not found` });
+    }
+    const tree = buildNode(root);
+    return res.json({
+      success: true,
+      rootId,
+      tree: tree ? [tree] : [],
+      totalMembers: all.length,
+    });
+  }
+
+  const roots = all
+    .filter((u) => {
+      const sid = u.sponsorId;
+      if (!sid || sid === 'GW0000001' || sid === 'ADMIN') return true;
+      return !byId.has(sid);
+    })
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+  const tree = roots.map((r) => buildNode(r)).filter(Boolean);
+  return res.json({
+    success: true,
+    rootId: null,
+    tree,
+    totalMembers: all.length,
   });
 }
 
@@ -199,7 +292,23 @@ async function approveDeposit(req, res) {
   const user = await User.findOne({ userId: deposit.userId });
   if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-  const amt = Number(deposit.amount);
+  let amt = Number(deposit.amount);
+  const txHash = deposit.meta?.txHash;
+  const companyWallet = process.env.DEPOSIT_ADDRESS || '';
+  const onChain = txHash ? await getUsdtTransferFromTx(txHash, companyWallet) : null;
+  if (onChain && onChain.amount > 0) {
+    if (Math.abs(onChain.amount - amt) > 0.0001) {
+      deposit.meta = {
+        ...(deposit.meta || {}),
+        submittedAmount: amt,
+        onChainAmount: onChain.amount,
+        amountCorrectedFromChain: true,
+      };
+      amt = onChain.amount;
+      deposit.amount = amt;
+    }
+  }
+
   const isJoining = deposit.type === 'joining' || deposit.meta?.purpose === 'registration_joining';
 
   if (isJoining) {
@@ -216,23 +325,29 @@ async function approveDeposit(req, res) {
       });
     }
 
-    user.isJoined = true;
-    user.joiningAmount = amt;
-    user.joinedAt = new Date();
+    user.fundBalance = Number((user.fundBalance + amt).toFixed(8));
+    user.usdtBep20Balance = Number(((user.usdtBep20Balance || 0) + amt).toFixed(8));
     user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
     await user.save();
 
+    const joinResult = await autoJoinOnPayment(user, {
+      paymentAmount: amt,
+      createdBy: req.user.userId,
+      source: 'joining_payment',
+    });
+
     deposit.status = 'success';
-    deposit.balanceAfter = user.fundBalance;
+    deposit.balanceAfter = (joinResult.user || user).fundBalance;
     deposit.description = `Joining $${amt} approved & account activated`;
-    deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date() };
+    deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date(), autoJoined: true };
     await deposit.save();
 
+    const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
     return res.json({
       success: true,
       message: `Joining approved — ${user.userId} activated`,
       deposit,
-      user: user.toSafeJSON(),
+      user: fresh.toSafeJSON(),
     });
   }
 
@@ -241,17 +356,33 @@ async function approveDeposit(req, res) {
   user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
   await user.save();
 
+  const joinResult = await autoJoinOnPayment(user, {
+    paymentAmount: amt,
+    createdBy: req.user.userId,
+    source: 'deposit',
+  });
+
   deposit.status = 'success';
-  deposit.balanceAfter = user.fundBalance;
-  deposit.description = 'USDT BEP-20 deposit approved & credited';
-  deposit.meta = { ...(deposit.meta || {}), approvedBy: req.user.userId, approvedAt: new Date() };
+  deposit.balanceAfter = (joinResult.user || user).fundBalance;
+  deposit.description = joinResult.joined
+    ? 'USDT deposit approved · fund credited · auto joined'
+    : 'USDT BEP-20 deposit approved & credited';
+  deposit.meta = {
+    ...(deposit.meta || {}),
+    approvedBy: req.user.userId,
+    approvedAt: new Date(),
+    autoJoined: !!joinResult.joined,
+  };
   await deposit.save();
 
+  const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
   return res.json({
     success: true,
-    message: `Deposit $${amt} credited to ${user.userId}`,
+    message: joinResult.joined
+      ? `Deposit $${amt} credited · ${user.userId} auto joined`
+      : `Deposit $${amt} credited to ${user.userId}`,
     deposit,
-    user: user.toSafeJSON(),
+    user: fresh.toSafeJSON(),
   });
 }
 
@@ -309,11 +440,84 @@ async function adjustFund(req, res) {
     createdBy: req.user.userId,
   });
 
+  let joinResult = { joined: false };
+  if (action === 'credit') {
+    joinResult = await autoJoinOnPayment(user, {
+      paymentAmount: amt,
+      createdBy: req.user.userId,
+      source: 'admin_fund_credit',
+    });
+  }
+
+  const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
   return res.json({
     success: true,
-    message: `Fund ${action} $${amt} for ${user.userId}`,
-    user: user.toSafeJSON(),
+    message: joinResult.joined
+      ? `Fund credit $${amt} for ${user.userId} · auto joined`
+      : `Fund ${action} $${amt} for ${user.userId}`,
+    user: fresh.toSafeJSON(),
   });
+}
+
+/** Admin: deposit + credit history for one user */
+async function getUserHistory(req, res) {
+  const userId = String(req.params.userId || '')
+    .trim()
+    .toUpperCase();
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'userId required' });
+  }
+
+  const user = await User.findOne({ userId }).select('-password -transactionPassword');
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const history = await Transaction.find({
+    userId,
+    type: {
+      $in: [
+        'deposit',
+        'joining',
+        'admin_credit',
+        'admin_debit',
+        'roi',
+        'direct_income',
+        'level_income',
+        'salary_income',
+        'fast_track_income',
+        'compound',
+        'withdraw',
+        'transfer_in',
+        'transfer_out',
+      ],
+    },
+  })
+    .sort({ createdAt: -1 })
+    .limit(200);
+
+  const deposits = history.filter((t) => ['deposit', 'joining'].includes(t.type));
+  const credits = history.filter((t) =>
+    ['admin_credit', 'roi', 'direct_income', 'level_income', 'salary_income', 'fast_track_income', 'transfer_in'].includes(
+      t.type
+    )
+  );
+
+  return res.json({
+    success: true,
+    user: user.toSafeJSON(),
+    history,
+    deposits,
+    credits,
+  });
+}
+
+/** Admin: force-join users who already paid but status is still No */
+async function forceJoinUsersAdmin(req, res) {
+  const ids = Array.isArray(req.body.userIds) ? req.body.userIds : [];
+  if (!ids.length) {
+    return res.status(400).json({ success: false, message: 'userIds array required' });
+  }
+  const results = await forceJoinUsers(ids, req.user.userId);
+  return res.json({ success: true, results });
 }
 
 module.exports = {
@@ -323,8 +527,11 @@ module.exports = {
   listWithdrawals,
   approveWithdrawal,
   listUsers,
+  getTeamHierarchy,
   listPendingDeposits,
   approveDeposit,
   rejectDeposit,
   adjustFund,
+  forceJoinUsersAdmin,
+  getUserHistory,
 };
