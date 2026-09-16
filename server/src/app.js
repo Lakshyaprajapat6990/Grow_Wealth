@@ -32,6 +32,8 @@ function isAllowedOrigin(origin) {
     process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
     process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
     'https://grow-wealth-neon.vercel.app',
+    'https://grow-wealth.co.uk',
+    'https://www.grow-wealth.co.uk',
   ]
     .filter(Boolean)
     .map((u) => String(u).trim().replace(/\/$/, ''));
