@@ -5,6 +5,7 @@ const { creditLevelIncomeFromRoi } = require('../services/levelIncomeService');
 const { remainingRoiCap, roiBase, ROI_CAP_MULTIPLIER } = require('../services/roiService');
 const { autoJoinOnPayment, forceJoinUsers } = require('../services/joiningService');
 const { getUsdtTransferFromTx } = require('../utils/bscUsdt');
+const { evaluateRanksUpChain } = require('../services/rankRewardService');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
@@ -343,11 +344,13 @@ async function approveDeposit(req, res) {
     await deposit.save();
 
     const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
+    const rankEval = await evaluateRanksUpChain(user.userId);
     return res.json({
       success: true,
       message: `Joining approved — ${user.userId} activated`,
       deposit,
       user: fresh.toSafeJSON(),
+      rankRewards: rankEval.chain,
     });
   }
 
@@ -376,6 +379,7 @@ async function approveDeposit(req, res) {
   await deposit.save();
 
   const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
+  const rankEval = await evaluateRanksUpChain(user.userId);
   return res.json({
     success: true,
     message: joinResult.joined
@@ -383,6 +387,7 @@ async function approveDeposit(req, res) {
       : `Deposit $${amt} credited to ${user.userId}`,
     deposit,
     user: fresh.toSafeJSON(),
+    rankRewards: rankEval.chain,
   });
 }
 
@@ -450,12 +455,18 @@ async function adjustFund(req, res) {
   }
 
   const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
+  let rankRewards = [];
+  if (action === 'credit') {
+    const rankEval = await evaluateRanksUpChain(user.userId);
+    rankRewards = rankEval.chain || [];
+  }
   return res.json({
     success: true,
     message: joinResult.joined
       ? `Fund credit $${amt} for ${user.userId} · auto joined`
       : `Fund ${action} $${amt} for ${user.userId}`,
     user: fresh.toSafeJSON(),
+    rankRewards,
   });
 }
 
@@ -484,6 +495,7 @@ async function getUserHistory(req, res) {
         'level_income',
         'salary_income',
         'fast_track_income',
+        'rank_reward',
         'compound',
         'withdraw',
         'transfer_in',
@@ -496,9 +508,16 @@ async function getUserHistory(req, res) {
 
   const deposits = history.filter((t) => ['deposit', 'joining'].includes(t.type));
   const credits = history.filter((t) =>
-    ['admin_credit', 'roi', 'direct_income', 'level_income', 'salary_income', 'fast_track_income', 'transfer_in'].includes(
-      t.type
-    )
+    [
+      'admin_credit',
+      'roi',
+      'direct_income',
+      'level_income',
+      'salary_income',
+      'fast_track_income',
+      'rank_reward',
+      'transfer_in',
+    ].includes(t.type)
   );
 
   return res.json({

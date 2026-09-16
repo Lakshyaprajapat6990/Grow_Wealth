@@ -2,12 +2,15 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
+const {
+  JOINING_AMOUNT,
+  REFER_EARN_RATES,
+  activateJoiningFromFund,
+} = require('../services/joiningService');
 
-const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
 const FIRST_WITHDRAW_MIN = Number(process.env.FIRST_WITHDRAW_MIN || 10);
 const WITHDRAW_MIN = Number(process.env.WITHDRAW_MIN || 10);
 const WITHDRAW_FEE_PERCENT = Number(process.env.WITHDRAW_FEE_PERCENT || 10);
-const DIRECT_INCOME_PERCENT = Number(process.env.DIRECT_INCOME_PERCENT || 5);
 const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 1);
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
 
@@ -29,41 +32,9 @@ async function getWalletInfo(req, res) {
     joiningAmount: JOINING_AMOUNT,
     minDeposit: MIN_DEPOSIT,
     maxDeposit: MAX_DEPOSIT,
-    directIncomePercent: DIRECT_INCOME_PERCENT,
+    referEarnRates: REFER_EARN_RATES,
+    directIncomePercent: REFER_EARN_RATES[0],
   });
-}
-
-async function creditDirectIncome(sponsorId, fromUserId, baseAmount) {
-  if (!sponsorId || sponsorId === 'GW0000001' || sponsorId === 'ADMIN') {
-    const company = await User.findOne({ userId: 'GW0000001' });
-    // still allow company admin to receive if they are a user-like sponsor; skip if no real sponsor member
-    if (!company || company.role === 'admin') return null;
-  }
-
-  const sponsor = await User.findOne({ userId: sponsorId, isBlocked: false });
-  if (!sponsor || sponsor.role === 'admin') return null;
-
-  const amt = Number(((baseAmount * DIRECT_INCOME_PERCENT) / 100).toFixed(8));
-  if (amt <= 0) return null;
-
-  sponsor.directIncome = Number(((sponsor.directIncome || 0) + amt).toFixed(8));
-  sponsor.totalDirectIncome = Number(((sponsor.totalDirectIncome || 0) + amt).toFixed(8));
-  sponsor.incomeBalance = Number((sponsor.incomeBalance + amt).toFixed(8));
-  sponsor.totalEarnings = Number((sponsor.totalEarnings + amt).toFixed(8));
-  await sponsor.save();
-
-  await Transaction.create({
-    userId: sponsor.userId,
-    type: 'direct_income',
-    amount: amt,
-    balanceAfter: sponsor.incomeBalance,
-    status: 'success',
-    description: `Direct income ${DIRECT_INCOME_PERCENT}% from ${fromUserId}`,
-    meta: { fromUserId, baseAmount, percent: DIRECT_INCOME_PERCENT },
-    createdBy: 'system',
-  });
-
-  return amt;
 }
 
 /** Member submits deposit proof — admin must approve before fund credit */
@@ -131,42 +102,16 @@ async function creditDeposit(req, res) {
 }
 
 async function activateJoining(req, res) {
-  const user = req.user;
-  if (user.isJoined) {
-    return res.status(400).json({ success: false, message: 'Already joined' });
+  const result = await activateJoiningFromFund(req.user, req.user.userId);
+  if (!result.ok) {
+    return res.status(400).json({ success: false, message: result.message });
   }
-  if (user.fundBalance < JOINING_AMOUNT) {
-    return res.status(400).json({
-      success: false,
-      message: `Insufficient fund balance. Need $${JOINING_AMOUNT} to join.`,
-    });
-  }
-
-  user.fundBalance = Number((user.fundBalance - JOINING_AMOUNT).toFixed(8));
-  user.isJoined = true;
-  user.joiningAmount = JOINING_AMOUNT;
-  user.joinedAt = new Date();
-  if ((user.totalDeposited || 0) < JOINING_AMOUNT) {
-    user.totalDeposited = Number((user.totalDeposited + JOINING_AMOUNT).toFixed(8));
-  }
-  await user.save();
-
-  await Transaction.create({
-    userId: user.userId,
-    type: 'joining',
-    amount: JOINING_AMOUNT,
-    balanceAfter: user.fundBalance,
-    status: 'success',
-    description: `Joining activated for $${JOINING_AMOUNT}`,
-    createdBy: user.userId,
+  return res.json({
+    success: true,
+    message: 'Joining activated',
+    user: result.user.toSafeJSON(),
+    referEarn: result.referEarn || null,
   });
-
-  if (user.sponsorId) {
-    await creditDirectIncome(user.sponsorId, user.userId, JOINING_AMOUNT);
-  }
-
-  const fresh = await User.findOne({ userId: user.userId });
-  return res.json({ success: true, message: 'Joining activated', user: fresh.toSafeJSON() });
 }
 
 async function requestWithdraw(req, res) {

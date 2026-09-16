@@ -22,6 +22,7 @@ const RoiIncome = lazy(() => import('./pages/RoiIncome'));
 const DirectIncome = lazy(() => import('./pages/DirectIncome'));
 const LevelIncome = lazy(() => import('./pages/LevelIncome'));
 const SalaryIncome = lazy(() => import('./pages/SalaryIncome'));
+const RankRewards = lazy(() => import('./pages/RankRewards'));
 const LiveFeed = lazy(() => import('./pages/LiveFeed'));
 const Trading = lazy(() => import('./pages/Trading'));
 const PlanDetails = lazy(() => import('./pages/PlanDetails'));
@@ -66,6 +67,7 @@ export default function App() {
                 <Route path="/direct-income" element={<DirectIncome />} />
                 <Route path="/level-income" element={<LevelIncome />} />
                 <Route path="/salary-income" element={<SalaryIncome />} />
+                <Route path="/rank-rewards" element={<RankRewards />} />
                 <Route path="/system-live-feed" element={<LiveFeed />} />
                 <Route path="/trading" element={<Trading />} />
                 <Route path="/plan-details" element={<PlanDetails />} />

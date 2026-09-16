@@ -43,8 +43,8 @@ export default function Join() {
               Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong>
             </p>
             <p style={{ color: 'var(--text-muted)' }}>
-              Need at least $1 in fund balance. If you already deposited (e.g. $40), click Activate Joining — only $1
-              is deducted. Sponsor earns 5% direct income.
+              Need at least $1 in fund balance. If you already deposited, click Activate Joining. Your sponsor earns
+              Refer & Earn on this joining amount (1st direct 5%, 2nd 3%, 3rd 2%, …).
             </p>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
               <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">

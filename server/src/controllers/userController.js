@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const { getRankStatus, RANK_PLAN } = require('../services/rankRewardService');
 
 async function getProfile(req, res) {
   const { userId } = req.params;
@@ -71,6 +72,7 @@ async function getAllTeam(req, res) {
 async function getDashboardSummary(req, res) {
   const u = req.user;
   const recent = await Transaction.find({ userId: u.userId }).sort({ createdAt: -1 }).limit(5);
+  const rank = await getRankStatus(u.userId);
 
   return res.json({
     success: true,
@@ -82,14 +84,28 @@ async function getDashboardSummary(req, res) {
       totalRoiIncome: u.totalRoiIncome,
       totalDirectIncome: u.totalDirectIncome,
       totalLevelIncome: u.totalLevelIncome,
+      totalRankReward: u.totalRankReward || 0,
+      currentRank: u.currentRank || 0,
       totalEarnings: u.totalEarnings,
       isJoined: u.isJoined,
       directCount: u.directCount,
       teamCount: u.teamCount,
+      teamBusiness: rank?.teamVolume || 0,
+      teamSize: rank?.teamSize || 0,
+      remainingToNextRank: rank?.remainingToNext || 0,
+      nextRank: rank?.nextRank || null,
+      ranks: rank?.ranks || [],
       referralLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/register?ref=${u.userId}`,
     },
     recentTransactions: recent,
+    rankPlan: RANK_PLAN,
   });
 }
 
-module.exports = { getProfile, getDirectTeam, getAllTeam, getDashboardSummary };
+async function getMyRankStatus(req, res) {
+  const status = await getRankStatus(req.user.userId);
+  if (!status) return res.status(404).json({ success: false, message: 'User not found' });
+  return res.json({ success: true, ...status, plan: RANK_PLAN });
+}
+
+module.exports = { getProfile, getDirectTeam, getAllTeam, getDashboardSummary, getMyRankStatus };

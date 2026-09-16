@@ -28,9 +28,10 @@ const menu = [
     title: 'Income Reports',
     items: [
       { to: '/roi-income', label: 'ROI Income' },
-      { to: '/direct-income', label: 'Direct Income' },
+      { to: '/direct-income', label: 'Refer & Earn' },
       { to: '/level-income', label: 'Level Income' },
       { to: '/salary-income', label: 'Monthly Salary' },
+      { to: '/rank-rewards', label: 'Rank & Rewards' },
     ],
   },
   {

@@ -6,6 +6,7 @@ const TYPE_MAP = {
   level_income: 'level_income',
   salary: 'salary_income',
   fast_track: 'fast_track_income',
+  rank_reward: 'rank_reward',
   deposit: 'deposit',
   withdraw: 'withdraw',
   transfer_in: 'transfer_in',

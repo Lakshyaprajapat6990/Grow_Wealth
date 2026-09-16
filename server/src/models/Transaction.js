@@ -14,6 +14,7 @@ const transactionSchema = new mongoose.Schema(
         'level_income',
         'salary_income',
         'fast_track_income',
+        'rank_reward',
         'transfer_in',
         'transfer_out',
         'withdraw',
