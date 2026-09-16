@@ -24,22 +24,30 @@ const app = express();
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
+
+  const normalized = String(origin).trim().replace(/\/$/, '');
   const allowed = [
     process.env.CLIENT_URL,
     process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
     process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
-  ].filter(Boolean);
-  if (allowed.includes(origin)) return true;
-  if (/^http:\/\/localhost:\d+$/.test(origin)) return true;
-  if (/^https:\/\/[\w-]+\.vercel\.app$/.test(origin)) return true;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+    'https://grow-wealth-neon.vercel.app',
+  ]
+    .filter(Boolean)
+    .map((u) => String(u).trim().replace(/\/$/, ''));
+
+  if (allowed.includes(normalized)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(normalized)) return true;
+  if (/^https:\/\/([\w-]+\.)*vercel\.app$/i.test(normalized)) return true;
   return false;
 }
 
 app.use(
   cors({
     origin(origin, callback) {
+      // Never throw here: a thrown CORS error breaks same-origin /api login on Vercel.
       if (isAllowedOrigin(origin)) callback(null, true);
-      else callback(new Error('Not allowed by CORS'));
+      else callback(null, false);
     },
     credentials: true,
   })
