@@ -4,22 +4,28 @@ const bcrypt = require('bcryptjs');
 const { connectDB } = require('./config/db');
 const User = require('./models/User');
 
+const ADMIN_PASSWORD = 'Grow@!!!;gta21';
+
 async function seed() {
   await connectDB();
 
   const userId = 'GW0000001';
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
   let admin = await User.findOne({ userId });
+
   if (admin) {
-    console.log('Admin already exists:', userId);
+    admin.password = passwordHash;
+    admin.role = 'admin';
+    await admin.save();
+    console.log('Admin password updated:', userId);
   } else {
-    const password = await bcrypt.hash('Admin@123', 10);
     const trx = await bcrypt.hash('123456', 10);
     admin = await User.create({
       userId,
       name: 'Grow Wealth Admin',
       email: 'admin@growwealth.local',
       mobile: '9999999999',
-      password,
+      password: passwordHash,
       transactionPassword: trx,
       country: 'INDIA',
       role: 'admin',
@@ -32,7 +38,7 @@ async function seed() {
     console.log('Admin created');
   }
 
-  console.log('Login → User ID: GW0000001 | Password: Admin@123');
+  console.log('Login → User ID: GW0000001 | Password: ' + ADMIN_PASSWORD);
   process.exit(0);
 }
 

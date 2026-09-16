@@ -56,10 +56,7 @@ export default function Landing() {
       <header className={`lp-nav ${scrolled ? 'is-solid' : ''}`}>
         <div className="lp-nav-inner">
           <Link to="/" className="lp-brand">
-            <span className="lp-brand-mark" aria-hidden />
-            <span>
-              GROW<em>WEALTH</em>
-            </span>
+            <img className="lp-brand-logo" src="/logo.png" alt="Grow Wealth" width="48" height="48" />
           </Link>
 
           <nav className={`lp-links ${menuOpen ? 'open' : ''}`}>
@@ -282,10 +279,7 @@ export default function Landing() {
       <footer className="lp-footer">
         <div className="lp-wrap lp-footer-inner">
           <div className="lp-brand">
-            <span className="lp-brand-mark" aria-hidden />
-            <span>
-              GROW<em>WEALTH</em>
-            </span>
+            <img className="lp-brand-logo" src="/logo.png" alt="Grow Wealth" width="48" height="48" />
           </div>
           <p>© {new Date().getFullYear()} Grow Wealth. USDT BEP-20 platform.</p>
         </div>

@@ -104,7 +104,7 @@ export default function Register() {
     <div className="auth-page">
       <form className="card auth-card wide" onSubmit={onSubmit}>
         <div className="auth-brand">
-          <span className="logo-mark" />
+          <img className="logo-img" src="/logo.png" alt="Grow Wealth" width="96" height="96" />
           <h1>Grow Wealth</h1>
           <p>Create Free Account</p>
         </div>

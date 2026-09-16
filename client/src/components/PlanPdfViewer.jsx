@@ -9,8 +9,8 @@ export default function PlanPdfViewer() {
       <div className="plan-pdf-image-wrap">
         <img
           className="plan-pdf-image"
-          src="/plan.png"
-          alt="Grow Wealth Executive Business and MLM Plan on BEP-20 Staking and Referral Compensation Structure"
+          src="/plan.png?v=20260916"
+          alt="Grow Wealth Executive Business Plan - BEP-20 Staking and Referral Compensation Structure"
           loading="lazy"
           decoding="async"
           width="1489"

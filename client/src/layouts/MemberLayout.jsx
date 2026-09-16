@@ -74,7 +74,7 @@ export default function MemberLayout() {
     <div className="member-shell">
       <aside className={`sidebar ${open ? 'open' : ''}`}>
         <div className="brand">
-          <span className="brand-mark" />
+          <img className="brand-logo" src="/logo.png" alt="Grow Wealth" width="44" height="44" />
           <div>
             <strong>GROW WEALTH</strong>
             <small>Member Panel</small>
