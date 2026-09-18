@@ -66,6 +66,7 @@ export default function Register() {
   const [success, setSuccess] = useState(null);
   const [checking, setChecking] = useState(false);
   const [hasProvider, setHasProvider] = useState(() => !!getEthereumProvider());
+  const [txHashManual, setTxHashManual] = useState('');
   const pollRef = useRef(null);
 
   function set(key, value) {
@@ -428,22 +429,36 @@ export default function Register() {
                 : 'Pay USDT (open a wallet app first)'}
           </button>
 
+          <div className="field" style={{ marginBottom: '0.75rem' }}>
+            <label className="label">Tx Hash (if Check Payment fails)</label>
+            <input
+              className="input"
+              value={txHashManual}
+              onChange={(e) => setTxHashManual(e.target.value.trim())}
+              placeholder="0x… paste from Trust / TokenPocket / SafePal"
+            />
+            <small className="hint">
+              Open your wallet → transaction history → copy Tx Hash. Must pay from{' '}
+              {payInfo.walletAddress.slice(0, 8)}…{payInfo.walletAddress.slice(-6)}
+            </small>
+          </div>
+
           <button
-            className="btn btn-ghost"
+            className="btn btn-success"
             style={{ width: '100%', marginBottom: '0.5rem' }}
             type="button"
             disabled={checking || loading}
             onClick={() => {
-              confirmPayment('');
-              startAutoPoll();
+              confirmPayment(txHashManual);
+              if (!txHashManual) startAutoPoll();
             }}
           >
             {checking ? 'Checking BSC…' : 'I Paid — Check Payment'}
           </button>
 
           <p className="muted" style={{ fontSize: '0.85rem' }}>
-            After sending, wait ~15s and tap Check Payment. No Tx Hash needed. Must send from your
-            registered wallet address.
+            After sending, wait ~20s then Check Payment. If it still fails, paste Tx Hash above.
+            Payment must come from your registered wallet.
           </p>
 
           <p className="auth-foot">

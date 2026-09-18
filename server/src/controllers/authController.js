@@ -9,7 +9,7 @@ const {
   generateTrxPassword,
   isValidBep20Address,
 } = require('../utils/helpers');
-const { getUsdtTransferFromTx, findRecentUsdtTransfer, USDT_BEP20 } = require('../utils/bscUsdt');
+const { getUsdtTransferFromTx, findRecentUsdtTransfer, findRecentIncomingUsdt, USDT_BEP20 } = require('../utils/bscUsdt');
 const { autoJoinOnPayment } = require('../services/joiningService');
 const { evaluateRanksUpChain } = require('../services/rankRewardService');
 
@@ -197,27 +197,58 @@ async function registerConfirmPayment(req, res) {
       return res.status(400).json({
         success: false,
         waiting: true,
-        message: 'Payment not found on BSC yet. Wait a few seconds and try again.',
+        message: 'Payment not found on BSC yet for that Tx Hash. Wait a few seconds and try again.',
       });
     }
     if (transfer.from.toLowerCase() !== pending.walletAddress.toLowerCase()) {
       return res.status(400).json({
         success: false,
-        message: 'Payment must come from your registered BEP-20 wallet address.',
+        message: `This Tx was sent from ${transfer.from}, but you registered ${pending.walletAddress}. Pay from your registered wallet, or start register again with the paying wallet.`,
       });
     }
   } else {
-    transfer = await findRecentUsdtTransfer({
-      from: pending.walletAddress,
-      to: DEPOSIT_ADDRESS,
-      minAmount: pending.amountDue,
-      lookbackBlocks: 12000,
-    });
+    try {
+      transfer = await findRecentUsdtTransfer({
+        from: pending.walletAddress,
+        to: DEPOSIT_ADDRESS,
+        minAmount: pending.amountDue,
+        lookbackBlocks: 8000,
+      });
+    } catch (scanErr) {
+      console.error('[register-confirm] BSC scan', scanErr.message);
+      return res.status(503).json({
+        success: false,
+        waiting: true,
+        message:
+          'Could not read BSC right now. Paste your Tx Hash below and tap Check Payment again.',
+        needTxHash: true,
+      });
+    }
+
     if (!transfer) {
+      // Helpful hint if money arrived from a different wallet
+      let hint = '';
+      try {
+        const incoming = await findRecentIncomingUsdt({
+          to: DEPOSIT_ADDRESS,
+          minAmount: pending.amountDue,
+          lookbackBlocks: 3000,
+        });
+        const other = incoming.find(
+          (t) => t.from.toLowerCase() !== pending.walletAddress.toLowerCase()
+        );
+        if (other) {
+          hint = ` A $${other.amount} USDT payment arrived from ${other.from}, but your registered wallet is ${pending.walletAddress}.`;
+        }
+      } catch {
+        /* ignore hint failures */
+      }
+
       return res.status(400).json({
         success: false,
         waiting: true,
-        message: `No $${pending.amountDue} USDT found yet from your wallet. Pay, wait ~15s, then Check Payment.`,
+        needTxHash: true,
+        message: `No $${pending.amountDue} USDT found yet from your registered wallet.${hint} Paste Tx Hash and Check Payment, or wait ~30s and retry.`,
       });
     }
   }

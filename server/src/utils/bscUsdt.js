@@ -3,15 +3,25 @@ const https = require('https');
 const USDT_BEP20 = '0x55d398326f99059ff775485246999027b3197955';
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
-function rpc(method, params) {
+/** Public endpoints — bsc-dataseed often rejects eth_getLogs with "limit exceeded". */
+const DEFAULT_RPC_HOSTS = [
+  process.env.BSC_RPC_HOST,
+  'bsc.publicnode.com',
+  'bsc-dataseed1.binance.org',
+  'bsc-dataseed2.binance.org',
+  'bsc-dataseed.binance.org',
+].filter(Boolean);
+
+function rpcOnHost(hostname, method, params, path = '/') {
   const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
-        hostname: process.env.BSC_RPC_HOST || 'bsc-dataseed.binance.org',
+        hostname,
         method: 'POST',
+        path,
         headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-        timeout: 15000,
+        timeout: 20000,
       },
       (res) => {
         let d = '';
@@ -28,15 +38,45 @@ function rpc(method, params) {
     req.on('error', reject);
     req.on('timeout', () => {
       req.destroy();
-      reject(new Error('BSC RPC timeout'));
+      reject(new Error(`BSC RPC timeout (${hostname})`));
     });
     req.write(body);
     req.end();
   });
 }
 
+async function rpc(method, params) {
+  let lastErr = null;
+  for (const host of DEFAULT_RPC_HOSTS) {
+    try {
+      const j = await rpcOnHost(host, method, params);
+      if (j.error) {
+        lastErr = new Error(j.error.message || 'RPC error');
+        continue;
+      }
+      return j;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('All BSC RPC hosts failed');
+}
+
 function padAddress(addr) {
   return `0x${String(addr).toLowerCase().replace(/^0x/, '').padStart(64, '0')}`;
+}
+
+function parseTransferLog(log, txHashFallback = '') {
+  const from = `0x${log.topics[1].slice(26)}`;
+  const to = `0x${log.topics[2].slice(26)}`;
+  const amount = Number(BigInt(log.data)) / 1e18;
+  return {
+    amount: Number(amount.toFixed(8)),
+    from,
+    to,
+    txHash: log.transactionHash || txHashFallback,
+    blockNumber: log.blockNumber ? parseInt(log.blockNumber, 16) : undefined,
+  };
 }
 
 /**
@@ -52,11 +92,9 @@ async function getUsdtTransferFromTx(txHash, expectedTo = '') {
     for (const log of j.result.logs || []) {
       if ((log.address || '').toLowerCase() !== USDT_BEP20) continue;
       if ((log.topics || [])[0] !== TRANSFER_TOPIC) continue;
-      const from = `0x${log.topics[1].slice(26)}`;
-      const to = `0x${log.topics[2].slice(26)}`;
-      if (wantTo && to.toLowerCase() !== wantTo) continue;
-      const amount = Number(BigInt(log.data)) / 1e18;
-      return { amount: Number(amount.toFixed(8)), from, to, txHash: txHash.trim() };
+      const transfer = parseTransferLog(log, txHash.trim());
+      if (wantTo && transfer.to.toLowerCase() !== wantTo) continue;
+      return transfer;
     }
     return null;
   } catch {
@@ -66,48 +104,128 @@ async function getUsdtTransferFromTx(txHash, expectedTo = '') {
 
 /**
  * Scan recent blocks for USDT transfer from → to with amount >= minAmount.
- * No Tx Hash required from the user.
+ * Uses small chunked eth_getLogs (public RPCs reject large ranges).
  */
-async function findRecentUsdtTransfer({ from, to, minAmount = 10, lookbackBlocks = 8000 } = {}) {
+async function findRecentUsdtTransfer({
+  from,
+  to,
+  minAmount = 10,
+  lookbackBlocks = 6000,
+  chunkSize = 40,
+} = {}) {
   if (!from || !to) return null;
-  try {
-    const latestRes = await rpc('eth_blockNumber', []);
-    const latest = parseInt(latestRes.result, 16);
-    const fromBlock = Math.max(0, latest - lookbackBlocks);
-    const topics = [TRANSFER_TOPIC, padAddress(from), padAddress(to)];
-    const logsRes = await rpc('eth_getLogs', [
-      {
-        fromBlock: `0x${fromBlock.toString(16)}`,
-        toBlock: 'latest',
-        address: USDT_BEP20,
-        topics,
-      },
-    ]);
-    const logs = logsRes.result || [];
-    if (!logs.length) return null;
 
-    // newest first
-    for (let i = logs.length - 1; i >= 0; i -= 1) {
-      const log = logs[i];
-      const amount = Number(BigInt(log.data)) / 1e18;
-      if (amount + 0.0000001 < Number(minAmount)) continue;
-      return {
-        amount: Number(amount.toFixed(8)),
-        from: `0x${log.topics[1].slice(26)}`,
-        to: `0x${log.topics[2].slice(26)}`,
-        txHash: log.transactionHash,
-        blockNumber: parseInt(log.blockNumber, 16),
-      };
+  const topics = [TRANSFER_TOPIC, padAddress(from), padAddress(to)];
+  let lastError = null;
+
+  for (const host of DEFAULT_RPC_HOSTS) {
+    try {
+      const latestRes = await rpcOnHost(host, 'eth_blockNumber', []);
+      if (latestRes.error || !latestRes.result) {
+        lastError = latestRes.error?.message || 'no block number';
+        continue;
+      }
+      const latest = parseInt(latestRes.result, 16);
+      const oldest = Math.max(0, latest - lookbackBlocks);
+
+      for (let end = latest; end > oldest; end -= chunkSize) {
+        const start = Math.max(oldest, end - chunkSize + 1);
+        const logsRes = await rpcOnHost(host, 'eth_getLogs', [
+          {
+            fromBlock: `0x${start.toString(16)}`,
+            toBlock: `0x${end.toString(16)}`,
+            address: USDT_BEP20,
+            topics,
+          },
+        ]);
+
+        if (logsRes.error) {
+          lastError = logsRes.error.message || 'getLogs error';
+          // try next host if this one rejects ranges
+          if (/limit|range|exceed/i.test(lastError)) break;
+          continue;
+        }
+
+        const logs = logsRes.result || [];
+        for (let i = logs.length - 1; i >= 0; i -= 1) {
+          const transfer = parseTransferLog(logs[i]);
+          if (transfer.amount + 0.0000001 < Number(minAmount)) continue;
+          return transfer;
+        }
+      }
+
+      // finished this host with no match — try next host anyway once
+      // (no match is not an error)
+      return null;
+    } catch (e) {
+      lastError = e.message || String(e);
     }
-    return null;
-  } catch {
-    return null;
   }
+
+  if (lastError) {
+    const err = new Error(`BSC scan failed: ${lastError}`);
+    err.code = 'BSC_SCAN_FAILED';
+    throw err;
+  }
+  return null;
+}
+
+/**
+ * Find recent USDT received by company wallet (any sender).
+ * Used to give a clearer "wrong wallet" message.
+ */
+async function findRecentIncomingUsdt({
+  to,
+  minAmount = 10,
+  lookbackBlocks = 2000,
+  chunkSize = 40,
+  maxResults = 15,
+} = {}) {
+  if (!to) return [];
+  const topics = [TRANSFER_TOPIC, null, padAddress(to)];
+  const found = [];
+
+  for (const host of DEFAULT_RPC_HOSTS) {
+    try {
+      const latestRes = await rpcOnHost(host, 'eth_blockNumber', []);
+      if (latestRes.error || !latestRes.result) continue;
+      const latest = parseInt(latestRes.result, 16);
+      const oldest = Math.max(0, latest - lookbackBlocks);
+
+      for (let end = latest; end > oldest && found.length < maxResults; end -= chunkSize) {
+        const start = Math.max(oldest, end - chunkSize + 1);
+        const logsRes = await rpcOnHost(host, 'eth_getLogs', [
+          {
+            fromBlock: `0x${start.toString(16)}`,
+            toBlock: `0x${end.toString(16)}`,
+            address: USDT_BEP20,
+            topics,
+          },
+        ]);
+        if (logsRes.error) {
+          if (/limit|range|exceed/i.test(logsRes.error.message || '')) break;
+          continue;
+        }
+        const logs = logsRes.result || [];
+        for (let i = logs.length - 1; i >= 0; i -= 1) {
+          const transfer = parseTransferLog(logs[i]);
+          if (transfer.amount + 0.0000001 < Number(minAmount)) continue;
+          found.push(transfer);
+          if (found.length >= maxResults) break;
+        }
+      }
+      return found;
+    } catch {
+      /* try next host */
+    }
+  }
+  return found;
 }
 
 module.exports = {
   getUsdtTransferFromTx,
   findRecentUsdtTransfer,
+  findRecentIncomingUsdt,
   USDT_BEP20,
   TRANSFER_TOPIC,
 };
