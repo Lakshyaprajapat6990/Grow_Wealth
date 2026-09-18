@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { getEthereumProvider, WALLET_CONNECT_HINT, WALLET_NOT_FOUND_MSG } from '../utils/walletProvider';
 
 export default function Deposit() {
   const { user, refreshUser } = useAuth();
@@ -49,16 +50,17 @@ export default function Deposit() {
     setErr('');
     setMsg('');
     try {
-      if (!window.ethereum) {
-        setErr('MetaMask / Web3 wallet not found. Use Address/QR tab or install MetaMask.');
+      const provider = getEthereumProvider();
+      if (!provider) {
+        setErr(WALLET_NOT_FOUND_MSG);
         return;
       }
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      const chainId = await provider.request({ method: 'eth_chainId' });
       if (chainId !== '0x38') {
         setErr('Wrong Network. Please switch to BSC (BEP-20).');
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x38' }],
           });
@@ -67,7 +69,9 @@ export default function Deposit() {
         }
         return;
       }
-      setMsg(`Wallet connected: ${accounts[0]}. Send USDT (BEP-20) to the deposit address, then submit Tx Hash below.`);
+      setMsg(
+        `Wallet connected: ${accounts[0]}. Send USDT (BEP-20) to the deposit address, then submit Tx Hash below.`
+      );
     } catch (e) {
       setErr(e.message || 'Wallet connect failed');
     }
@@ -135,9 +139,7 @@ export default function Deposit() {
           </div>
         ) : (
           <div>
-            <p style={{ color: 'var(--text-muted)' }}>
-              Connect MetaMask / Trust Wallet. Network must be BSC (BEP-20), then send USDT to company address.
-            </p>
+            <p style={{ color: 'var(--text-muted)' }}>{WALLET_CONNECT_HINT}</p>
             <button className="btn btn-primary" type="button" onClick={connectWallet}>
               Connect Wallet
             </button>

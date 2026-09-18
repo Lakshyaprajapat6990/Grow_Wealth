@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema(
     joiningAmount: { type: Number, default: 0 },
     joinedAt: { type: Date, default: null },
     totalDeposited: { type: Number, default: 0 },
+    registrationPaid: { type: Boolean, default: true },
 
     // Withdraw rules
     hasCompletedFirstWithdrawal: { type: Boolean, default: false },
@@ -101,6 +102,7 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     joiningAmount: this.joiningAmount,
     joinedAt: this.joinedAt,
     totalDeposited: this.totalDeposited,
+    registrationPaid: this.registrationPaid !== false,
     hasCompletedFirstWithdrawal: this.hasCompletedFirstWithdrawal,
     withdrawalCount: this.withdrawalCount,
     directCount: this.directCount,

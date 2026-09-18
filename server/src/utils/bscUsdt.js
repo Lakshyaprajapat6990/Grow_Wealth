@@ -8,10 +8,10 @@ function rpc(method, params) {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
-        hostname: 'bsc-dataseed.binance.org',
+        hostname: process.env.BSC_RPC_HOST || 'bsc-dataseed.binance.org',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-        timeout: 12000,
+        timeout: 15000,
       },
       (res) => {
         let d = '';
@@ -35,9 +35,13 @@ function rpc(method, params) {
   });
 }
 
+function padAddress(addr) {
+  return `0x${String(addr).toLowerCase().replace(/^0x/, '').padStart(64, '0')}`;
+}
+
 /**
  * Read USDT (BEP-20) transfer amount from a tx hash.
- * Returns { amount, from, to } or null if not found / RPC fail.
+ * Returns { amount, from, to, txHash } or null.
  */
 async function getUsdtTransferFromTx(txHash, expectedTo = '') {
   if (!txHash || typeof txHash !== 'string' || !txHash.startsWith('0x')) return null;
@@ -60,4 +64,50 @@ async function getUsdtTransferFromTx(txHash, expectedTo = '') {
   }
 }
 
-module.exports = { getUsdtTransferFromTx, USDT_BEP20 };
+/**
+ * Scan recent blocks for USDT transfer from → to with amount >= minAmount.
+ * No Tx Hash required from the user.
+ */
+async function findRecentUsdtTransfer({ from, to, minAmount = 10, lookbackBlocks = 8000 } = {}) {
+  if (!from || !to) return null;
+  try {
+    const latestRes = await rpc('eth_blockNumber', []);
+    const latest = parseInt(latestRes.result, 16);
+    const fromBlock = Math.max(0, latest - lookbackBlocks);
+    const topics = [TRANSFER_TOPIC, padAddress(from), padAddress(to)];
+    const logsRes = await rpc('eth_getLogs', [
+      {
+        fromBlock: `0x${fromBlock.toString(16)}`,
+        toBlock: 'latest',
+        address: USDT_BEP20,
+        topics,
+      },
+    ]);
+    const logs = logsRes.result || [];
+    if (!logs.length) return null;
+
+    // newest first
+    for (let i = logs.length - 1; i >= 0; i -= 1) {
+      const log = logs[i];
+      const amount = Number(BigInt(log.data)) / 1e18;
+      if (amount + 0.0000001 < Number(minAmount)) continue;
+      return {
+        amount: Number(amount.toFixed(8)),
+        from: `0x${log.topics[1].slice(26)}`,
+        to: `0x${log.topics[2].slice(26)}`,
+        txHash: log.transactionHash,
+        blockNumber: parseInt(log.blockNumber, 16),
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = {
+  getUsdtTransferFromTx,
+  findRecentUsdtTransfer,
+  USDT_BEP20,
+  TRANSFER_TOPIC,
+};

@@ -31,6 +31,15 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, [token]);
 
+  function applySession(data) {
+    if (data?.token && data?.user) {
+      localStorage.setItem('gw_token', data.token);
+      localStorage.setItem('gw_user', JSON.stringify(data.user));
+      setToken(data.token);
+      setUser(data.user);
+    }
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -39,18 +48,26 @@ export function AuthProvider({ children }) {
       isAdmin: user?.role === 'admin',
       async login(userId, password) {
         const { data } = await api.post('/auth/login', { userId, password });
-        localStorage.setItem('gw_token', data.token);
-        localStorage.setItem('gw_user', JSON.stringify(data.user));
-        setToken(data.token);
-        setUser(data.user);
+        applySession(data);
         return data;
       },
+      /** Step 1 — save details; no login yet */
+      async registerStart(payload) {
+        const { data } = await api.post('/auth/register-start', payload);
+        return data;
+      },
+      /** Step 2 — verify $10 USDT (txHash optional; auto-scan if omitted) */
+      async registerConfirm(pendingId, txHash = '') {
+        const { data } = await api.post('/auth/register-confirm', {
+          pendingId,
+          txHash: txHash || undefined,
+        });
+        applySession(data);
+        return data;
+      },
+      /** @deprecated use registerStart — kept for old callers */
       async register(payload) {
-        const { data } = await api.post('/auth/register', payload);
-        localStorage.setItem('gw_token', data.token);
-        localStorage.setItem('gw_user', JSON.stringify(data.user));
-        setToken(data.token);
-        setUser(data.user);
+        const { data } = await api.post('/auth/register-start', payload);
         return data;
       },
       logout() {

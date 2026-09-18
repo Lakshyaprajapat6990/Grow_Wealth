@@ -19,7 +19,14 @@ export default function Login() {
       const data = await login(userId.trim().toUpperCase(), password);
       navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      const body = err.response?.data;
+      if (body?.needsPayment && body?.pendingId) {
+        setError(
+          `${body.message || 'Complete registration payment first.'} Open Register and continue payment (pending: ${body.pendingId.slice(0, 8)}…).`
+        );
+      } else {
+        setError(body?.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }

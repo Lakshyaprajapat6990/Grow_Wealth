@@ -40,6 +40,10 @@ function isAllowedOrigin(origin) {
 
   if (allowed.includes(normalized)) return true;
   if (/^https?:\/\/(localhost|127\.0\.0\.1):\d+$/i.test(normalized)) return true;
+  // Local LAN (phone on same Wi‑Fi)
+  if (/^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d+$/i.test(normalized)) {
+    return true;
+  }
   if (/^https:\/\/([\w-]+\.)*vercel\.app$/i.test(normalized)) return true;
   return false;
 }
