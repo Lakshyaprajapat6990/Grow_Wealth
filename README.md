@@ -17,7 +17,7 @@ USDT BEP-20 investment & member platform — **full stack deployable on Vercel**
 
 | Role | User ID | Password |
 |------|---------|----------|
-| Super Admin | `GW0000001` | `Grow@!!!;gta21` |
+| Super Admin | `GW0000001` | `growwelth?/.<>";}{12` |
 | Demo Client | `GW9999999` | `Client@123` |
 
 Transaction password (demo client): `123456`
