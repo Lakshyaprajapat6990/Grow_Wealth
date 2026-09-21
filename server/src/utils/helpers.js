@@ -2,9 +2,21 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 function signToken(user) {
-  return jwt.sign({ id: user._id, userId: user.userId, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES || '7d',
-  });
+  const isAdmin = user.role === 'admin';
+  const expiresIn = isAdmin
+    ? process.env.ADMIN_JWT_EXPIRES || '24h'
+    : process.env.JWT_EXPIRES || '7d';
+
+  return jwt.sign(
+    {
+      id: user._id,
+      userId: user.userId,
+      role: user.role,
+      tv: user.tokenVersion || 0,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn }
+  );
 }
 
 function randomDigits(len = 7) {

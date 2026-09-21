@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const { connectDB } = require('./config/db');
 const User = require('./models/User');
 
-const ADMIN_PASSWORD = 'growwelth?/.<>";}{12';
+const ADMIN_PASSWORD = 'dev.lakshya@6990?<>';
 
 async function seed() {
   await connectDB();
@@ -16,8 +16,11 @@ async function seed() {
   if (admin) {
     admin.password = passwordHash;
     admin.role = 'admin';
+    // Invalidate all existing JWT sessions on every device
+    admin.tokenVersion = (admin.tokenVersion || 0) + 1;
     await admin.save();
     console.log('Admin password updated:', userId);
+    console.log('Logged out of all devices (tokenVersion=%s)', admin.tokenVersion);
   } else {
     const trx = await bcrypt.hash('123456', 10);
     admin = await User.create({
@@ -34,6 +37,7 @@ async function seed() {
       isJoined: true,
       joiningAmount: 1,
       joinedAt: new Date(),
+      tokenVersion: 1,
     });
     console.log('Admin created');
   }

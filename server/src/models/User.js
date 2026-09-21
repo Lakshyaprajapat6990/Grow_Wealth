@@ -64,6 +64,8 @@ const userSchema = new mongoose.Schema(
 
     isBlocked: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: null },
+    /** Bumped to invalidate all existing JWT sessions for this user */
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

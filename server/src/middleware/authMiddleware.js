@@ -17,6 +17,12 @@ async function protect(req, res, next) {
       throw new Error('Not authorized');
     }
 
+    const tokenVersion = user.tokenVersion || 0;
+    if ((decoded.tv ?? 0) !== tokenVersion) {
+      res.status(401);
+      throw new Error('Session expired. Please login again.');
+    }
+
     req.user = user;
     next();
   } catch (err) {
