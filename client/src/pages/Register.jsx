@@ -385,9 +385,20 @@ export default function Register() {
           </div>
 
           <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-              Opens wallet with <strong>company address</strong> + <strong>${payInfo.amountDue} USDT</strong>{' '}
-              filled (Trust &amp; TokenPocket). SafePal opens the app — then tap Pay or send manually.
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                textAlign: 'center',
+                padding: '0.55rem 0.75rem',
+                borderRadius: 8,
+                background: 'rgba(250, 204, 21, 0.22)',
+                color: '#facc15',
+                border: '1px solid rgba(250, 204, 21, 0.45)',
+              }}
+            >
+              Minimum 10 USDT to 50000 USDT pay
             </p>
             <button
               className="btn btn-primary"
@@ -395,7 +406,7 @@ export default function Register() {
               type="button"
               onClick={() => openWalletApp('trust')}
             >
-              Trust Wallet · Send ${payInfo.amountDue} USDT
+              Trust Wallet
             </button>
             <button
               className="btn btn-primary"
@@ -403,7 +414,7 @@ export default function Register() {
               type="button"
               onClick={() => openWalletApp('tokenpocket')}
             >
-              TokenPocket · Send ${payInfo.amountDue} USDT
+              TokenPocket
             </button>
             <button
               className="btn btn-primary"
@@ -411,7 +422,7 @@ export default function Register() {
               type="button"
               onClick={() => openWalletApp('safepal')}
             >
-              SafePal · Open &amp; pay ${payInfo.amountDue} USDT
+              SafePal
             </button>
           </div>
 
@@ -581,7 +592,7 @@ export default function Register() {
         </label>
 
         <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.75rem' }} disabled={loading}>
-          {loading ? 'Saving…' : 'Next · Pay $10 USDT'}
+          {loading ? 'Saving…' : 'Next · Pay to create account'}
         </button>
 
         <p className="auth-foot">
