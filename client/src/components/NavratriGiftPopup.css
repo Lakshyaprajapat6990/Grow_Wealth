@@ -1,0 +1,142 @@
+.navratri-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 153, 51, 0.25), transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(212, 248, 74, 0.3), transparent 35%),
+    rgba(10, 12, 8, 0.45);
+  backdrop-filter: blur(4px);
+  animation: navratri-fade 0.35s ease;
+}
+
+@keyframes navratri-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.navratri-modal {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 20px;
+  background: linear-gradient(165deg, #fffdf8 0%, #ffffff 45%, #f7f8f4 100%);
+  border: 1px solid rgba(255, 153, 51, 0.35);
+  box-shadow:
+    0 24px 60px rgba(8, 12, 5, 0.18),
+    0 0 0 1px rgba(212, 248, 74, 0.35) inset;
+  text-align: center;
+  animation: navratri-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes navratri-pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.navratri-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(10, 12, 8, 0.06);
+  color: var(--text);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.navratri-badge {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a3410;
+  background: linear-gradient(90deg, #ffcc80, #ffe082, #d4f84a);
+  border: 1px solid rgba(255, 153, 51, 0.45);
+}
+
+.navratri-gift-icon {
+  font-size: 2.75rem;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+  filter: drop-shadow(0 8px 16px rgba(255, 153, 51, 0.35));
+}
+
+.navratri-modal h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-size: 1.55rem;
+  color: #5c3d00;
+}
+
+.navratri-lead {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.navratri-points {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  text-align: left;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.navratri-points li {
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(212, 248, 74, 0.22);
+  border: 1px solid rgba(182, 217, 42, 0.4);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.navratri-status {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.navratri-status.wait {
+  background: rgba(255, 153, 51, 0.12);
+  border: 1px solid rgba(255, 153, 51, 0.35);
+  color: #9a3412;
+}
+
+.navratri-status.on {
+  background: rgba(21, 128, 61, 0.1);
+  border: 1px solid rgba(21, 128, 61, 0.3);
+  color: #14532d;
+}
+
+.navratri-cta {
+  width: 100%;
+}

@@ -6,12 +6,13 @@ export const PLAN_CORE = [
   { rule: 'Daily ROI', value: '1% Daily (All 7 Days)' },
   { rule: 'ROI Cap', value: 'Maximum 2X of the investment' },
   { rule: 'Compounding Mode', value: 'Manual Compounding' },
-  { rule: 'Withdrawal', value: 'Min $10 (Unlimited subsequent withdrawals)' },
-  { rule: 'Withdrawal Fee', value: '10%' },
+  { rule: 'Withdrawal', value: 'Min $10 · Principal + income allowed · Process 24–48 hours' },
+  { rule: 'Withdrawal Fee', value: '8%' },
   {
     rule: 'Refer & Earn',
-    value: '1st direct 5% · 2nd 3% · 3rd 2% · 4th 1.5% · 5th 1% · 6th–10th 0.5% (on joining amount)',
+    value: 'L1 5% · L2 2% · L3 1% of joining amount (3 upline levels)',
   },
+  { rule: 'Company share', value: '0.8% of joining amount' },
 ];
 
 export const PLAN_LEVELS = [
@@ -25,22 +26,19 @@ export const PLAN_LEVELS = [
 ];
 
 export const REFER_EARN_TABLE = [
-  { order: '1st direct', rate: '5%' },
-  { order: '2nd direct', rate: '3%' },
-  { order: '3rd direct', rate: '2%' },
-  { order: '4th direct', rate: '1.5%' },
-  { order: '5th direct', rate: '1%' },
-  { order: '6th–10th direct', rate: '0.5% each' },
+  { order: 'Level 1 (direct)', rate: '5%' },
+  { order: 'Level 2', rate: '2%' },
+  { order: 'Level 3', rate: '1%' },
 ];
 
 export const PLAN_DISCLAIMER =
-  'Disclaimer: The maximum ROI is capped at 2X of the investment.';
+  'Disclaimer: The maximum ROI is capped at 2X of the investment. Leader incentives are non-withdrawable.';
 
 export const PLAN_LEVEL_NOTE =
   'Level income is ROI ka ROI: when a downline receives daily ROI, uplines L1–L7 earn the Level Income % — only if their own total ROI has reached that level’s ROI / TARGET. L-7 has no target.';
 
 export const REFER_EARN_NOTE =
-  'Refer & Earn: only the direct sponsor earns. Rate depends on how many joined directs they already have (1st→5%, 2nd→3%, …). Paid on the new member’s joining/investment amount. No upline chain share.';
+  'Refer & Earn: on each join, L1 (sponsor) 5%, L2 2%, L3 1% of the joining amount. Company also receives 0.8%.';
 
 export const RANK_REWARDS = [
   { rank: 1, target: '$5,000', reward: '150 USDT' },
@@ -58,3 +56,5 @@ export const RANK_REWARDS = [
 export const RANK_REWARD_NOTE =
   'Rank & Rewards: when your team’s total deposited volume hits a rank target, you receive a one-time USDT bonus. Team headcount does not matter — only business volume.';
 
+export const LEADER_INCENTIVE_NOTE =
+  'Selected leaders may receive 100 USDT incentive (50 company + 50 leader). Non-withdrawable. Trading/ROI benefits unlock after 500 USDT downline business.';

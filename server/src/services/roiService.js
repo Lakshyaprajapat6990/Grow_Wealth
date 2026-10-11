@@ -12,7 +12,13 @@ function todayKey(date = new Date()) {
 function roiBase(user) {
   const deposited = Number(user.totalDeposited || 0);
   const joining = Number(user.joiningAmount || 0);
-  return Math.max(deposited, joining, 0);
+  const stake = Math.max(deposited, joining, 0);
+  // Locked leader incentive only earns ROI after unlock (still non-withdrawable)
+  const leaderBoost =
+    user.leaderIncentiveActive && Number(user.leaderIncentiveAmount || 0) > 0
+      ? Number(user.leaderIncentiveAmount)
+      : 0;
+  return Number((stake + leaderBoost).toFixed(8));
 }
 
 function remainingRoiCap(user) {

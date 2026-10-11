@@ -1,34 +1,26 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { evaluateRanksUpChain } = require('./rankRewardService');
+const { checkAndUnlockLeaderIncentive } = require('./leaderIncentiveService');
 
 const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
 
-/** nth direct join → % of that member's joining/investment amount (sponsor only, no upline). */
-const REFER_EARN_RATES = [5, 3, 2, 1.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5];
+/** L1 / L2 / L3 % of joining amount (upline chain). */
+const REFER_LEVEL_RATES = [5, 2, 1];
+/** Kept for API/UI compatibility — means L1/L2/L3 rates. */
+const REFER_EARN_RATES = REFER_LEVEL_RATES;
 
-function getReferEarnPercent(nth) {
-  const n = Number(nth) || 0;
-  if (n < 1) return 0;
-  if (n <= REFER_EARN_RATES.length) return REFER_EARN_RATES[n - 1];
-  return REFER_EARN_RATES[REFER_EARN_RATES.length - 1]; // after 10th: keep 0.5%
+const COMPANY_REFERRAL_PERCENT = Number(process.env.COMPANY_REFERRAL_PERCENT || 0.8);
+const COMPANY_USER_ID = 'GW0000001';
+
+function getReferEarnPercent(level) {
+  const n = Number(level) || 0;
+  if (n < 1 || n > REFER_LEVEL_RATES.length) return 0;
+  return REFER_LEVEL_RATES[n - 1];
 }
 
-/**
- * Credit Refer & Earn to the direct sponsor only.
- * nth = which joined direct this is for the sponsor (1st→5%, 2nd→3%, …).
- * baseAmount = new member's joining/investment amount.
- */
-async function creditReferEarn(sponsorId, fromUserId, baseAmount, nth) {
-  if (!sponsorId || sponsorId === 'GW0000001' || sponsorId === 'ADMIN') return null;
-
-  const sponsor = await User.findOne({ userId: sponsorId, isBlocked: false });
-  if (!sponsor || sponsor.role === 'admin') return null;
-
-  const percent = getReferEarnPercent(nth);
+async function creditOneReferLevel(sponsor, fromUserId, baseAmount, level, percent) {
   const base = Number(baseAmount || 0);
-  if (percent <= 0 || base <= 0) return null;
-
   const amt = Number(((base * percent) / 100).toFixed(8));
   if (amt <= 0) return null;
 
@@ -44,30 +36,114 @@ async function creditReferEarn(sponsorId, fromUserId, baseAmount, nth) {
     amount: amt,
     balanceAfter: sponsor.incomeBalance,
     status: 'success',
-    description: `Refer & Earn #${nth}: ${percent}% of $${base} from ${fromUserId}`,
+    description: `Refer L${level}: ${percent}% of $${base} from ${fromUserId}`,
     meta: {
       fromUserId,
       baseAmount: base,
       percent,
-      referralIndex: nth,
+      level,
       referEarn: true,
+      referChain: true,
     },
     createdBy: 'system',
   });
 
-  return { amount: amt, percent, nth, baseAmount: base };
+  return { userId: sponsor.userId, amount: amt, percent, level, baseAmount: base };
 }
 
-/** How many directs under this sponsor have already joined (activated). */
+/** Credit company 0.8% of joining amount (non-member payout). */
+async function creditCompanyReferralShare(fromUserId, baseAmount) {
+  const base = Number(baseAmount || 0);
+  const amt = Number(((base * COMPANY_REFERRAL_PERCENT) / 100).toFixed(8));
+  if (amt <= 0) return null;
+
+  const company = await User.findOne({ userId: COMPANY_USER_ID });
+  if (!company) return null;
+
+  company.incomeBalance = Number(((company.incomeBalance || 0) + amt).toFixed(8));
+  company.totalEarnings = Number(((company.totalEarnings || 0) + amt).toFixed(8));
+  await company.save();
+
+  await Transaction.create({
+    userId: company.userId,
+    type: 'company_income',
+    amount: amt,
+    balanceAfter: company.incomeBalance,
+    status: 'success',
+    description: `Company referral share ${COMPANY_REFERRAL_PERCENT}% of $${base} from ${fromUserId}`,
+    meta: {
+      fromUserId,
+      baseAmount: base,
+      percent: COMPANY_REFERRAL_PERCENT,
+      purpose: 'company_referral_share',
+    },
+    createdBy: 'system',
+  });
+
+  return { amount: amt, percent: COMPANY_REFERRAL_PERCENT };
+}
+
+/**
+ * Walk 3 uplines: L1=5%, L2=2%, L3=1% of joining/investment amount.
+ * Also credits company 0.8%.
+ */
+async function creditReferEarnChain(fromUserId, baseAmount) {
+  const member = await User.findOne({ userId: fromUserId }).select('sponsorId');
+  if (!member?.sponsorId) {
+    return { levels: [], company: null };
+  }
+
+  const levels = [];
+  let sid = member.sponsorId;
+  const seen = new Set();
+
+  for (let level = 1; level <= REFER_LEVEL_RATES.length; level += 1) {
+    if (!sid || sid === COMPANY_USER_ID || sid === 'ADMIN' || seen.has(sid)) break;
+    seen.add(sid);
+
+    const sponsor = await User.findOne({ userId: sid, isBlocked: false });
+    if (!sponsor || sponsor.role === 'admin') {
+      sid = sponsor?.sponsorId || null;
+      continue;
+    }
+
+    const percent = getReferEarnPercent(level);
+    const credited = await creditOneReferLevel(sponsor, fromUserId, baseAmount, level, percent);
+    if (credited) levels.push(credited);
+
+    sid = sponsor.sponsorId || null;
+  }
+
+  const company = await creditCompanyReferralShare(fromUserId, baseAmount);
+  return { levels, company };
+}
+
+/** @deprecated sliding-nth API — now credits L1 only equivalent via chain */
+async function creditReferEarn(sponsorId, fromUserId, baseAmount, _nth) {
+  const chain = await creditReferEarnChain(fromUserId, baseAmount);
+  return chain.levels[0] || null;
+}
+
 async function countJoinedDirects(sponsorId) {
   if (!sponsorId) return 0;
   return User.countDocuments({ sponsorId, isJoined: true, role: 'user' });
 }
 
-/**
- * Auto-activate joining when a payment/fund credit of at least JOINING_AMOUNT is received.
- * Refer & Earn uses the payment/joining amount paid by the new member.
- */
+async function afterJoinSideEffects(userId) {
+  const rankEval = await evaluateRanksUpChain(userId);
+  // Unlock leader incentives up the chain when team volume moves
+  const member = await User.findOne({ userId }).select('sponsorId');
+  let sid = member?.sponsorId;
+  const seen = new Set();
+  while (sid && sid !== COMPANY_USER_ID && !seen.has(sid)) {
+    seen.add(sid);
+    await checkAndUnlockLeaderIncentive(sid);
+    const up = await User.findOne({ userId: sid }).select('sponsorId');
+    sid = up?.sponsorId || null;
+  }
+  return rankEval;
+}
+
 async function autoJoinOnPayment(user, { paymentAmount = 0, createdBy = 'system', source = 'payment' } = {}) {
   if (!user || user.isJoined) {
     return { joined: false, alreadyJoined: !!user?.isJoined };
@@ -79,20 +155,17 @@ async function autoJoinOnPayment(user, { paymentAmount = 0, createdBy = 'system'
     return { joined: false, alreadyJoined: false, reason: 'below_min' };
   }
 
-  // Commission base = what they paid to join (fallback to min joining)
   const investBase = Math.max(paid, JOINING_AMOUNT);
-
-  let referResult = null;
-  if (user.sponsorId) {
-    const priorJoined = await countJoinedDirects(user.sponsorId);
-    const nth = priorJoined + 1;
-    referResult = await creditReferEarn(user.sponsorId, user.userId, investBase, nth);
-  }
 
   user.isJoined = true;
   user.joiningAmount = investBase;
   user.joinedAt = new Date();
   await user.save();
+
+  let referChain = { levels: [], company: null };
+  if (user.sponsorId) {
+    referChain = await creditReferEarnChain(user.userId, investBase);
+  }
 
   await Transaction.create({
     userId: user.userId,
@@ -106,19 +179,23 @@ async function autoJoinOnPayment(user, { paymentAmount = 0, createdBy = 'system'
       paymentAmount: paid,
       investBase,
       source,
-      referEarn: referResult
-        ? { nth: referResult.nth, percent: referResult.percent, amount: referResult.amount }
-        : null,
+      referChain,
     },
     createdBy,
   });
 
   const fresh = await User.findOne({ userId: user.userId });
-  const rankEval = await evaluateRanksUpChain(user.userId);
-  return { joined: true, alreadyJoined: false, user: fresh, referEarn: referResult, rankRewards: rankEval.chain };
+  const rankEval = await afterJoinSideEffects(user.userId);
+  return {
+    joined: true,
+    alreadyJoined: false,
+    user: fresh,
+    referEarn: referChain.levels[0] || null,
+    referChain,
+    rankRewards: rankEval.chain,
+  };
 }
 
-/** Manual join from fund balance (Activate Joining page). */
 async function activateJoiningFromFund(user, createdBy) {
   if (!user || user.isJoined) {
     return { ok: false, message: 'Already joined' };
@@ -128,11 +205,9 @@ async function activateJoiningFromFund(user, createdBy) {
   }
 
   const investBase = JOINING_AMOUNT;
-  let referResult = null;
+  let referChain = { levels: [], company: null };
   if (user.sponsorId) {
-    const priorJoined = await countJoinedDirects(user.sponsorId);
-    const nth = priorJoined + 1;
-    referResult = await creditReferEarn(user.sponsorId, user.userId, investBase, nth);
+    // Credit after we know userId; chain uses fromUserId
   }
 
   user.fundBalance = Number((user.fundBalance - JOINING_AMOUNT).toFixed(8));
@@ -144,6 +219,10 @@ async function activateJoiningFromFund(user, createdBy) {
   }
   await user.save();
 
+  if (user.sponsorId) {
+    referChain = await creditReferEarnChain(user.userId, investBase);
+  }
+
   await Transaction.create({
     userId: user.userId,
     type: 'joining',
@@ -151,20 +230,21 @@ async function activateJoiningFromFund(user, createdBy) {
     balanceAfter: user.fundBalance,
     status: 'success',
     description: `Joining activated for $${investBase}`,
-    meta: {
-      referEarn: referResult
-        ? { nth: referResult.nth, percent: referResult.percent, amount: referResult.amount }
-        : null,
-    },
+    meta: { referChain },
     createdBy: createdBy || user.userId,
   });
 
   const fresh = await User.findOne({ userId: user.userId });
-  const rankEval = await evaluateRanksUpChain(user.userId);
-  return { ok: true, user: fresh, referEarn: referResult, rankRewards: rankEval.chain };
+  const rankEval = await afterJoinSideEffects(user.userId);
+  return {
+    ok: true,
+    user: fresh,
+    referEarn: referChain.levels[0] || null,
+    referChain,
+    rankRewards: rankEval.chain,
+  };
 }
 
-/** Force-join specific users who already have fund (admin fix / migration). */
 async function forceJoinUsers(userIds, createdBy = 'system') {
   const results = [];
   for (const id of userIds) {
@@ -189,6 +269,7 @@ async function forceJoinUsers(userIds, createdBy = 'system') {
       ok: result.joined || result.alreadyJoined,
       message: result.joined ? 'joined' : result.reason || 'failed',
       referEarn: result.referEarn || null,
+      referChain: result.referChain || null,
     });
   }
   return results;
@@ -197,15 +278,17 @@ async function forceJoinUsers(userIds, createdBy = 'system') {
 module.exports = {
   JOINING_AMOUNT,
   REFER_EARN_RATES,
+  REFER_LEVEL_RATES,
+  COMPANY_REFERRAL_PERCENT,
   getReferEarnPercent,
   creditReferEarn,
+  creditReferEarnChain,
   countJoinedDirects,
   autoJoinOnPayment,
   activateJoiningFromFund,
   forceJoinUsers,
-  /** @deprecated use creditReferEarn — kept for older imports */
-  creditDirectIncome: async (sponsorId, fromUserId, baseAmount) => {
-    const prior = await countJoinedDirects(sponsorId);
-    return creditReferEarn(sponsorId, fromUserId, baseAmount, prior + 1);
+  creditDirectIncome: async (_sponsorId, fromUserId, baseAmount) => {
+    const chain = await creditReferEarnChain(fromUserId, baseAmount);
+    return chain.levels[0] || null;
   },
 };

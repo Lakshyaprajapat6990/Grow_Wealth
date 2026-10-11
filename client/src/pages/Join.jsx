@@ -44,7 +44,7 @@ export default function Join() {
             </p>
             <p style={{ color: 'var(--text-muted)' }}>
               Need at least $1 in fund balance. If you already deposited, click Activate Joining. Your sponsor earns
-              Refer & Earn on this joining amount (1st direct 5%, 2nd 3%, 3rd 2%, …).
+              Refer & Earn on this joining amount (L1 5% · L2 2% · L3 1%).
             </p>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
               <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">

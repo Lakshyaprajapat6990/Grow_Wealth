@@ -200,6 +200,25 @@ export default function Admin() {
     }
   }
 
+  async function grantLeaderIncentive(userId) {
+    if (
+      !window.confirm(
+        `Grant ${userId} locked 100 USDT leader incentive (50 company + 50 leader)? Trading unlocks at $500 team business.`
+      )
+    ) {
+      return;
+    }
+    setErr('');
+    setMsg('');
+    try {
+      const { data } = await api.post(`/admin/users/${userId}/leader-incentive`);
+      setMsg(data.message);
+      await load();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Leader incentive failed');
+    }
+  }
+
   async function deleteUser(userId) {
     if (!window.confirm(`Delete user ${userId} permanently? Their team will move to their sponsor.`)) return;
     setErr('');
@@ -234,7 +253,9 @@ export default function Admin() {
           <h1 className="page-title" style={{ marginBottom: 0 }}>
             Admin Panel
           </h1>
-          <p className="page-sub">Live ops · Deposits · Fund credit/debit · Auto Daily ROI 1% (2× cap) · Withdrawals 10% fee</p>
+          <p className="page-sub">
+            Live ops · Deposits · ROI 1% (2×) · Withdraw 8% · Refer L1/L2/L3 · Leader incentive
+          </p>
         </div>
         <div className="admin-header-actions">
           <Link className="btn btn-ghost" to="/dashboard">
@@ -487,6 +508,14 @@ export default function Admin() {
                       }}
                     >
                       Tree
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      type="button"
+                      onClick={() => grantLeaderIncentive(u.userId)}
+                      disabled={(u.leaderIncentiveAmount || 0) > 0}
+                    >
+                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Incentive OK' : 'Leader +100'}
                     </button>
                     <button
                       className="btn btn-ghost"

@@ -62,6 +62,14 @@ const userSchema = new mongoose.Schema(
     directCount: { type: Number, default: 0 },
     teamCount: { type: Number, default: 0 },
 
+    // Leader starter incentive (locked; trading unlocks at team volume)
+    leaderIncentiveAmount: { type: Number, default: 0 },
+    leaderIncentiveCompanyPart: { type: Number, default: 0 },
+    leaderIncentiveLeaderPart: { type: Number, default: 0 },
+    leaderIncentiveActive: { type: Boolean, default: false },
+    leaderIncentiveUnlockVolume: { type: Number, default: 500 },
+    leaderIncentiveUnlockedAt: { type: Date, default: null },
+
     isBlocked: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: null },
     /** Bumped to invalidate all existing JWT sessions for this user */
@@ -109,6 +117,9 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     withdrawalCount: this.withdrawalCount,
     directCount: this.directCount,
     teamCount: this.teamCount,
+    leaderIncentiveAmount: this.leaderIncentiveAmount || 0,
+    leaderIncentiveActive: !!this.leaderIncentiveActive,
+    leaderIncentiveUnlockVolume: this.leaderIncentiveUnlockVolume || 500,
     createdAt: this.createdAt,
   };
 };

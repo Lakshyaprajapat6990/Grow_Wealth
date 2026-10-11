@@ -42,8 +42,12 @@ export default function Withdraw() {
     }
   }
 
-  const feePct = info?.withdrawFeePercent ?? 10;
+  const feePct = info?.withdrawFeePercent ?? 8;
   const minWd = info?.withdrawMin ?? 10;
+  const processHrs = info?.withdrawProcessingHours || '24-48';
+  const available =
+    info?.availableBalance ??
+    Number(info?.incomeBalance || 0) + Number(info?.fundBalance || 0);
   const amt = Number(amount) || 0;
   const feePreview = Number(((amt * feePct) / 100).toFixed(2));
   const netPreview = Number((amt - feePreview).toFixed(2));
@@ -52,7 +56,7 @@ export default function Withdraw() {
     <div>
       <h1 className="page-title">Withdraw</h1>
       <p className="page-sub">
-        USDT BEP-20 · Min ${minWd} · Fee {feePct}% · Net paid to your wallet
+        USDT BEP-20 · Min ${minWd} · Fee {feePct}% · Principal + income · Process {processHrs}h
       </p>
 
       <form className="card" style={{ padding: '1.25rem', maxWidth: 520 }} onSubmit={submit}>
@@ -60,10 +64,17 @@ export default function Withdraw() {
         {msg && <div className="alert alert-success">{msg}</div>}
 
         <p>
-          Income Balance: <strong>${(info?.incomeBalance ?? user?.incomeBalance ?? 0).toFixed(2)}</strong>
+          Available (income + principal): <strong>${Number(available || 0).toFixed(2)}</strong>
+        </p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          Income ${(info?.incomeBalance ?? user?.incomeBalance ?? 0).toFixed(2)} · Principal / fund $
+          {(info?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)}
         </p>
         <p style={{ color: 'var(--text-muted)', wordBreak: 'break-all' }}>
           Payout wallet: {user?.walletAddress}
+        </p>
+        <p style={{ color: 'var(--warning)', fontSize: '0.85rem' }}>
+          Requests are processed in {processHrs} hours. Leader incentive (if any) cannot be withdrawn.
         </p>
 
         <div className="field">

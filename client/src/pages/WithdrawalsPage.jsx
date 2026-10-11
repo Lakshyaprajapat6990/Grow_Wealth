@@ -15,7 +15,7 @@ export default function WithdrawalsPage() {
   if (showForm) {
     return (
       <div>
-        <PageHeader title="Request Withdrawal" subtitle="Min $10 · 10% fee · USDT BEP-20" />
+        <PageHeader title="Request Withdrawal" subtitle="Min $10 · 8% fee · Principal allowed · 24–48h process" />
         <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setShowForm(false)}>
           ← Back to History
         </button>

@@ -120,7 +120,7 @@ export default function Dashboard() {
         {next ? (
           <div style={{ marginTop: '1.1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <strong style={{ color: '#fff' }}>
+              <strong style={{ color: 'var(--text)' }}>
                 Next reward: Rank {next.rank} at ${Number(next.target).toLocaleString()} business
               </strong>
               <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{next.reward} USDT</span>
@@ -140,7 +140,7 @@ export default function Dashboard() {
                 style={{
                   width: `${nextProgress}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, #b8860b, #f7c02b)',
+                  background: 'linear-gradient(90deg, #b6d92a, #d4f84a)',
                   borderRadius: 999,
                 }}
               />

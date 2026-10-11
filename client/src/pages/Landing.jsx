@@ -7,11 +7,11 @@ import './Landing.css';
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn 1% daily ROI (capped at 2× investment), Refer & Earn on joins (1st direct 5%, 2nd 3%, 3rd 2%…), and withdraw with a 10% fee.',
+    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw income or principal with an 8% fee (24–48h process).',
   },
   {
     q: 'How do I activate my account?',
-    a: 'Register with your BEP-20 wallet, deposit at least $10 USDT, then activate joining from the dashboard. Your sponsor earns Refer & Earn on your joining amount (rate depends on whether you are their 1st, 2nd, 3rd… joined direct).',
+    a: 'Register with your BEP-20 wallet, deposit at least $10 USDT, then activate joining from the dashboard. Your sponsor (L1) earns 5%, their sponsor (L2) 2%, and L3 earns 1% of your joining amount.',
   },
   {
     q: 'What is the ROI?',
@@ -114,8 +114,8 @@ export default function Landing() {
             </h1>
             <p className="lp-lead">
               Stake from <strong>$10</strong> (max $50,000). Earn <strong>1% daily ROI</strong> (2×
-              cap) · <strong>Refer & Earn</strong> (1st 5% · 2nd 3% · 3rd 2%…) · L1–L7 level income. Manual compound.
-              Withdraw min $10 with 10% fee.
+              cap) · <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%) · L1–L7 level income. Manual compound.
+              Withdraw min $10 · 8% fee · principal allowed · 24–48h.
             </p>
             <div className="lp-hero-actions">
               <Link to="/register" className="btn btn-primary lp-btn-lg">

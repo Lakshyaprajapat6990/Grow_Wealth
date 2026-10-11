@@ -539,6 +539,24 @@ async function forceJoinUsersAdmin(req, res) {
   return res.json({ success: true, results });
 }
 
+/** Admin: grant locked 100 USDT leader incentive (50 company + 50 leader). */
+async function grantLeaderIncentiveAdmin(req, res) {
+  const { grantLeaderIncentive } = require('../services/leaderIncentiveService');
+  const userId = String(req.params.userId || req.body.userId || '').trim().toUpperCase();
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'userId required' });
+  }
+  const result = await grantLeaderIncentive(userId, { createdBy: req.user.userId });
+  if (!result.ok) {
+    return res.status(400).json({ success: false, message: result.message });
+  }
+  return res.json({
+    success: true,
+    message: 'Leader incentive granted (locked). Trading unlocks at $500 team business.',
+    user: result.user.toSafeJSON(),
+  });
+}
+
 module.exports = {
   dashboard,
   creditRoi,
@@ -553,4 +571,5 @@ module.exports = {
   adjustFund,
   forceJoinUsersAdmin,
   getUserHistory,
+  grantLeaderIncentiveAdmin,
 };

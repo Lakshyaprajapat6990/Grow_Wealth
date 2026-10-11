@@ -24,7 +24,7 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f7c02b, #b8860b);
+  background: linear-gradient(135deg, #d4f84a, #b6d92a);
   margin-bottom: 0.6rem;
 }
 
@@ -34,7 +34,7 @@
   height: 96px;
   object-fit: contain;
   margin: 0 auto 0.75rem;
-  filter: drop-shadow(0 8px 18px rgba(247, 192, 43, 0.28));
+  filter: drop-shadow(0 8px 18px rgba(212, 248, 74, 0.35));
 }
 
 .auth-brand h1 {

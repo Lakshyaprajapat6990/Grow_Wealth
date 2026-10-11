@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import NavratriGiftPopup from '../components/NavratriGiftPopup';
 import './MemberLayout.css';
 
 const menu = [
@@ -137,6 +138,7 @@ export default function MemberLayout() {
         </main>
       </div>
       {open && <div className="backdrop" onClick={() => setOpen(false)} />}
+      <NavratriGiftPopup />
     </div>
   );
 }

@@ -13,6 +13,7 @@ const {
   adjustFund,
   forceJoinUsersAdmin,
   getUserHistory,
+  grantLeaderIncentiveAdmin,
 } = require('../controllers/adminController');
 const { adminList, adminReply } = require('../controllers/supportController');
 const { adminCreate } = require('../controllers/notificationController');
@@ -28,6 +29,7 @@ router.get('/users', listUsers);
 router.get('/users/:userId/history', getUserHistory);
 router.get('/team-hierarchy', getTeamHierarchy);
 router.post('/users/force-join', forceJoinUsersAdmin);
+router.post('/users/:userId/leader-incentive', grantLeaderIncentiveAdmin);
 router.delete('/users/:userId', adminDeleteUser);
 router.post('/roi/credit', creditRoi);
 router.post('/roi/run-daily', runDailyRoiAdmin);

@@ -393,9 +393,9 @@ export default function Register() {
                 textAlign: 'center',
                 padding: '0.55rem 0.75rem',
                 borderRadius: 8,
-                background: 'rgba(250, 204, 21, 0.22)',
-                color: '#facc15',
-                border: '1px solid rgba(250, 204, 21, 0.45)',
+                background: 'rgba(212, 248, 74, 0.35)',
+                color: '#3f5200',
+                border: '1px solid rgba(182, 217, 42, 0.65)',
               }}
             >
               Minimum 10 USDT to 50000 USDT pay

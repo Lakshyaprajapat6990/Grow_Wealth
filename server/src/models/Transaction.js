@@ -22,6 +22,8 @@ const transactionSchema = new mongoose.Schema(
         'admin_credit',
         'admin_debit',
         'compound',
+        'company_income',
+        'leader_incentive',
       ],
     },
     amount: { type: Number, required: true },
