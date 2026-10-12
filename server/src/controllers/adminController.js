@@ -539,21 +539,37 @@ async function forceJoinUsersAdmin(req, res) {
   return res.json({ success: true, results });
 }
 
-/** Admin: grant locked 100 USDT leader incentive (50 company + 50 leader). */
+/** Admin: grant locked 100 USDT gift to one member (50 company + 50 leader). */
 async function grantLeaderIncentiveAdmin(req, res) {
   const { grantLeaderIncentive } = require('../services/leaderIncentiveService');
   const userId = String(req.params.userId || req.body.userId || '').trim().toUpperCase();
   if (!userId) {
     return res.status(400).json({ success: false, message: 'userId required' });
   }
-  const result = await grantLeaderIncentive(userId, { createdBy: req.user.userId });
-  if (!result.ok) {
+  const result = await grantLeaderIncentive(userId, {
+    createdBy: req.user.userId,
+    source: 'admin_manual',
+  });
+  if (!result.ok && !result.already) {
     return res.status(400).json({ success: false, message: result.message });
   }
   return res.json({
     success: true,
-    message: 'Leader incentive granted (locked). Trading unlocks at $500 team business.',
+    message: result.already
+      ? 'Gift already on this account (locked, non-withdrawable).'
+      : '100 USDT locked gift granted. Not withdrawable. Trading unlocks at $500 team business.',
     user: result.user.toSafeJSON(),
+  });
+}
+
+/** Admin: give locked 100 USDT gift to every member missing it. */
+async function grantGiftToAllMembersAdmin(req, res) {
+  const { grantGiftToAllMembers } = require('../services/leaderIncentiveService');
+  const out = await grantGiftToAllMembers({ createdBy: req.user.userId });
+  return res.json({
+    success: true,
+    message: `Processed ${out.count} members for locked 100 USDT gift (non-withdrawable).`,
+    ...out,
   });
 }
 
@@ -572,4 +588,5 @@ module.exports = {
   forceJoinUsersAdmin,
   getUserHistory,
   grantLeaderIncentiveAdmin,
+  grantGiftToAllMembersAdmin,
 };

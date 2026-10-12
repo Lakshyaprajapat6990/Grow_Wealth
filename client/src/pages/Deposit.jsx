@@ -151,6 +151,13 @@ export default function Deposit() {
         <h3 style={{ marginTop: 0 }}>Submit Deposit Proof</h3>
         <p style={{ color: 'var(--text-muted)' }}>
           Fund balance: ${(walletInfo?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)}
+          {(walletInfo?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0) > 0 && (
+            <span>
+              {' '}
+              (includes $
+              {Number(walletInfo?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0).toFixed(0)} locked gift)
+            </span>
+          )}
         </p>
         {err && <div className="alert alert-error">{err}</div>}
         {msg && <div className="alert alert-success">{msg}</div>}

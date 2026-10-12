@@ -41,7 +41,19 @@ export default function Transfer() {
       <form className="card" style={{ padding: '1.25rem', maxWidth: 480 }} onSubmit={submit}>
         {err && <div className="alert alert-error">{err}</div>}
         {msg && <div className="alert alert-success">{msg}</div>}
-        <p>Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong></p>
+        <p>
+          Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong>
+          {(user?.leaderIncentiveAmount || 0) > 0 && (
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+              {' '}
+              · Spendable $
+              {Number(
+                user?.principalBalance ?? Number(user?.fundBalance || 0) - Number(user?.leaderIncentiveAmount || 0)
+              ).toFixed(2)}{' '}
+              (gift locked)
+            </span>
+          )}
+        </p>
         <div className="field">
           <label className="label">Receiver User ID</label>
           <input className="input" value={receiverUserId} onChange={(e) => setReceiverUserId(e.target.value)} placeholder="GW1234567" required />

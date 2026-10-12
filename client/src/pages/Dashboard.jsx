@@ -20,8 +20,14 @@ export default function Dashboard() {
   const nextProgress =
     next && next.target > 0 ? Math.min(100, Number(((teamBusiness / next.target) * 100).toFixed(1))) : 100;
 
+  const giftAmt = Number(s.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0);
   const stats = [
-    { label: 'Fund Balance', value: `$${(s.fundBalance || 0).toFixed(2)}`, cls: '' },
+    {
+      label: 'Fund Balance',
+      value: `$${(s.fundBalance || 0).toFixed(2)}`,
+      cls: '',
+      hint: giftAmt > 0 ? `Includes $${giftAmt.toFixed(0)} locked gift` : '',
+    },
     { label: 'Income Balance', value: `$${(s.incomeBalance || 0).toFixed(2)}`, cls: 'green' },
     { label: 'Team Business', value: `$${teamBusiness.toFixed(2)}`, cls: 'gold' },
     { label: 'Current Rank', value: s.currentRank || 0, cls: '' },
@@ -83,6 +89,9 @@ export default function Dashboard() {
           <div className={`card dash-card ${st.cls}`} key={st.label}>
             <div className="label">{st.label}</div>
             <div className="value">{st.value}</div>
+            {st.hint ? (
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{st.hint}</div>
+            ) : null}
           </div>
         ))}
       </div>

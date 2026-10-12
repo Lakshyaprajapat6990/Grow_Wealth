@@ -24,9 +24,13 @@ function withdrawableBalance(u) {
 async function getWalletInfo(req, res) {
   const u = req.user;
   const available = withdrawableBalance(u);
+  const principal = Number(u.fundBalance || 0);
+  const gift = Number(u.leaderIncentiveAmount || 0);
   return res.json({
     success: true,
-    fundBalance: u.fundBalance,
+    /** Display Fund Balance includes locked gift. */
+    fundBalance: Number((principal + gift).toFixed(8)),
+    principalBalance: principal,
     incomeBalance: u.incomeBalance,
     availableBalance: available,
     principalWithdrawable: true,
@@ -44,7 +48,7 @@ async function getWalletInfo(req, res) {
     maxDeposit: MAX_DEPOSIT,
     referEarnRates: REFER_EARN_RATES,
     directIncomePercent: REFER_EARN_RATES[0],
-    leaderIncentiveAmount: u.leaderIncentiveAmount || 0,
+    leaderIncentiveAmount: gift,
     leaderIncentiveActive: !!u.leaderIncentiveActive,
   });
 }

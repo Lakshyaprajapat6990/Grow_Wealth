@@ -41,10 +41,16 @@ export default function Join() {
             {msg && <div className="alert alert-success">{msg}</div>}
             <p>
               Fund Balance: <strong>${(user?.fundBalance || 0).toFixed(2)}</strong>
+              {(user?.leaderIncentiveAmount || 0) > 0 && (
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                  {' '}
+                  (includes ${(user.leaderIncentiveAmount || 0).toFixed(0)} locked gift)
+                </span>
+              )}
             </p>
             <p style={{ color: 'var(--text-muted)' }}>
-              Need at least $1 in fund balance. If you already deposited, click Activate Joining. Your sponsor earns
-              Refer & Earn on this joining amount (L1 5% · L2 2% · L3 1%).
+              Need at least $1 spendable principal (gift cannot be used for joining). If you already deposited, click
+              Activate Joining. Your sponsor earns Refer & Earn on this joining amount (L1 5% · L2 2% · L3 1%).
             </p>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
               <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
@@ -54,7 +60,11 @@ export default function Join() {
                 className="btn btn-primary"
                 type="button"
                 onClick={activate}
-                disabled={loading || (user?.fundBalance || 0) < 1}
+                disabled={
+                  loading ||
+                  Number(user?.principalBalance ?? Number(user?.fundBalance || 0) - Number(user?.leaderIncentiveAmount || 0)) <
+                    1
+                }
               >
                 {loading ? 'Activating…' : 'Activate $1 Joining'}
               </button>

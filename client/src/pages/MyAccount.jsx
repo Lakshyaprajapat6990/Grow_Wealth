@@ -18,6 +18,11 @@ export default function MyAccount() {
         <div className="card dash-card">
           <div className="label">Fund Balance</div>
           <div className="value">${(user?.fundBalance || 0).toFixed(2)}</div>
+          {(user?.leaderIncentiveAmount || 0) > 0 && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              Includes ${(user.leaderIncentiveAmount || 0).toFixed(0)} locked gift
+            </div>
+          )}
         </div>
         <div className="card dash-card green">
           <div className="label">Income Balance</div>

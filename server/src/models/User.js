@@ -79,6 +79,8 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.methods.toSafeJSON = function toSafeJSON() {
+  const principal = Number(this.fundBalance || 0);
+  const gift = Number(this.leaderIncentiveAmount || 0);
   return {
     userId: this.userId,
     name: this.name,
@@ -88,7 +90,10 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     role: this.role,
     sponsorId: this.sponsorId,
     walletAddress: this.walletAddress,
-    fundBalance: this.fundBalance,
+    /** Display Fund Balance = principal deposits + locked gift (gift is non-withdrawable). */
+    fundBalance: Number((principal + gift).toFixed(8)),
+    /** Spendable principal only (excludes locked gift). */
+    principalBalance: Number(principal.toFixed(8)),
     incomeBalance: this.incomeBalance,
     usdtBep20Balance: this.usdtBep20Balance,
     directIncome: this.directIncome,

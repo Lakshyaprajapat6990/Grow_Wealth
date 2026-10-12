@@ -74,10 +74,14 @@ async function getDashboardSummary(req, res) {
   const recent = await Transaction.find({ userId: u.userId }).sort({ createdAt: -1 }).limit(5);
   const rank = await getRankStatus(u.userId);
 
+  const principal = Number(u.fundBalance || 0);
+  const gift = Number(u.leaderIncentiveAmount || 0);
   return res.json({
     success: true,
     summary: {
-      fundBalance: u.fundBalance,
+      fundBalance: Number((principal + gift).toFixed(8)),
+      principalBalance: principal,
+      leaderIncentiveAmount: gift,
       incomeBalance: u.incomeBalance,
       totalDeposited: u.totalDeposited,
       totalWithdrawn: u.totalWithdrawn,

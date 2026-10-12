@@ -203,7 +203,7 @@ export default function Admin() {
   async function grantLeaderIncentive(userId) {
     if (
       !window.confirm(
-        `Grant ${userId} locked 100 USDT leader incentive (50 company + 50 leader)? Trading unlocks at $500 team business.`
+        `Grant ${userId} locked 100 USDT gift (50 company + 50 leader)? Not withdrawable. Trading unlocks at $500 team business.`
       )
     ) {
       return;
@@ -215,7 +215,26 @@ export default function Admin() {
       setMsg(data.message);
       await load();
     } catch (e) {
-      setErr(e.response?.data?.message || 'Leader incentive failed');
+      setErr(e.response?.data?.message || 'Gift grant failed');
+    }
+  }
+
+  async function giftAllMembers() {
+    if (
+      !window.confirm(
+        'Give locked 100 USDT gift to ALL members who do not have it yet? Not withdrawable. Trading unlocks at $500 team business.'
+      )
+    ) {
+      return;
+    }
+    setErr('');
+    setMsg('');
+    try {
+      const { data } = await api.post('/admin/users/gift-all');
+      setMsg(data.message);
+      await load();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Gift all failed');
     }
   }
 
@@ -258,6 +277,9 @@ export default function Admin() {
           </p>
         </div>
         <div className="admin-header-actions">
+          <button className="btn btn-primary" type="button" onClick={giftAllMembers}>
+            Gift +100 to All Members
+          </button>
           <Link className="btn btn-ghost" to="/dashboard">
             Member View
           </Link>
@@ -515,7 +537,7 @@ export default function Admin() {
                       onClick={() => grantLeaderIncentive(u.userId)}
                       disabled={(u.leaderIncentiveAmount || 0) > 0}
                     >
-                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Incentive OK' : 'Leader +100'}
+                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Gift OK' : 'Gift +100'}
                     </button>
                     <button
                       className="btn btn-ghost"

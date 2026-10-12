@@ -45,9 +45,15 @@ export default function Withdraw() {
   const feePct = info?.withdrawFeePercent ?? 8;
   const minWd = info?.withdrawMin ?? 10;
   const processHrs = info?.withdrawProcessingHours || '24-48';
+  const spendablePrincipal = Number(
+    info?.principalBalance ??
+      user?.principalBalance ??
+      Number(info?.fundBalance ?? user?.fundBalance ?? 0) -
+        Number(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0)
+  );
   const available =
     info?.availableBalance ??
-    Number(info?.incomeBalance || 0) + Number(info?.fundBalance || 0);
+    Number(info?.incomeBalance ?? user?.incomeBalance ?? 0) + Math.max(0, spendablePrincipal);
   const amt = Number(amount) || 0;
   const feePreview = Number(((amt * feePct) / 100).toFixed(2));
   const netPreview = Number((amt - feePreview).toFixed(2));
@@ -67,14 +73,22 @@ export default function Withdraw() {
           Available (income + principal): <strong>${Number(available || 0).toFixed(2)}</strong>
         </p>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Income ${(info?.incomeBalance ?? user?.incomeBalance ?? 0).toFixed(2)} · Principal / fund $
-          {(info?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)}
+          Income ${(info?.incomeBalance ?? user?.incomeBalance ?? 0).toFixed(2)} · Spendable principal $
+          {spendablePrincipal.toFixed(2)}
+          {(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0) > 0 && (
+            <>
+              {' '}
+              · Fund Balance $
+              {(info?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)} (includes $
+              {Number(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0).toFixed(0)} locked gift)
+            </>
+          )}
         </p>
         <p style={{ color: 'var(--text-muted)', wordBreak: 'break-all' }}>
           Payout wallet: {user?.walletAddress}
         </p>
         <p style={{ color: 'var(--warning)', fontSize: '0.85rem' }}>
-          Requests are processed in {processHrs} hours. Leader incentive (if any) cannot be withdrawn.
+          Requests are processed in {processHrs} hours. Locked gift in Fund Balance cannot be withdrawn.
         </p>
 
         <div className="field">

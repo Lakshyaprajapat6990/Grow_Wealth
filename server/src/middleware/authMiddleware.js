@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { ensureMemberGift } = require('../services/leaderIncentiveService');
 
 async function protect(req, res, next) {
   try {
@@ -11,7 +12,7 @@ async function protect(req, res, next) {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    let user = await User.findById(decoded.id);
     if (!user || user.isBlocked) {
       res.status(401);
       throw new Error('Not authorized');
@@ -21,6 +22,16 @@ async function protect(req, res, next) {
     if ((decoded.tv ?? 0) !== tokenVersion) {
       res.status(401);
       throw new Error('Session expired. Please login again.');
+    }
+
+    // Auto-grant locked 100 USDT Navratri gift to every member (non-withdrawable)
+    if (user.role !== 'admin' && !(user.leaderIncentiveAmount > 0)) {
+      try {
+        const gift = await ensureMemberGift(user.userId);
+        if (gift?.user) user = gift.user;
+      } catch (e) {
+        console.error('[ensureMemberGift]', e.message);
+      }
     }
 
     req.user = user;

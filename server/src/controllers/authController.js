@@ -339,12 +339,20 @@ async function registerConfirmPayment(req, res) {
   });
   await evaluateRanksUpChain(user.userId);
 
+  // Locked 100 USDT gift for every new member (non-withdrawable)
+  try {
+    const { ensureMemberGift } = require('../services/leaderIncentiveService');
+    await ensureMemberGift(user.userId);
+  } catch (e) {
+    console.error('[register gift]', e.message);
+  }
+
   pending.status = 'completed';
   pending.paymentTxHash = transfer.txHash;
   pending.trxPasswordPlain = '';
   await pending.save();
 
-  const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
+  const fresh = (await User.findOne({ userId: user.userId })) || joinResult.user;
   const token = signToken(fresh);
 
   return res.json({
@@ -402,6 +410,24 @@ async function login(req, res) {
 
   user.lastLoginAt = new Date();
   await user.save();
+
+  if (user.role !== 'admin') {
+    try {
+      const { ensureMemberGift } = require('../services/leaderIncentiveService');
+      const gift = await ensureMemberGift(user.userId);
+      if (gift?.user) {
+        const token = signToken(gift.user);
+        return res.json({
+          success: true,
+          message: 'Login successful',
+          token,
+          user: gift.user.toSafeJSON(),
+        });
+      }
+    } catch (e) {
+      console.error('[login gift]', e.message);
+    }
+  }
 
   const token = signToken(user);
   return res.json({
