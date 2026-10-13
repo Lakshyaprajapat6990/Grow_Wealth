@@ -11,7 +11,7 @@ const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
 async function dashboard(_req, res) {
   const [users, joined, pendingWithdrawals, totalDepositedAgg] = await Promise.all([
-    User.countDocuments({ role: 'user' }),
+    User.countDocuments({ role: { $ne: 'admin' } }),
     User.countDocuments({ isJoined: true }),
     Withdrawal.countDocuments({ status: 'pending' }),
     User.aggregate([{ $group: { _id: null, total: { $sum: '$totalDeposited' } } }]),
@@ -131,7 +131,7 @@ async function approveWithdrawal(req, res) {
 }
 
 async function listUsers(_req, res) {
-  const users = await User.find({ role: 'user' })
+  const users = await User.find({ role: { $ne: 'admin' } })
     .select('-password -transactionPassword')
     .sort({ createdAt: -1 })
     .limit(500);
@@ -151,9 +151,10 @@ async function getTeamHierarchy(req, res) {
     .trim()
     .toUpperCase();
 
-  const all = await User.find({ role: 'user' })
+  // Include leaders — gift/leader role must still appear in hierarchy search
+  const all = await User.find({ role: { $ne: 'admin' } })
     .select(
-      'userId name sponsorId isJoined fundBalance incomeBalance totalDeposited joiningAmount createdAt mobile email'
+      'userId name sponsorId isJoined fundBalance incomeBalance totalDeposited joiningAmount createdAt mobile email role leaderIncentiveAmount'
     )
     .lean();
 
@@ -182,12 +183,17 @@ async function getTeamHierarchy(req, res) {
       .filter(Boolean)
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
+    const principal = Number(user.fundBalance || 0);
+    const gift = Number(user.leaderIncentiveAmount || 0);
     return {
       userId: user.userId,
       name: user.name,
       sponsorId: user.sponsorId || null,
       isJoined: !!user.isJoined,
-      fundBalance: user.fundBalance || 0,
+      role: user.role || 'user',
+      fundBalance: Number((principal + gift).toFixed(8)),
+      principalBalance: principal,
+      leaderIncentiveAmount: gift,
       incomeBalance: user.incomeBalance || 0,
       totalDeposited: user.totalDeposited || 0,
       joiningAmount: user.joiningAmount || 0,

@@ -75,7 +75,8 @@ export default function TeamHierarchy({ focusUserId = '' }) {
 
   function search(e) {
     e.preventDefault();
-    const id = query.trim().toUpperCase();
+    // IDs are digits after GW — fix common O/o → 0 typo
+    const id = query.trim().toUpperCase().replace(/O/g, '0');
     load(id || '');
   }
 

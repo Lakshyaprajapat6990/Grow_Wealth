@@ -35,7 +35,7 @@ function remainingRoiCap(user) {
  */
 async function runDailyRoi({ createdBy = 'system' } = {}) {
   const day = todayKey();
-  const users = await User.find({ role: 'user', isJoined: true, isBlocked: false });
+  const users = await User.find({ role: { $ne: 'admin' }, isJoined: true, isBlocked: false });
 
   let credited = 0;
   let skipped = 0;

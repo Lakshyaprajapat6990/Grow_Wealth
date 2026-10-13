@@ -19,7 +19,7 @@ const RANK_PLAN = [
 ];
 
 async function getDownlineIds(rootUserId) {
-  const all = await User.find({ sponsorId: { $ne: null }, role: 'user' })
+  const all = await User.find({ sponsorId: { $ne: null }, role: { $ne: 'admin' } })
     .select('userId sponsorId totalDeposited')
     .lean();
 

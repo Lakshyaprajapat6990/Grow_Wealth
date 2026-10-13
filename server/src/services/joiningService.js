@@ -126,7 +126,7 @@ async function creditReferEarn(sponsorId, fromUserId, baseAmount, _nth) {
 
 async function countJoinedDirects(sponsorId) {
   if (!sponsorId) return 0;
-  return User.countDocuments({ sponsorId, isJoined: true, role: 'user' });
+  return User.countDocuments({ sponsorId, isJoined: true, role: { $ne: 'admin' } });
 }
 
 async function afterJoinSideEffects(userId) {
