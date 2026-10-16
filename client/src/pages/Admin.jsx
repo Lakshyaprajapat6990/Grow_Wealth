@@ -203,7 +203,7 @@ export default function Admin() {
   async function grantLeaderIncentive(userId) {
     if (
       !window.confirm(
-        `Grant ${userId} locked 100 USDT gift (50 company + 50 leader)? Not withdrawable. Trading unlocks at $500 team business.`
+        `Grant ${userId} locked 100 USDT gift (50 company + 50 leader)? Not withdrawable. Does not earn ROI.`
       )
     ) {
       return;
@@ -222,7 +222,7 @@ export default function Admin() {
   async function giftAllMembers() {
     if (
       !window.confirm(
-        'Give locked 100 USDT gift to ALL members who do not have it yet? Not withdrawable. Trading unlocks at $500 team business.'
+        'Give locked 100 USDT gift to ALL members who do not have it yet? Not withdrawable. Does not earn ROI.'
       )
     ) {
       return;
@@ -235,18 +235,6 @@ export default function Admin() {
       await load();
     } catch (e) {
       setErr(e.response?.data?.message || 'Gift all failed');
-    }
-  }
-
-  async function deleteUser(userId) {
-    if (!window.confirm(`Delete user ${userId} permanently? Their team will move to their sponsor.`)) return;
-    setErr('');
-    try {
-      const { data } = await api.delete(`/admin/users/${userId}`);
-      setMsg(data.message);
-      await load();
-    } catch (error) {
-      setErr(error.response?.data?.message || 'Delete failed');
     }
   }
 
@@ -538,14 +526,6 @@ export default function Admin() {
                       disabled={(u.leaderIncentiveAmount || 0) > 0}
                     >
                       {(u.leaderIncentiveAmount || 0) > 0 ? 'Gift OK' : 'Gift +100'}
-                    </button>
-                    <button
-                      className="btn btn-ghost"
-                      type="button"
-                      style={{ color: '#fca5a5', borderColor: 'rgba(248,113,113,0.45)' }}
-                      onClick={() => deleteUser(u.userId)}
-                    >
-                      Delete
                     </button>
                   </div>
                 </td>

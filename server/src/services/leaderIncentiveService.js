@@ -36,7 +36,7 @@ async function grantLeaderIncentive(userId, { createdBy = 'system', source = 'au
     amount: total,
     balanceAfter: user.incomeBalance,
     status: 'success',
-    description: `Navratri gift ${total} USDT locked (company ${companyPart} + leader ${leaderPart}). Not withdrawable. Trading unlocks at $${LEADER_INCENTIVE_UNLOCK} team business.`,
+    description: `Navratri gift ${total} USDT locked (company ${companyPart} + leader ${leaderPart}). Not withdrawable. Does not earn ROI.`,
     meta: {
       companyPart,
       leaderPart,
@@ -45,6 +45,7 @@ async function grantLeaderIncentive(userId, { createdBy = 'system', source = 'au
       active: false,
       source,
       withdrawable: false,
+      earnsRoi: false,
     },
     createdBy,
   });
@@ -104,13 +105,14 @@ async function checkAndUnlockLeaderIncentive(userId) {
     amount: user.leaderIncentiveAmount,
     balanceAfter: user.incomeBalance,
     status: 'success',
-    description: `Gift trading unlocked (team volume $${volume} ≥ $${unlockAt}). Still non-withdrawable.`,
+    description: `Gift marked active (team volume $${volume} ≥ $${unlockAt}). Still non-withdrawable and does not earn ROI.`,
     meta: {
       unlocked: true,
       teamVolume: volume,
       unlockAt,
       amount: user.leaderIncentiveAmount,
       withdrawable: false,
+      earnsRoi: false,
     },
     createdBy: 'system',
   });

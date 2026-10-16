@@ -31,8 +31,6 @@ export default function NavratriGiftPopup() {
   if (!open || !user || user.role === 'admin') return null;
 
   const amount = Number(user.leaderIncentiveAmount || 100);
-  const active = !!user.leaderIncentiveActive;
-  const unlockAt = user.leaderIncentiveUnlockVolume || 500;
 
   return (
     <div className="navratri-overlay" role="dialog" aria-modal="true" aria-labelledby="navratri-title">
@@ -58,15 +56,12 @@ export default function NavratriGiftPopup() {
             <strong>Locked</strong> — you cannot withdraw this amount
           </li>
           <li>
-            <strong>ROI / trading</strong> unlocks when your downline Team Business reaches{' '}
-            <strong>${unlockAt}</strong>
+            <strong>No ROI</strong> on this gift — daily ROI is only on your real deposits
           </li>
         </ul>
 
-        <div className={`navratri-status ${active ? 'on' : 'wait'}`}>
-          {active
-            ? `Your $${amount.toFixed(0)} gift trading is unlocked. Still non-withdrawable.`
-            : `Your $${amount.toFixed(0)} gift is locked on your account. Build $${unlockAt} team business to unlock trading benefits.`}
+        <div className="navratri-status wait">
+          Your ${amount.toFixed(0)} gift is on your Fund Balance. Non-withdrawable · no ROI on gift.
         </div>
 
         <button

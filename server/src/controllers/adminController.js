@@ -563,7 +563,7 @@ async function grantLeaderIncentiveAdmin(req, res) {
     success: true,
     message: result.already
       ? 'Gift already on this account (locked, non-withdrawable).'
-      : '100 USDT locked gift granted. Not withdrawable. Trading unlocks at $500 team business.',
+      : '100 USDT locked gift granted. Not withdrawable. Does not earn ROI.',
     user: result.user.toSafeJSON(),
   });
 }
