@@ -29,9 +29,9 @@ async function dashboard(_req, res) {
   });
 }
 
-/** Manual ROI credit — 1%, with 2X cap + L1–L7 ROI-ka-ROI */
+/** Manual ROI credit for today only — same once-per-day rule as cron */
 async function creditRoi(req, res) {
-  const { userId, baseAmount } = req.body;
+  const { userId } = req.body;
   if (!userId) {
     return res.status(400).json({ success: false, message: 'userId required' });
   }
@@ -42,54 +42,31 @@ async function creditRoi(req, res) {
     return res.status(400).json({ success: false, message: 'User has not joined yet' });
   }
 
-  const base = Number(baseAmount ?? roiBase(user));
-  if (!base || base <= 0) {
-    return res.status(400).json({ success: false, message: 'Invalid ROI base amount' });
-  }
-
-  const remaining = remainingRoiCap(user);
-  if (remaining <= 0) {
+  const { creditOneDailyRoi, todayKey } = require('../services/roiService');
+  const day = todayKey();
+  const result = await creditOneDailyRoi(user, day, { createdBy: req.user.userId });
+  if (result.skipped) {
     return res.status(400).json({
       success: false,
-      message: `ROI cap reached (max ${ROI_CAP_MULTIPLIER}X investment)`,
+      message:
+        result.reason === 'already' || result.reason === 'duplicate_race'
+          ? `ROI for ${day} already credited (once per day only)`
+          : result.reason === 'cap'
+            ? `ROI cap reached (max ${ROI_CAP_MULTIPLIER}X investment)`
+            : 'No ROI amount to credit',
     });
   }
 
-  let amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
-  if (amount > remaining) amount = remaining;
-  if (amount <= 0) {
-    return res.status(400).json({ success: false, message: 'No ROI amount to credit' });
-  }
-
-  user.roiIncome = Number((user.roiIncome + amount).toFixed(8));
-  user.totalRoiIncome = Number((user.totalRoiIncome + amount).toFixed(8));
-  user.incomeBalance = Number((user.incomeBalance + amount).toFixed(8));
-  user.totalEarnings = Number((user.totalEarnings + amount).toFixed(8));
-  await user.save();
-
-  await Transaction.create({
-    userId: user.userId,
-    type: 'roi',
-    amount,
-    balanceAfter: user.incomeBalance,
-    status: 'success',
-    description: `Manual ROI ${ROI_PERCENT}% on $${base} · cap 2X`,
-    meta: { baseAmount: base, roiPercent: ROI_PERCENT, manual: true },
-    createdBy: req.user.userId,
-  });
-
-  const levelResult = await creditLevelIncomeFromRoi({
-    fromUserId: user.userId,
-    roiAmount: amount,
-    createdBy: req.user.userId,
-  });
+  const amount = result.amount;
+  const levelResult = result.levelIncome || { totalAmount: 0 };
+  const fresh = await User.findOne({ userId: user.userId });
 
   return res.json({
     success: true,
-    message: `Credited $${amount} ROI (${ROI_PERCENT}%) · level income $${levelResult.totalAmount}`,
+    message: `Credited $${amount} ROI (${ROI_PERCENT}%) for ${day} · level income $${levelResult.totalAmount}`,
     amount,
     levelIncome: levelResult,
-    user: user.toSafeJSON(),
+    user: fresh.toSafeJSON(),
   });
 }
 
@@ -490,6 +467,7 @@ async function getUserHistory(req, res) {
 
   const history = await Transaction.find({
     userId,
+    status: { $ne: 'failed' },
     type: {
       $in: [
         'deposit',

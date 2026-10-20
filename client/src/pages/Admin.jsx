@@ -127,6 +127,7 @@ export default function Admin() {
   const [historyUser, setHistoryUser] = useState(null);
   const [historyRows, setHistoryRows] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [roiRunning, setRoiRunning] = useState(false);
 
   async function load() {
     const [d, u, w, dep] = await Promise.all([
@@ -161,14 +162,18 @@ export default function Admin() {
   }
 
   async function runDailyRoi() {
+    if (roiRunning) return;
     setErr('');
     setMsg('');
+    setRoiRunning(true);
     try {
       const { data } = await api.post('/admin/roi/run-daily');
       setMsg(data.message);
       await load();
     } catch (error) {
       setErr(error.response?.data?.message || 'Daily ROI run failed');
+    } finally {
+      setRoiRunning(false);
     }
   }
 
@@ -352,8 +357,8 @@ export default function Admin() {
           2×), then L1–L7 ROI-ka-ROI. <strong>Button:</strong> optional manual run if you need to credit today early /
           retry. Same day will not double-pay.
         </p>
-        <button className="btn btn-success" type="button" onClick={runDailyRoi}>
-          Run Daily ROI Now
+        <button className="btn btn-success" type="button" onClick={runDailyRoi} disabled={roiRunning}>
+          {roiRunning ? 'Running ROI…' : 'Run Daily ROI Now'}
         </button>
       </div>
 
@@ -419,7 +424,9 @@ export default function Admin() {
             {historyRows.map((h) => (
               <tr key={h._id} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '0.65rem', whiteSpace: 'nowrap' }}>
-                  {new Date(h.createdAt).toLocaleString()}
+                  {h.type === 'roi' && h.meta?.roiDay
+                    ? `ROI day ${h.meta.roiDay}`
+                    : new Date(h.createdAt).toLocaleString()}
                 </td>
                 <td style={{ padding: '0.65rem' }}>{h.type}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(h.amount || 0).toFixed(2)}</td>

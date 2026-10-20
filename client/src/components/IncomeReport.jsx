@@ -31,7 +31,14 @@ export default function IncomeReport({ title, subtitle, type, totalLabel }) {
       </div>
       <DataTable
         columns={[
-          { key: 'date', label: 'Date', render: (r) => new Date(r.createdAt).toLocaleString() },
+          {
+            key: 'date',
+            label: 'Date',
+            render: (r) =>
+              r.type === 'roi' && r.meta?.roiDay
+                ? `ROI day ${r.meta.roiDay}`
+                : new Date(r.createdAt).toLocaleString(),
+          },
           { key: 'amount', label: 'Amount', render: (r) => `$${Number(r.amount).toFixed(2)}` },
           { key: 'status', label: 'Status' },
           { key: 'description', label: 'Description' },

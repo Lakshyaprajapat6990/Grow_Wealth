@@ -21,7 +21,7 @@ async function getTransactions(req, res) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
-  const filter = { userId };
+  const filter = { userId, status: { $ne: 'failed' } };
   if (type && TYPE_MAP[type]) filter.type = TYPE_MAP[type];
 
   const transactions = await Transaction.find(filter).sort({ createdAt: -1 }).limit(200);

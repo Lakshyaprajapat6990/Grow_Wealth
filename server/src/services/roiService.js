@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { creditLevelIncomeFromRoi } = require('./levelIncomeService');
@@ -12,7 +13,7 @@ function todayKey(date = new Date()) {
 function roiBase(user) {
   const deposited = Number(user.totalDeposited || 0);
   const joining = Number(user.joiningAmount || 0);
-  // Gifted USDT never earns ROI (even if gift "unlocked")
+  // Gifted USDT never earns ROI
   return Number(Math.max(deposited, joining, 0).toFixed(8));
 }
 
@@ -23,11 +24,120 @@ function remainingRoiCap(user) {
   return Math.max(0, Number((cap - earned).toFixed(8)));
 }
 
+function isDuplicateKeyError(err) {
+  return err && (err.code === 11000 || err.code === 11001 || /E11000/.test(String(err.message || '')));
+}
+
+/**
+ * Credit one member's daily ROI exactly once for `day`.
+ * Uses a DB transaction + unique index so cron/admin double-run cannot pay twice.
+ */
+async function creditOneDailyRoi(userDoc, day, { createdBy = 'system', backfill = false } = {}) {
+  const base = roiBase(userDoc);
+  if (!base || base <= 0) return { skipped: true, reason: 'no_base' };
+
+  const remaining = remainingRoiCap(userDoc);
+  if (remaining <= 0) return { skipped: true, reason: 'cap' };
+
+  let amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
+  if (amount > remaining) amount = remaining;
+  if (amount <= 0) return { skipped: true, reason: 'zero' };
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const already = await Transaction.findOne({
+      userId: userDoc.userId,
+      type: 'roi',
+      status: 'success',
+      'meta.roiDay': day,
+      'meta.autoDaily': true,
+    }).session(session);
+
+    if (already) {
+      await session.abortTransaction();
+      return { skipped: true, reason: 'already' };
+    }
+
+    const fresh = await User.findOne({ _id: userDoc._id }).session(session);
+    if (!fresh || fresh.isBlocked || !fresh.isJoined) {
+      await session.abortTransaction();
+      return { skipped: true, reason: 'user' };
+    }
+
+    // Recompute remaining on locked read
+    const rem2 = remainingRoiCap(fresh);
+    if (rem2 <= 0) {
+      await session.abortTransaction();
+      return { skipped: true, reason: 'cap' };
+    }
+    if (amount > rem2) amount = rem2;
+
+    fresh.roiIncome = Number((Number(fresh.roiIncome || 0) + amount).toFixed(8));
+    fresh.totalRoiIncome = Number((Number(fresh.totalRoiIncome || 0) + amount).toFixed(8));
+    fresh.incomeBalance = Number((Number(fresh.incomeBalance || 0) + amount).toFixed(8));
+    fresh.totalEarnings = Number((Number(fresh.totalEarnings || 0) + amount).toFixed(8));
+    await fresh.save({ session });
+
+    await Transaction.create(
+      [
+        {
+          userId: fresh.userId,
+          type: 'roi',
+          amount,
+          balanceAfter: fresh.incomeBalance,
+          status: 'success',
+          description: `Daily auto ROI ${ROI_PERCENT}% on $${base} (${day}) · cap 2X`,
+          meta: {
+            baseAmount: base,
+            roiPercent: ROI_PERCENT,
+            roiDay: day,
+            autoDaily: true,
+            roiCapMultiplier: ROI_CAP_MULTIPLIER,
+            remainingAfter: remainingRoiCap(fresh),
+            ...(backfill ? { backfill: true } : {}),
+          },
+          createdBy,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    // Level income outside the main txn (idempotent enough via its own checks)
+    const levelResult = await creditLevelIncomeFromRoi({
+      fromUserId: fresh.userId,
+      roiAmount: amount,
+      roiDay: day,
+      createdBy,
+    });
+
+    return {
+      credited: true,
+      userId: fresh.userId,
+      amount,
+      base,
+      levelIncome: levelResult,
+    };
+  } catch (err) {
+    try {
+      await session.abortTransaction();
+    } catch {
+      /* ignore */
+    }
+    if (isDuplicateKeyError(err)) {
+      return { skipped: true, reason: 'duplicate_race' };
+    }
+    throw err;
+  } finally {
+    session.endSession();
+  }
+}
+
 /**
  * Credit 1% daily ROI to all joined members (once per UTC day).
- * Stops when total ROI reaches 2X of investment.
- * Then distributes L1–L7 ROI-ka-ROI level income to qualifying uplines.
- * @param {{ createdBy?: string, day?: string }} opts - optional day (YYYY-MM-DD) for backfill
+ * @param {{ createdBy?: string, day?: string }} opts
  */
 async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
   const day = dayOverride || todayKey();
@@ -46,79 +156,19 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
 
   for (const user of users) {
     try {
-      const base = roiBase(user);
-      if (!base || base <= 0) {
-        skipped += 1;
-        continue;
-      }
-
-      const remaining = remainingRoiCap(user);
-      if (remaining <= 0) {
-        skipped += 1;
-        continue;
-      }
-
-      const already = await Transaction.findOne({
-        userId: user.userId,
-        type: 'roi',
-        status: 'success',
-        'meta.roiDay': day,
-        'meta.autoDaily': true,
-      });
-      if (already) {
-        skipped += 1;
-        continue;
-      }
-
-      let amount = Number(((base * ROI_PERCENT) / 100).toFixed(8));
-      if (amount > remaining) amount = remaining;
-      if (amount <= 0) {
-        skipped += 1;
-        continue;
-      }
-
-      user.roiIncome = Number((user.roiIncome + amount).toFixed(8));
-      user.totalRoiIncome = Number((user.totalRoiIncome + amount).toFixed(8));
-      user.incomeBalance = Number((user.incomeBalance + amount).toFixed(8));
-      user.totalEarnings = Number((user.totalEarnings + amount).toFixed(8));
-      await user.save();
-
-      await Transaction.create({
-        userId: user.userId,
-        type: 'roi',
-        amount,
-        balanceAfter: user.incomeBalance,
-        status: 'success',
-        description: `Daily auto ROI ${ROI_PERCENT}% on $${base} (${day}) · cap 2X`,
-        meta: {
-          baseAmount: base,
-          roiPercent: ROI_PERCENT,
-          roiDay: day,
-          autoDaily: true,
-          roiCapMultiplier: ROI_CAP_MULTIPLIER,
-          remainingAfter: remainingRoiCap(user),
-          ...(dayOverride ? { backfill: true } : {}),
-        },
+      const result = await creditOneDailyRoi(user, day, {
         createdBy,
+        backfill: Boolean(dayOverride),
       });
-
-      const levelResult = await creditLevelIncomeFromRoi({
-        fromUserId: user.userId,
-        roiAmount: amount,
-        roiDay: day,
-        createdBy,
-      });
-      levelCredited += levelResult.credited;
-      levelTotalAmount += levelResult.totalAmount;
-
+      if (result.skipped) {
+        skipped += 1;
+        continue;
+      }
       credited += 1;
-      totalAmount += amount;
-      details.push({
-        userId: user.userId,
-        amount,
-        base,
-        levelIncome: levelResult,
-      });
+      totalAmount += result.amount;
+      levelCredited += result.levelIncome?.credited || 0;
+      levelTotalAmount += result.levelIncome?.totalAmount || 0;
+      details.push(result);
     } catch (err) {
       failed += 1;
       const msg = err?.message || String(err);
@@ -143,4 +193,12 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
   };
 }
 
-module.exports = { runDailyRoi, ROI_PERCENT, ROI_CAP_MULTIPLIER, todayKey, roiBase, remainingRoiCap };
+module.exports = {
+  runDailyRoi,
+  creditOneDailyRoi,
+  ROI_PERCENT,
+  ROI_CAP_MULTIPLIER,
+  todayKey,
+  roiBase,
+  remainingRoiCap,
+};

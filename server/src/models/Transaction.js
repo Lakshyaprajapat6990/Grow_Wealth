@@ -40,4 +40,18 @@ const transactionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// One successful auto daily ROI per member per calendar day (blocks double pay)
+transactionSchema.index(
+  { userId: 1, type: 1, 'meta.roiDay': 1 },
+  {
+    unique: true,
+    name: 'uniq_auto_daily_roi_per_day',
+    partialFilterExpression: {
+      type: 'roi',
+      status: 'success',
+      'meta.autoDaily': true,
+    },
+  }
+);
+
 module.exports = mongoose.model('Transaction', transactionSchema);
