@@ -52,6 +52,11 @@ const NAME_POOLS = {
 
 const COUNTRIES = Object.keys(NAME_POOLS);
 const MAX_ROWS = 10;
+/** Show these names in the feed list with $2000–$5000 amounts */
+const FEATURED_MEMBERS = [
+  { name: 'Praveen kumar Rai', userId: 'GW9869420', country: 'INDIA' },
+  { name: 'Bhagvati Prasad Sahu', userId: 'GW0165712', country: 'INDIA' },
+];
 /** ~70% credit (deposit), ~30% debit (withdraw) */
 const TX_TYPES = [
   { type: 'Credit', weight: 7 },
@@ -83,23 +88,38 @@ function makeFakeId() {
 }
 
 /** Amount $500–$6000, often round-ish */
-function randomAmount() {
-  const raw = randInt(500, 6000);
+function randomAmount(min = 500, max = 6000) {
+  const raw = randInt(min, max);
   const modes = [raw, Math.round(raw / 10) * 10, Math.round(raw / 50) * 50, Math.round(raw / 100) * 100];
-  return Number(Math.min(6000, Math.max(500, pick(modes))).toFixed(2));
+  return Number(Math.min(max, Math.max(min, pick(modes))).toFixed(2));
 }
 
 function createFakeTx(now = new Date()) {
+  const { type } = pickWeighted(TX_TYPES);
+  // ~35% of rows use featured members at $2000–$5000
+  if (Math.random() < 0.35) {
+    const featured = pick(FEATURED_MEMBERS);
+    return {
+      _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+      userId: featured.userId,
+      name: featured.name,
+      country: featured.country,
+      type,
+      amount: randomAmount(2000, 5000),
+      status: 'Success',
+      createdAt: now.toISOString(),
+    };
+  }
+
   const country = pick(COUNTRIES);
   const name = pick(NAME_POOLS[country]);
-  const { type } = pickWeighted(TX_TYPES);
   return {
     _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: makeFakeId(),
     name,
     country,
     type,
-    amount: randomAmount(),
+    amount: randomAmount(500, 6000),
     status: 'Success',
     createdAt: now.toISOString(),
   };
@@ -109,7 +129,24 @@ function seedFeed(count = MAX_ROWS) {
   const rows = [];
   const now = Date.now();
   for (let i = 0; i < count; i += 1) {
-    rows.push(createFakeTx(new Date(now - (count - i) * 10000)));
+    const at = new Date(now - (count - i) * 60_000);
+    // Guarantee both featured names appear in the initial list
+    if (i < FEATURED_MEMBERS.length) {
+      const featured = FEATURED_MEMBERS[i];
+      const { type } = pickWeighted(TX_TYPES);
+      rows.push({
+        _id: `${at.getTime()}-feat-${i}`,
+        userId: featured.userId,
+        name: featured.name,
+        country: featured.country,
+        type,
+        amount: randomAmount(2000, 5000),
+        status: 'Success',
+        createdAt: at.toISOString(),
+      });
+    } else {
+      rows.push(createFakeTx(at));
+    }
   }
   return rows.reverse();
 }
