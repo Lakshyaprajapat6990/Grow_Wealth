@@ -2,13 +2,13 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { getTeamVolume } = require('./rankRewardService');
 
-const LEADER_INCENTIVE_COMPANY = Number(process.env.LEADER_INCENTIVE_COMPANY || 50);
-const LEADER_INCENTIVE_LEADER = Number(process.env.LEADER_INCENTIVE_LEADER || 50);
+const LEADER_INCENTIVE_COMPANY = Number(process.env.LEADER_INCENTIVE_COMPANY || 5);
+const LEADER_INCENTIVE_LEADER = Number(process.env.LEADER_INCENTIVE_LEADER || 5);
 const LEADER_INCENTIVE_UNLOCK = Number(process.env.LEADER_INCENTIVE_UNLOCK_VOLUME || 500);
 
 /**
- * Grant locked 100 USDT gift to a member (50 company + 50 leader).
- * Non-withdrawable. Trading/ROI unlocks at $500 downline business.
+ * Grant locked gift to a member (default 10 USDT = 5 company + 5 leader).
+ * Non-withdrawable. Does not earn ROI.
  * Does NOT change role to leader (all members get this).
  */
 async function grantLeaderIncentive(userId, { createdBy = 'system', source = 'auto_all_members' } = {}) {
@@ -56,7 +56,7 @@ async function grantLeaderIncentive(userId, { createdBy = 'system', source = 'au
   return { ok: true, user: fresh, already: false };
 }
 
-/** Ensure every member has the locked 100 USDT gift (idempotent). */
+/** Ensure every member has the locked gift (idempotent; amount from env, default $10). */
 async function ensureMemberGift(userId) {
   const user = await User.findOne({ userId: String(userId).trim().toUpperCase() });
   if (!user || user.role === 'admin') return { ok: false, skipped: true };

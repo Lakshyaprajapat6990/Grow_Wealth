@@ -208,7 +208,7 @@ export default function Admin() {
   async function grantLeaderIncentive(userId) {
     if (
       !window.confirm(
-        `Grant ${userId} locked 100 USDT gift (50 company + 50 leader)? Not withdrawable. Does not earn ROI.`
+        `Grant ${userId} locked 10 USDT gift (5 company + 5 leader)? Not withdrawable. Does not earn ROI.`
       )
     ) {
       return;
@@ -227,7 +227,7 @@ export default function Admin() {
   async function giftAllMembers() {
     if (
       !window.confirm(
-        'Give locked 100 USDT gift to ALL members who do not have it yet? Not withdrawable. Does not earn ROI.'
+        'Give locked 10 USDT gift to ALL members who do not have it yet? Not withdrawable. Does not earn ROI.'
       )
     ) {
       return;
@@ -271,7 +271,7 @@ export default function Admin() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-primary" type="button" onClick={giftAllMembers}>
-            Gift +100 to All Members
+            Gift +10 to All Members
           </button>
           <Link className="btn btn-ghost" to="/dashboard">
             Member View
@@ -532,7 +532,7 @@ export default function Admin() {
                       onClick={() => grantLeaderIncentive(u.userId)}
                       disabled={(u.leaderIncentiveAmount || 0) > 0}
                     >
-                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Gift OK' : 'Gift +100'}
+                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Gift OK' : 'Gift +10'}
                     </button>
                   </div>
                 </td>

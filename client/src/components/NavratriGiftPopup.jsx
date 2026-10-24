@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './NavratriGiftPopup.css';
 
-const STORAGE_KEY = 'gw_navratri_gift_dismissed_v2_2026';
+const STORAGE_KEY = 'gw_member_gift_dismissed_v3_10usdt';
 
 export default function NavratriGiftPopup() {
   const { user, refreshUser } = useAuth();
@@ -30,7 +30,8 @@ export default function NavratriGiftPopup() {
 
   if (!open || !user || user.role === 'admin') return null;
 
-  const amount = Number(user.leaderIncentiveAmount || 100);
+  const amount = Number(user.leaderIncentiveAmount || 10);
+  const half = Number((amount / 2).toFixed(0));
 
   return (
     <div className="navratri-overlay" role="dialog" aria-modal="true" aria-labelledby="navratri-title">
@@ -39,18 +40,19 @@ export default function NavratriGiftPopup() {
           ×
         </button>
 
-        <div className="navratri-badge">Navratri Special</div>
+        <div className="navratri-badge">Welcome Gift</div>
         <div className="navratri-gift-icon" aria-hidden>
           🎁
         </div>
-        <h2 id="navratri-title">Festive Gift for Every Member</h2>
+        <h2 id="navratri-title">Gift for Every Member</h2>
         <p className="navratri-lead">
-          Celebrate Navratri with Grow Wealth — every member receives a locked 100 USDT gift.
+          Welcome to Grow Wealth — every member receives a locked {amount.toFixed(0)} USDT gift.
         </p>
 
         <ul className="navratri-points">
           <li>
-            <strong>100 USDT</strong> gift — <strong>50</strong> from company + <strong>50</strong> from leader pool
+            <strong>{amount.toFixed(0)} USDT</strong> gift — <strong>{half}</strong> from company +{' '}
+            <strong>{half}</strong> from leader pool
           </li>
           <li>
             <strong>Locked</strong> — you cannot withdraw this amount

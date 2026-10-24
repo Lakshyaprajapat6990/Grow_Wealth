@@ -24,7 +24,7 @@ async function protect(req, res, next) {
       throw new Error('Session expired. Please login again.');
     }
 
-    // Auto-grant locked 100 USDT Navratri gift to every member (non-withdrawable)
+    // Auto-grant locked welcome gift to every member missing it (non-withdrawable)
     if (user.role !== 'admin' && !(user.leaderIncentiveAmount > 0)) {
       try {
         const gift = await ensureMemberGift(user.userId);

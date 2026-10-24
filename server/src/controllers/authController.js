@@ -339,7 +339,7 @@ async function registerConfirmPayment(req, res) {
   });
   await evaluateRanksUpChain(user.userId);
 
-  // Locked 100 USDT gift for every new member (non-withdrawable)
+  // Locked welcome gift for every new member (non-withdrawable; default $10)
   try {
     const { ensureMemberGift } = require('../services/leaderIncentiveService');
     await ensureMemberGift(user.userId);

@@ -523,7 +523,7 @@ async function forceJoinUsersAdmin(req, res) {
   return res.json({ success: true, results });
 }
 
-/** Admin: grant locked 100 USDT gift to one member (50 company + 50 leader). */
+/** Admin: grant locked 10 USDT gift to one member (5 company + 5 leader). */
 async function grantLeaderIncentiveAdmin(req, res) {
   const { grantLeaderIncentive } = require('../services/leaderIncentiveService');
   const userId = String(req.params.userId || req.body.userId || '').trim().toUpperCase();
@@ -541,18 +541,18 @@ async function grantLeaderIncentiveAdmin(req, res) {
     success: true,
     message: result.already
       ? 'Gift already on this account (locked, non-withdrawable).'
-      : '100 USDT locked gift granted. Not withdrawable. Does not earn ROI.',
+      : '10 USDT locked gift granted. Not withdrawable. Does not earn ROI.',
     user: result.user.toSafeJSON(),
   });
 }
 
-/** Admin: give locked 100 USDT gift to every member missing it. */
+/** Admin: give locked 10 USDT gift to every member missing it. */
 async function grantGiftToAllMembersAdmin(req, res) {
   const { grantGiftToAllMembers } = require('../services/leaderIncentiveService');
   const out = await grantGiftToAllMembers({ createdBy: req.user.userId });
   return res.json({
     success: true,
-    message: `Processed ${out.count} members for locked 100 USDT gift (non-withdrawable).`,
+    message: `Processed ${out.count} members for locked 10 USDT gift (non-withdrawable).`,
     ...out,
   });
 }
