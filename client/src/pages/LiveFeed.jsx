@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 
@@ -51,7 +51,12 @@ const NAME_POOLS = {
 };
 
 const COUNTRIES = Object.keys(NAME_POOLS);
-const MAX_ROWS = 40;
+const MAX_ROWS = 10;
+/** ~70% credit (deposit), ~30% debit (withdraw) */
+const TX_TYPES = [
+  { type: 'Credit', weight: 7 },
+  { type: 'Debit', weight: 3 },
+];
 
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -59,6 +64,16 @@ function randInt(min, max) {
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickWeighted(items) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = Math.random() * total;
+  for (const item of items) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return items[0];
 }
 
 function makeFakeId() {
@@ -74,49 +89,52 @@ function randomAmount() {
   return Number(Math.min(6000, Math.max(500, pick(modes))).toFixed(2));
 }
 
-function createFakeDeposit(now = new Date()) {
+function createFakeTx(now = new Date()) {
   const country = pick(COUNTRIES);
   const name = pick(NAME_POOLS[country]);
+  const { type } = pickWeighted(TX_TYPES);
   return {
     _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: makeFakeId(),
     name,
     country,
+    type,
     amount: randomAmount(),
     status: 'Success',
     createdAt: now.toISOString(),
   };
 }
 
-function seedFeed(count = 12) {
+function seedFeed(count = MAX_ROWS) {
   const rows = [];
   const now = Date.now();
   for (let i = 0; i < count; i += 1) {
-    rows.push(createFakeDeposit(new Date(now - (count - i) * 10000)));
+    rows.push(createFakeTx(new Date(now - (count - i) * 10000)));
   }
   return rows.reverse();
 }
 
+const TODAY_FIXED = 30645;
+
 export default function LiveFeed() {
-  const [deposits, setDeposits] = useState(() => seedFeed(15));
-  const [todayTotal, setTodayTotal] = useState(() => randInt(8000, 25000));
+  const [rows, setRows] = useState(() => seedFeed(10));
   const [grandTotal, setGrandTotal] = useState(() => randInt(180000, 420000));
-  const tickRef = useRef(0);
 
   useEffect(() => {
     const t = setInterval(() => {
-      const row = createFakeDeposit(new Date());
-      tickRef.current += 1;
-      setDeposits((prev) => [row, ...prev].slice(0, MAX_ROWS));
-      setTodayTotal((v) => Number((v + row.amount).toFixed(0)));
-      setGrandTotal((v) => Number((v + row.amount).toFixed(0)));
-    }, 10000);
+      const row = createFakeTx(new Date());
+      setRows((prev) => [row, ...prev].slice(0, MAX_ROWS));
+      // Today stays fixed at $30,645; credits/debits only refresh the feed list
+      if (row.type === 'Credit') {
+        setGrandTotal((v) => Number((v + row.amount).toFixed(0)));
+      }
+    }, 60_000);
     return () => clearInterval(t);
   }, []);
 
   return (
     <div>
-      <PageHeader title="System Live Feed" subtitle="Live platform deposit activity" />
+      <PageHeader title="System Live Feed" subtitle="Live platform credit & debit activity" />
       <div className="mp-stat-row">
         <div className="card mp-stat">
           <span>Total Investment</span>
@@ -124,7 +142,7 @@ export default function LiveFeed() {
         </div>
         <div className="card mp-stat">
           <span>Today</span>
-          <strong>${Number(todayTotal).toLocaleString()}</strong>
+          <strong>${TODAY_FIXED.toLocaleString()}</strong>
         </div>
       </div>
       <DataTable
@@ -132,11 +150,28 @@ export default function LiveFeed() {
           { key: 'userId', label: 'User ID' },
           { key: 'name', label: 'Name' },
           { key: 'country', label: 'Country' },
-          { key: 'amount', label: 'Amount', render: (r) => `$${Number(r.amount).toFixed(2)}` },
+          {
+            key: 'type',
+            label: 'Type',
+            render: (r) => (
+              <span style={{ color: r.type === 'Credit' ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
+                {r.type}
+              </span>
+            ),
+          },
+          {
+            key: 'amount',
+            label: 'Amount',
+            render: (r) => (
+              <span style={{ color: r.type === 'Credit' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>
+                {r.type === 'Credit' ? '+' : '−'}${Number(r.amount).toFixed(2)}
+              </span>
+            ),
+          },
           { key: 'status', label: 'Status' },
           { key: 'date', label: 'Time', render: (r) => new Date(r.createdAt).toLocaleString() },
         ]}
-        rows={deposits}
+        rows={rows}
       />
     </div>
   );
