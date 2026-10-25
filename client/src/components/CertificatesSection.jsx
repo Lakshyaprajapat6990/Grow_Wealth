@@ -56,14 +56,6 @@ export default function CertificatesSection() {
             </button>
           ))}
         </div>
-
-        <div className="lp-cert-downloads">
-          {CERTS.map((c) => (
-            <a key={c.id} className="btn btn-ghost" href={c.src} download>
-              Download {c.label}
-            </a>
-          ))}
-        </div>
       </div>
 
       {activeCert && (
