@@ -1,4 +1,5 @@
 const { runDailyRoi } = require('../services/roiService');
+const { runMonthlySalaryPass } = require('../services/salaryIncomeService');
 
 function isAuthorizedCron(req) {
   const secret = process.env.CRON_SECRET;
@@ -19,8 +20,15 @@ async function dailyRoiCron(req, res) {
   }
 
   try {
-    const result = await runDailyRoi({ createdBy: 'cron' });
-    return res.json(result);
+    const roi = await runDailyRoi({ createdBy: 'cron' });
+    let salary = null;
+    try {
+      salary = await runMonthlySalaryPass({ createdBy: 'cron' });
+    } catch (salaryErr) {
+      console.error('[monthly-salary]', salaryErr);
+      salary = { success: false, message: salaryErr.message };
+    }
+    return res.json({ ...roi, salary });
   } catch (err) {
     console.error('[daily-roi]', err);
     return res.status(500).json({ success: false, message: err.message || 'Daily ROI failed' });
@@ -30,8 +38,15 @@ async function dailyRoiCron(req, res) {
 /** Admin can trigger the same job manually */
 async function runDailyRoiAdmin(req, res) {
   try {
-    const result = await runDailyRoi({ createdBy: req.user.userId });
-    return res.json(result);
+    const roi = await runDailyRoi({ createdBy: req.user.userId });
+    let salary = null;
+    try {
+      salary = await runMonthlySalaryPass({ createdBy: req.user.userId });
+    } catch (salaryErr) {
+      console.error('[monthly-salary-admin]', salaryErr);
+      salary = { success: false, message: salaryErr.message };
+    }
+    return res.json({ ...roi, salary });
   } catch (err) {
     console.error('[daily-roi-admin]', err);
     return res.status(500).json({ success: false, message: err.message || 'Daily ROI failed' });

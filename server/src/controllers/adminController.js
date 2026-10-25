@@ -1,11 +1,11 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
-const { creditLevelIncomeFromRoi } = require('../services/levelIncomeService');
 const { remainingRoiCap, roiBase, ROI_CAP_MULTIPLIER } = require('../services/roiService');
 const { autoJoinOnPayment, forceJoinUsers } = require('../services/joiningService');
 const { getUsdtTransferFromTx } = require('../utils/bscUsdt');
 const { evaluateRanksUpChain } = require('../services/rankRewardService');
+const { evaluateSalaryUpChain } = require('../services/salaryIncomeService');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
@@ -328,12 +328,14 @@ async function approveDeposit(req, res) {
 
     const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
     const rankEval = await evaluateRanksUpChain(user.userId);
+    const salaryEval = await evaluateSalaryUpChain(user.userId);
     return res.json({
       success: true,
       message: `Joining approved — ${user.userId} activated`,
       deposit,
       user: fresh.toSafeJSON(),
       rankRewards: rankEval.chain,
+      salaryRewards: salaryEval.chain,
     });
   }
 
@@ -363,6 +365,7 @@ async function approveDeposit(req, res) {
 
   const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
   const rankEval = await evaluateRanksUpChain(user.userId);
+  const salaryEval = await evaluateSalaryUpChain(user.userId);
   return res.json({
     success: true,
     message: joinResult.joined
@@ -371,6 +374,7 @@ async function approveDeposit(req, res) {
     deposit,
     user: fresh.toSafeJSON(),
     rankRewards: rankEval.chain,
+    salaryRewards: salaryEval.chain,
   });
 }
 
@@ -439,9 +443,12 @@ async function adjustFund(req, res) {
 
   const fresh = joinResult.user || (await User.findOne({ userId: user.userId }));
   let rankRewards = [];
+  let salaryRewards = [];
   if (action === 'credit') {
     const rankEval = await evaluateRanksUpChain(user.userId);
+    const salaryEval = await evaluateSalaryUpChain(user.userId);
     rankRewards = rankEval.chain || [];
+    salaryRewards = salaryEval.chain || [];
   }
   return res.json({
     success: true,
@@ -450,6 +457,7 @@ async function adjustFund(req, res) {
       : `Fund ${action} $${amt} for ${user.userId}`,
     user: fresh.toSafeJSON(),
     rankRewards,
+    salaryRewards,
   });
 }
 

@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { getRankStatus, RANK_PLAN } = require('../services/rankRewardService');
+const { getSalaryStatus, SALARY_PLAN } = require('../services/salaryIncomeService');
 
 async function getProfile(req, res) {
   const { userId } = req.params;
@@ -90,6 +91,9 @@ async function getDashboardSummary(req, res) {
       totalLevelIncome: u.totalLevelIncome,
       totalRankReward: u.totalRankReward || 0,
       currentRank: u.currentRank || 0,
+      totalSalaryIncome: u.totalSalaryIncome || 0,
+      salaryTier: u.salaryTier || 0,
+      dailyWithdrawUnlocked: !!u.dailyWithdrawUnlocked,
       totalEarnings: u.totalEarnings,
       isJoined: u.isJoined,
       directCount: u.directCount,
@@ -103,6 +107,7 @@ async function getDashboardSummary(req, res) {
     },
     recentTransactions: recent,
     rankPlan: RANK_PLAN,
+    salaryPlan: SALARY_PLAN,
   });
 }
 
@@ -112,4 +117,17 @@ async function getMyRankStatus(req, res) {
   return res.json({ success: true, ...status, plan: RANK_PLAN });
 }
 
-module.exports = { getProfile, getDirectTeam, getAllTeam, getDashboardSummary, getMyRankStatus };
+async function getMySalaryStatus(req, res) {
+  const status = await getSalaryStatus(req.user.userId);
+  if (!status) return res.status(404).json({ success: false, message: 'User not found' });
+  return res.json({ success: true, ...status, plan: SALARY_PLAN });
+}
+
+module.exports = {
+  getProfile,
+  getDirectTeam,
+  getAllTeam,
+  getDashboardSummary,
+  getMyRankStatus,
+  getMySalaryStatus,
+};

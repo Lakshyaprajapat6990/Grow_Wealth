@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
-const { creditLevelIncomeFromRoi } = require('./levelIncomeService');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 const ROI_CAP_MULTIPLIER = Number(process.env.ROI_CAP_MULTIPLIER || 2);
@@ -105,20 +104,12 @@ async function creditOneDailyRoi(userDoc, day, { createdBy = 'system', backfill 
 
     await session.commitTransaction();
 
-    // Level income outside the main txn (idempotent enough via its own checks)
-    const levelResult = await creditLevelIncomeFromRoi({
-      fromUserId: fresh.userId,
-      roiAmount: amount,
-      roiDay: day,
-      createdBy,
-    });
-
     return {
       credited: true,
       userId: fresh.userId,
       amount,
       base,
-      levelIncome: levelResult,
+      levelIncome: { credited: 0, totalAmount: 0, details: [], disabled: true },
     };
   } catch (err) {
     try {

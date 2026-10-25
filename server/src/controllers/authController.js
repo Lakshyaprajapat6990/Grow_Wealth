@@ -12,6 +12,7 @@ const {
 const { getUsdtTransferFromTx, findRecentUsdtTransfer, findRecentIncomingUsdt, USDT_BEP20 } = require('../utils/bscUsdt');
 const { autoJoinOnPayment } = require('../services/joiningService');
 const { evaluateRanksUpChain } = require('../services/rankRewardService');
+const { evaluateSalaryUpChain } = require('../services/salaryIncomeService');
 
 const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
 const REGISTRATION_PAYMENT = Number(process.env.REGISTRATION_PAYMENT || 10);
@@ -338,6 +339,7 @@ async function registerConfirmPayment(req, res) {
     source: 'registration_payment',
   });
   await evaluateRanksUpChain(user.userId);
+  await evaluateSalaryUpChain(user.userId);
 
   // Locked welcome gift for every new member (non-withdrawable; default $10)
   try {

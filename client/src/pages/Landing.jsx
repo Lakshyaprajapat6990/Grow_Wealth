@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CertificatesSection from '../components/CertificatesSection';
-import PlanPdfViewer from '../components/PlanPdfViewer';
 import './Landing.css';
 
 const faqs = [
@@ -65,9 +64,6 @@ export default function Landing() {
             </button>
             <button type="button" onClick={() => go('ecosystem')}>
               Ecosystem
-            </button>
-            <button type="button" onClick={() => go('plans')}>
-              Plans
             </button>
             <button type="button" onClick={() => go('certificates')}>
               Certificates
@@ -204,8 +200,8 @@ export default function Landing() {
               <div className="lp-step">
                 <span>2</span>
                 <div>
-                  <h4>Activate Joining</h4>
-                  <p>Activate from fund balance to unlock ROI, Refer & Earn for your sponsor, and withdrawals.</p>
+                  <h4>Auto Activate</h4>
+                  <p>After your deposit is credited, joining activates automatically — ROI and Refer & Earn unlock.</p>
                 </div>
               </div>
               <div className="lp-step">
@@ -217,20 +213,6 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* PLANS — real client PDF */}
-      <section className="lp-section lp-section-alt" id="plans">
-        <div className="lp-wrap">
-          <div className="lp-section-head center">
-            <p className="lp-kicker">Business Plan</p>
-            <h2>
-              Official Plan <span>Document</span>
-            </h2>
-            <p>Blockchain BEP-20 Staking &amp; Referral Compensation.</p>
-          </div>
-          <PlanPdfViewer />
         </div>
       </section>
 

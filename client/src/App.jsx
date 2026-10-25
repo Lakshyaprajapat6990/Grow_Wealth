@@ -11,7 +11,6 @@ import './pages/pages.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Deposit = lazy(() => import('./pages/Deposit'));
-const Join = lazy(() => import('./pages/Join'));
 const Profile = lazy(() => import('./pages/Profile'));
 const WalletHistory = lazy(() => import('./pages/WalletHistory'));
 const Admin = lazy(() => import('./pages/Admin'));
@@ -25,7 +24,6 @@ const SalaryIncome = lazy(() => import('./pages/SalaryIncome'));
 const RankRewards = lazy(() => import('./pages/RankRewards'));
 const LiveFeed = lazy(() => import('./pages/LiveFeed'));
 const Trading = lazy(() => import('./pages/Trading'));
-const PlanDetails = lazy(() => import('./pages/PlanDetails'));
 const MyAccount = lazy(() => import('./pages/MyAccount'));
 const Transfer = lazy(() => import('./pages/Transfer'));
 const Support = lazy(() => import('./pages/Support'));
@@ -56,7 +54,7 @@ export default function App() {
               <Route element={<MemberLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/deposit" element={<Deposit />} />
-                <Route path="/join" element={<Join />} />
+                <Route path="/join" element={<Navigate to="/deposit" replace />} />
                 <Route path="/compound" element={<Compound />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/wallet-history" element={<WalletHistory />} />
@@ -70,7 +68,7 @@ export default function App() {
                 <Route path="/rank-rewards" element={<RankRewards />} />
                 <Route path="/system-live-feed" element={<LiveFeed />} />
                 <Route path="/trading" element={<Trading />} />
-                <Route path="/plan-details" element={<PlanDetails />} />
+                <Route path="/plan-details" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/my-account" element={<MyAccount />} />
                 <Route path="/transfer" element={<Transfer />} />
                 <Route path="/support" element={<Support />} />

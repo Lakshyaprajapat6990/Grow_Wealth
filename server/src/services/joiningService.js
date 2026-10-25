@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { evaluateRanksUpChain } = require('./rankRewardService');
+const { evaluateSalaryUpChain } = require('./salaryIncomeService');
 const { checkAndUnlockLeaderIncentive } = require('./leaderIncentiveService');
 
 const JOINING_AMOUNT = Number(process.env.JOINING_AMOUNT || 1);
@@ -131,6 +132,7 @@ async function countJoinedDirects(sponsorId) {
 
 async function afterJoinSideEffects(userId) {
   const rankEval = await evaluateRanksUpChain(userId);
+  const salaryEval = await evaluateSalaryUpChain(userId);
   // Unlock leader incentives up the chain when team volume moves
   const member = await User.findOne({ userId }).select('sponsorId');
   let sid = member?.sponsorId;
@@ -141,7 +143,7 @@ async function afterJoinSideEffects(userId) {
     const up = await User.findOne({ userId: sid }).select('sponsorId');
     sid = up?.sponsorId || null;
   }
-  return rankEval;
+  return { ...rankEval, salaryChain: salaryEval.chain };
 }
 
 async function autoJoinOnPayment(user, { paymentAmount = 0, createdBy = 'system', source = 'payment' } = {}) {

@@ -50,6 +50,8 @@ async function getWalletInfo(req, res) {
     directIncomePercent: REFER_EARN_RATES[0],
     leaderIncentiveAmount: gift,
     leaderIncentiveActive: !!u.leaderIncentiveActive,
+    dailyWithdrawUnlocked: !!u.dailyWithdrawUnlocked,
+    salaryTier: u.salaryTier || 0,
   });
 }
 
@@ -142,6 +144,32 @@ async function requestWithdraw(req, res) {
     return res.status(400).json({
       success: false,
       message: `Minimum withdrawal is $${WITHDRAW_MIN}`,
+    });
+  }
+
+  // Daily withdrawal unlocks with Monthly Salary (team business ≥ $3,000)
+  if (!user.dailyWithdrawUnlocked) {
+    return res.status(400).json({
+      success: false,
+      message:
+        'Daily withdrawal locked. Achieve Monthly Salary (downline team business $3,000+) to unlock once-per-day withdrawals.',
+      dailyWithdrawUnlocked: false,
+      salaryRequiredTeamBusiness: 3000,
+    });
+  }
+
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
+  const alreadyToday = await Withdrawal.findOne({
+    userId: user.userId,
+    createdAt: { $gte: startOfUtcDay },
+    status: { $in: ['pending', 'paid'] },
+  }).lean();
+  if (alreadyToday) {
+    return res.status(400).json({
+      success: false,
+      message: 'Daily withdrawal limit reached. You can withdraw once per day (UTC).',
+      dailyWithdrawUnlocked: true,
     });
   }
 

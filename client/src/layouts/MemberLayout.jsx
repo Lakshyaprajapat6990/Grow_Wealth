@@ -13,7 +13,6 @@ const menu = [
       { to: '/system-live-feed', label: 'System Live Feed' },
       { to: '/trading', label: 'Live Trading' },
       { to: '/profile', label: 'My Profile' },
-      { to: '/plan-details', label: 'Plan Details' },
       { to: '/my-account', label: 'My Account' },
     ],
   },

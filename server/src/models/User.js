@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
     totalFastTrackIncome: { type: Number, default: 0 },
     salaryIncome: { type: Number, default: 0 },
     totalSalaryIncome: { type: Number, default: 0 },
+    salaryTier: { type: Number, default: 0 },
+    salaryMonthsPaid: { type: Number, default: 0 },
+    lastSalaryPeriod: { type: String, default: null },
+    lastSalaryPaidAt: { type: Date, default: null },
     rankReward: { type: Number, default: 0 },
     totalRankReward: { type: Number, default: 0 },
     currentRank: { type: Number, default: 0 },
@@ -57,6 +61,8 @@ const userSchema = new mongoose.Schema(
     // Withdraw rules
     hasCompletedFirstWithdrawal: { type: Boolean, default: false },
     withdrawalCount: { type: Number, default: 0 },
+    /** Unlocked when Monthly Salary tier is achieved (team business ≥ $3,000). */
+    dailyWithdrawUnlocked: { type: Boolean, default: false },
 
     // Network
     directCount: { type: Number, default: 0 },
@@ -106,6 +112,10 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     totalFastTrackIncome: this.totalFastTrackIncome || 0,
     salaryIncome: this.salaryIncome || 0,
     totalSalaryIncome: this.totalSalaryIncome || 0,
+    salaryTier: this.salaryTier || 0,
+    salaryMonthsPaid: this.salaryMonthsPaid || 0,
+    lastSalaryPeriod: this.lastSalaryPeriod || null,
+    dailyWithdrawUnlocked: !!this.dailyWithdrawUnlocked,
     rankReward: this.rankReward || 0,
     totalRankReward: this.totalRankReward || 0,
     currentRank: this.currentRank || 0,

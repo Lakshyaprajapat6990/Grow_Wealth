@@ -41,7 +41,6 @@ export default function Dashboard() {
 
   const quick = [
     { to: '/deposit', icon: '💰', label: 'Deposit' },
-    { to: '/join', icon: '✅', label: 'Join $1' },
     { to: '/withdrawals', icon: '💸', label: 'Withdraw' },
     { to: '/compound', icon: '♻️', label: 'Compound' },
     { to: '/transfer', icon: '🔄', label: 'Transfer' },
@@ -56,7 +55,7 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? 'Joined' : 'Not Joined - pay $1'}`}
+        subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? 'Joined' : 'Not Joined — deposit to activate'}`}
       />
 
       {!user?.isJoined && (
@@ -69,18 +68,13 @@ export default function Dashboard() {
             background: 'rgba(247,192,43,0.08)',
           }}
         >
-          <h3 style={{ marginTop: 0, color: 'var(--accent)' }}>Activate Joining - $1 USDT</h3>
+          <h3 style={{ marginTop: 0, color: 'var(--accent)' }}>Deposit to Activate</h3>
           <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
-            Deposit at least $1 (or use existing fund balance), then activate joining.
+            Deposit USDT (BEP-20). Joining activates automatically after your deposit is credited.
           </p>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link className="btn btn-success" to="/deposit?amount=1&purpose=joining">
-              Pay $1 Joining
-            </Link>
-            <Link className="btn btn-primary" to="/join">
-              Activate $1 Joining
-            </Link>
-          </div>
+          <Link className="btn btn-success" to="/deposit">
+            Deposit USDT
+          </Link>
         </div>
       )}
 
