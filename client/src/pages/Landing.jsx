@@ -6,11 +6,15 @@ import './Landing.css';
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw income or principal with an 8% fee (24–48h process).',
+    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn Monthly Salary from team business, 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw with an 8% fee (24–48h process).',
+  },
+  {
+    q: 'What is the Monthly Salary Plan?',
+    a: 'Downline team business unlocks a monthly USDT salary (highest tier only): $3,000 → $180 · $5,000 → $270 · $7,000 → $450 · $10,000 → $600 · $15,000 → $750 · $20,000+ → $1,000. Achieving Tier 1 also unlocks once-per-day withdrawals.',
   },
   {
     q: 'How do I activate my account?',
-    a: 'Register with your BEP-20 wallet, deposit at least $10 USDT, then activate joining from the dashboard. Your sponsor (L1) earns 5%, their sponsor (L2) 2%, and L3 earns 1% of your joining amount.',
+    a: 'Register with your BEP-20 wallet and deposit at least $10 USDT. Joining activates automatically after your deposit is credited. Your sponsor (L1) earns 5%, their sponsor (L2) 2%, and L3 earns 1% of your joining amount.',
   },
   {
     q: 'What is the ROI?',
@@ -22,7 +26,7 @@ const faqs = [
   },
   {
     q: 'What are the withdrawal rules?',
-    a: 'Minimum withdrawal is always $10. Every withdrawal has a 10% fee; net amount is paid to your saved crypto wallet after admin approval.',
+    a: 'Minimum withdrawal is $10 with an 8% fee. Daily withdrawals unlock when you achieve Monthly Salary (team business $3,000+), then max 1 request per day (UTC). Net amount is paid to your saved wallet after admin approval (24–48h).',
   },
 ];
 
@@ -109,9 +113,10 @@ export default function Landing() {
               <span>WEALTH</span>
             </h1>
             <p className="lp-lead">
-              Stake from <strong>$10</strong> (max $50,000). Earn <strong>1% daily ROI</strong> (2×
-              cap) · <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%) · L1–L7 level income. Manual compound.
-              Withdraw min $10 · 8% fee · principal allowed · 24–48h.
+              <strong>Monthly Salary Plan</strong> — team business pays every month ($3k → $180 · $5k → $270 · $7k →
+              $450 · $10k → $600 · $15k → $750 · $20k+ → $1,000) and unlocks daily withdrawal. Stake from{' '}
+              <strong>$10</strong> (max $50,000) · <strong>1% daily ROI</strong> (2× cap) ·{' '}
+              <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%). Manual compound · WD min $10 · 8% fee · 24–48h.
             </p>
             <div className="lp-hero-actions">
               <Link to="/register" className="btn btn-primary lp-btn-lg">
@@ -122,9 +127,9 @@ export default function Landing() {
               </button>
             </div>
             <div className="lp-hero-pills">
+              <span>Monthly Salary</span>
               <span>USDT BEP-20</span>
               <span>Min package $10</span>
-              <span>WD fee 10%</span>
             </div>
           </div>
 
@@ -134,23 +139,23 @@ export default function Landing() {
             <div className="lp-hero-card">
               <div className="lp-hero-card-top">
                 <span>Live Snapshot</span>
-                <strong>1% ROI</strong>
+                <strong>Salary Plan</strong>
               </div>
               <div className="lp-meter">
                 <div className="lp-meter-fill" />
               </div>
               <ul>
                 <li>
-                  <span>Package</span>
-                  <b>$10–$50k</b>
+                  <span>Salary / mo</span>
+                  <b>$180–$1,000</b>
                 </li>
                 <li>
-                  <span>Network</span>
-                  <b>BEP-20</b>
+                  <span>Team from</span>
+                  <b>$3,000</b>
                 </li>
                 <li>
-                  <span>ROI Cap</span>
-                  <b>2× investment</b>
+                  <span>Daily ROI</span>
+                  <b>1% · 2× cap</b>
                 </li>
               </ul>
             </div>
@@ -183,7 +188,10 @@ export default function Landing() {
             <article className="lp-eco-card">
               <div className="lp-eco-icon">◇</div>
               <h3>Liquidity & Community</h3>
-              <p>Member deposits power liquidity — and referral growth unlocks network incomes.</p>
+              <p>
+                Member deposits power liquidity — referral growth unlocks Refer & Earn and Monthly Salary from team
+                business.
+              </p>
             </article>
           </div>
 
@@ -208,7 +216,10 @@ export default function Landing() {
                 <span>3</span>
                 <div>
                   <h4>Earn & Withdraw</h4>
-                  <p>1% daily ROI (2× cap), manual compound, withdraw min $10 with 10% fee.</p>
+                  <p>
+                    Monthly Salary from team business, 1% daily ROI (2× cap), manual compound. Daily WD unlocks at $3k
+                    team business · min $10 · 8% fee.
+                  </p>
                 </div>
               </div>
             </div>
@@ -251,7 +262,7 @@ export default function Landing() {
       <section className="lp-cta">
         <div className="lp-wrap lp-cta-inner">
           <h2>Start Your Growth Journey Today</h2>
-          <p>Join Grow Wealth — $10 package, 1% daily ROI (2× cap), USDT BEP-20.</p>
+          <p>Join Grow Wealth — Monthly Salary Plan, $10 package, 1% daily ROI (2× cap), USDT BEP-20.</p>
           <Link to="/register" className="btn btn-primary lp-btn-lg">
             Create Free Account
           </Link>
