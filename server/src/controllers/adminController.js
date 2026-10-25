@@ -523,7 +523,7 @@ async function forceJoinUsersAdmin(req, res) {
   return res.json({ success: true, results });
 }
 
-/** Admin: grant locked 10 USDT gift to one member (5 company + 5 leader). */
+/** Admin: grant locked gift to one member (amount from env; $0 = disabled). */
 async function grantLeaderIncentiveAdmin(req, res) {
   const { grantLeaderIncentive } = require('../services/leaderIncentiveService');
   const userId = String(req.params.userId || req.body.userId || '').trim().toUpperCase();
@@ -541,18 +541,26 @@ async function grantLeaderIncentiveAdmin(req, res) {
     success: true,
     message: result.already
       ? 'Gift already on this account (locked, non-withdrawable).'
-      : '10 USDT locked gift granted. Not withdrawable. Does not earn ROI.',
+      : 'Locked gift granted. Not withdrawable. Does not earn ROI.',
     user: result.user.toSafeJSON(),
   });
 }
 
-/** Admin: give locked 10 USDT gift to every member missing it. */
+/** Admin: gift-all (no-op when env gift amount is $0). */
 async function grantGiftToAllMembersAdmin(req, res) {
-  const { grantGiftToAllMembers } = require('../services/leaderIncentiveService');
+  const { grantGiftToAllMembers, GIFT_TOTAL_DEFAULT } = require('../services/leaderIncentiveService');
+  if (!(GIFT_TOTAL_DEFAULT > 0)) {
+    return res.json({
+      success: true,
+      message: 'Auto gift is $0 — no gifts granted to new/missing members.',
+      count: 0,
+      results: [],
+    });
+  }
   const out = await grantGiftToAllMembers({ createdBy: req.user.userId });
   return res.json({
     success: true,
-    message: `Processed ${out.count} members for locked 10 USDT gift (non-withdrawable).`,
+    message: `Processed ${out.count} members for locked gift (non-withdrawable).`,
     ...out,
   });
 }

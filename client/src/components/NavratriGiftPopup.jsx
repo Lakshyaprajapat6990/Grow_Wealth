@@ -30,7 +30,8 @@ export default function NavratriGiftPopup() {
 
   if (!open || !user || user.role === 'admin') return null;
 
-  const amount = Number(user.leaderIncentiveAmount || 10);
+  const amount = Number(user.leaderIncentiveAmount || 0);
+  if (!(amount > 0)) return null;
   const half = Number((amount / 2).toFixed(0));
 
   return (

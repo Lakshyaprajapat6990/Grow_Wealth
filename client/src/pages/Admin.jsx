@@ -208,7 +208,7 @@ export default function Admin() {
   async function grantLeaderIncentive(userId) {
     if (
       !window.confirm(
-        `Grant ${userId} locked 10 USDT gift (5 company + 5 leader)? Not withdrawable. Does not earn ROI.`
+        `Grant ${userId} locked gift (manual)? Auto gift for new joins is $0. Continue only if you intend a manual grant.`
       )
     ) {
       return;
@@ -227,7 +227,7 @@ export default function Admin() {
   async function giftAllMembers() {
     if (
       !window.confirm(
-        'Give locked 10 USDT gift to ALL members who do not have it yet? Not withdrawable. Does not earn ROI.'
+        'Auto gift is $0 for new joins. Gift-all will do nothing unless env gift amount is set. Continue?'
       )
     ) {
       return;
@@ -271,7 +271,7 @@ export default function Admin() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-primary" type="button" onClick={giftAllMembers}>
-            Gift +10 to All Members
+            Gift All (manual)
           </button>
           <Link className="btn btn-ghost" to="/dashboard">
             Member View
@@ -532,7 +532,7 @@ export default function Admin() {
                       onClick={() => grantLeaderIncentive(u.userId)}
                       disabled={(u.leaderIncentiveAmount || 0) > 0}
                     >
-                      {(u.leaderIncentiveAmount || 0) > 0 ? 'Gift OK' : 'Gift +10'}
+                      {(u.leaderIncentiveAmount || 0) > 0 ? `Gift $${Number(u.leaderIncentiveAmount).toFixed(0)}` : 'No gift'}
                     </button>
                   </div>
                 </td>

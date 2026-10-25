@@ -57,4 +57,4 @@ export const RANK_REWARD_NOTE =
   'Rank & Rewards: when your team’s total deposited volume hits a rank target, you receive a one-time USDT bonus. Team headcount does not matter — only business volume.';
 
 export const LEADER_INCENTIVE_NOTE =
-  'Every member may receive a 10 USDT welcome gift (5 company + 5 leader). Non-withdrawable. Does not earn ROI.';
+  'Welcome gift for new joins is currently $0. Prior gifts (if any) stay locked on Fund Balance and do not earn ROI.';
