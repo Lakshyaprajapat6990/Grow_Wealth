@@ -2,62 +2,74 @@ import { useEffect, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 
-const NAME_POOLS = {
-  INDIA: [
-    'Rahul Sharma',
-    'Priya Patel',
-    'Amit Kumar',
-    'Sneha Reddy',
-    'Vikram Singh',
-    'Ananya Gupta',
-    'Rohan Mehta',
-    'Kavita Nair',
-    'Suresh Iyer',
-    'Neha Joshi',
-  ],
-  USA: [
-    'James Miller',
-    'Emily Johnson',
-    'Michael Brown',
-    'Sarah Davis',
-    'David Wilson',
-    'Jessica Martinez',
-    'Christopher Lee',
-    'Amanda Taylor',
-  ],
-  PAKISTAN: [
-    'Ahmed Khan',
-    'Fatima Ali',
-    'Hassan Raza',
-    'Ayesha Malik',
-    'Usman Sheikh',
-    'Sana Iqbal',
-    'Bilal Ahmed',
-    'Maryam Hussain',
-  ],
-  CHINA: [
-    'Wei Chen',
-    'Li Wei',
-    'Zhang Min',
-    'Wang Fang',
-    'Liu Yang',
-    'Chen Hao',
-    'Zhao Lei',
-    'Sun Mei',
-  ],
-  UAE: ['Omar Al Hashimi', 'Layla Hassan', 'Yusuf Rahman', 'Noor Abdullah'],
-  UK: ['Oliver Smith', 'Sophie Williams', 'Harry Thompson', 'Charlotte Evans'],
-  NIGERIA: ['Chinedu Okafor', 'Amina Bello', 'Emeka Nwosu', 'Funke Adeyemi'],
-};
-
-const COUNTRIES = Object.keys(NAME_POOLS);
-const MAX_ROWS = 10;
-/** Show these names in the feed list with $2000–$5000 amounts */
-const FEATURED_MEMBERS = [
-  { name: 'Praveen kumar Rai', userId: 'GW9869420', country: 'INDIA' },
-  { name: 'Bhagvati Prasad Sahu', userId: 'GW0165712', country: 'INDIA' },
+const INDIAN_NAMES = [
+  'Rahul Sharma',
+  'Priya Patel',
+  'Amit Kumar',
+  'Sneha Reddy',
+  'Vikram Singh',
+  'Kavita Nair',
+  'Suresh Iyer',
+  'Neha Joshi',
+  'Ramesh Yadav',
+  'Sunita Devi',
+  'Manoj Tiwari',
+  'Pooja Verma',
+  'Deepak Chouhan',
+  'Rekha Pandey',
+  'Sanjay Tandan',
+  'Kushal Sahu',
+  'Gajanan Dhole',
+  'Urmila Devi',
+  'Raju Rajak',
+  'Upendra Gupta',
+  'Ashok Patel',
+  'Meena Kumari',
+  'Rajesh Gupta',
+  'Savita Sharma',
+  'Dinesh Verma',
+  'Lata Rani',
+  'Mukesh Jain',
+  'Seema Gupta',
+  'Harish Chandra',
+  'Kamla Devi',
+  'Naveen Kumar',
+  'Geeta Bai',
+  'Mahesh Sahu',
+  'Anita Yadav',
+  'Sandeep Singh',
+  'Kiran Bala',
+  'Bharat Lal',
+  'Shanti Devi',
+  'Vinod Kumar',
+  'Pushpa Rani',
+  'Jagdish Prasad',
+  'Radha Bai',
+  'Om Prakash',
+  'Sharda Devi',
+  'Ravi Shankar',
+  'Mamta Singh',
+  'Alok Mishra',
+  'Bharti Sahu',
+  'Pradeep Yadav',
+  'Nirmala Devi',
+  'Santosh Kumar',
+  'Asha Rani',
+  'Gopal Das',
+  'Hemant Sahu',
+  'Sarita Verma',
+  'Brijesh Tiwari',
+  'Indu Sharma',
+  'Yogesh Patel',
+  'Chhaya Devi',
 ];
-/** ~70% credit (deposit), ~30% debit (withdraw) */
+
+const MAX_ROWS = 10;
+
+const FEATURED_MEMBERS = [
+  { name: 'Praveen Kumar Rai', userId: 'GW9869420', country: 'INDIA' },
+];
+
 const TX_TYPES = [
   { type: 'Credit', weight: 7 },
   { type: 'Debit', weight: 3 },
@@ -87,8 +99,8 @@ function makeFakeId() {
   return `GW${n}`;
 }
 
-/** Amount $500–$6000, often round-ish */
-function randomAmount(min = 500, max = 6000) {
+/** Random $10 – $5,000 USDT */
+function randomAmount(min = 10, max = 5000) {
   const raw = randInt(min, max);
   const modes = [raw, Math.round(raw / 10) * 10, Math.round(raw / 50) * 50, Math.round(raw / 100) * 100];
   return Number(Math.min(max, Math.max(min, pick(modes))).toFixed(2));
@@ -96,8 +108,7 @@ function randomAmount(min = 500, max = 6000) {
 
 function createFakeTx(now = new Date()) {
   const { type } = pickWeighted(TX_TYPES);
-  // ~35% of rows use featured members at $2000–$5000
-  if (Math.random() < 0.35) {
+  if (Math.random() < 0.4) {
     const featured = pick(FEATURED_MEMBERS);
     return {
       _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -105,21 +116,19 @@ function createFakeTx(now = new Date()) {
       name: featured.name,
       country: featured.country,
       type,
-      amount: randomAmount(2000, 5000),
+      amount: randomAmount(10, 5000),
       status: 'Success',
       createdAt: now.toISOString(),
     };
   }
 
-  const country = pick(COUNTRIES);
-  const name = pick(NAME_POOLS[country]);
   return {
     _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: makeFakeId(),
-    name,
-    country,
+    name: pick(INDIAN_NAMES),
+    country: 'INDIA',
     type,
-    amount: randomAmount(500, 6000),
+    amount: randomAmount(10, 5000),
     status: 'Success',
     createdAt: now.toISOString(),
   };
@@ -130,7 +139,6 @@ function seedFeed(count = MAX_ROWS) {
   const now = Date.now();
   for (let i = 0; i < count; i += 1) {
     const at = new Date(now - (count - i) * 60_000);
-    // Guarantee both featured names appear in the initial list
     if (i < FEATURED_MEMBERS.length) {
       const featured = FEATURED_MEMBERS[i];
       const { type } = pickWeighted(TX_TYPES);
@@ -140,7 +148,7 @@ function seedFeed(count = MAX_ROWS) {
         name: featured.name,
         country: featured.country,
         type,
-        amount: randomAmount(2000, 5000),
+        amount: randomAmount(10, 5000),
         status: 'Success',
         createdAt: at.toISOString(),
       });
@@ -151,17 +159,28 @@ function seedFeed(count = MAX_ROWS) {
   return rows.reverse();
 }
 
-const TODAY_FIXED = 30645;
+/** Same for all members on a given UTC day; random within $30,000–$50,000 */
+function todayTotalForDate(date = new Date()) {
+  const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  const min = 30000;
+  const max = 50000;
+  return min + (hash % (max - min + 1));
+}
 
 export default function LiveFeed() {
   const [rows, setRows] = useState(() => seedFeed(10));
   const [grandTotal, setGrandTotal] = useState(() => randInt(180000, 420000));
+  const [todayTotal, setTodayTotal] = useState(() => todayTotalForDate());
 
   useEffect(() => {
     const t = setInterval(() => {
       const row = createFakeTx(new Date());
       setRows((prev) => [row, ...prev].slice(0, MAX_ROWS));
-      // Today stays fixed at $30,645; credits/debits only refresh the feed list
+      setTodayTotal(todayTotalForDate());
       if (row.type === 'Credit') {
         setGrandTotal((v) => Number((v + row.amount).toFixed(0)));
       }
@@ -179,7 +198,7 @@ export default function LiveFeed() {
         </div>
         <div className="card mp-stat">
           <span>Today</span>
-          <strong>${TODAY_FIXED.toLocaleString()}</strong>
+          <strong>${Number(todayTotal).toLocaleString()}</strong>
         </div>
       </div>
       <DataTable
