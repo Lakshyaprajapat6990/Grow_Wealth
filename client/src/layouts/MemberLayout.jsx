@@ -13,6 +13,7 @@ const menu = [
       { to: '/system-live-feed', label: 'System Live Feed' },
       { to: '/trading', label: 'Live Trading' },
       { to: '/profile', label: 'My Profile' },
+      { to: '/change-password', label: 'Change Password' },
       { to: '/my-account', label: 'My Account' },
     ],
   },
@@ -21,7 +22,7 @@ const menu = [
     items: [
       { to: '/deposit-history', label: 'Deposit History' },
       { to: '/direct-team', label: 'Direct Team' },
-      { to: '/all-team', label: 'Level Team' },
+      { to: '/all-team', label: 'All Team' },
     ],
   },
   {
@@ -29,7 +30,6 @@ const menu = [
     items: [
       { to: '/roi-income', label: 'ROI Income' },
       { to: '/direct-income', label: 'Refer & Earn' },
-      { to: '/level-income', label: 'Level Income' },
       { to: '/salary-income', label: 'Monthly Salary' },
       { to: '/rank-rewards', label: 'Rank & Rewards' },
     ],

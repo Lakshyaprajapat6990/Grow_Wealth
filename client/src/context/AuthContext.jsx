@@ -80,6 +80,9 @@ export function AuthProvider({ children }) {
         setUser(next);
         localStorage.setItem('gw_user', JSON.stringify(next));
       },
+      setSession(data) {
+        applySession(data);
+      },
     }),
     [user, token, loading]
   );

@@ -88,7 +88,6 @@ async function getDashboardSummary(req, res) {
       totalWithdrawn: u.totalWithdrawn,
       totalRoiIncome: u.totalRoiIncome,
       totalDirectIncome: u.totalDirectIncome,
-      totalLevelIncome: u.totalLevelIncome,
       totalRankReward: u.totalRankReward || 0,
       currentRank: u.currentRank || 0,
       totalSalaryIncome: u.totalSalaryIncome || 0,

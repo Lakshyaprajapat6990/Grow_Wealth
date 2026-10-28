@@ -35,7 +35,6 @@ export default function Dashboard() {
     { label: 'Total ROI', value: `$${(s.totalRoiIncome || 0).toFixed(2)}`, cls: 'gold' },
     { label: 'Refer & Earn', value: `$${(s.totalDirectIncome || 0).toFixed(2)}`, cls: '' },
     { label: 'Rank Rewards Paid', value: `$${(s.totalRankReward || 0).toFixed(2)}`, cls: 'gold' },
-    { label: 'Level Income', value: `$${(s.totalLevelIncome || 0).toFixed(2)}`, cls: '' },
     { label: 'Direct Team', value: s.directCount || 0, cls: '' },
   ];
 

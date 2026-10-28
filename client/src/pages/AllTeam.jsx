@@ -16,7 +16,7 @@ export default function AllTeam() {
   return (
     <div>
       <PageHeader
-        title="Level Team"
+        title="All Team"
         subtitle={`Direct: ${data.directCount} · Total downline: ${data.totalTeamCount}`}
       />
       <DataTable

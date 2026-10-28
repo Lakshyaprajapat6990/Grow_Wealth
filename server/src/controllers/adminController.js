@@ -58,14 +58,12 @@ async function creditRoi(req, res) {
   }
 
   const amount = result.amount;
-  const levelResult = result.levelIncome || { totalAmount: 0 };
   const fresh = await User.findOne({ userId: user.userId });
 
   return res.json({
     success: true,
-    message: `Credited $${amount} ROI (${ROI_PERCENT}%) for ${day} · level income $${levelResult.totalAmount}`,
+    message: `Credited $${amount} ROI (${ROI_PERCENT}%) for ${day}`,
     amount,
-    levelIncome: levelResult,
     user: fresh.toSafeJSON(),
   });
 }
@@ -220,7 +218,6 @@ async function creditIncome(req, res) {
   const incomeType = req.body.incomeType || req.body.type;
   const typeMap = {
     direct: { field: 'directIncome', total: 'totalDirectIncome', tx: 'direct_income' },
-    level: { field: 'levelIncome', total: 'totalLevelIncome', tx: 'level_income' },
     salary: { field: 'salaryIncome', total: 'totalSalaryIncome', tx: 'salary_income' },
     fast_track: { field: 'fastTrackIncome', total: 'totalFastTrackIncome', tx: 'fast_track_income' },
   };

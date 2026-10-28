@@ -12,6 +12,7 @@ import './pages/pages.css';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Deposit = lazy(() => import('./pages/Deposit'));
 const Profile = lazy(() => import('./pages/Profile'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const WalletHistory = lazy(() => import('./pages/WalletHistory'));
 const Admin = lazy(() => import('./pages/Admin'));
 const DepositHistory = lazy(() => import('./pages/DepositHistory'));
@@ -19,7 +20,6 @@ const DirectTeam = lazy(() => import('./pages/DirectTeam'));
 const AllTeam = lazy(() => import('./pages/AllTeam'));
 const RoiIncome = lazy(() => import('./pages/RoiIncome'));
 const DirectIncome = lazy(() => import('./pages/DirectIncome'));
-const LevelIncome = lazy(() => import('./pages/LevelIncome'));
 const SalaryIncome = lazy(() => import('./pages/SalaryIncome'));
 const RankRewards = lazy(() => import('./pages/RankRewards'));
 const LiveFeed = lazy(() => import('./pages/LiveFeed'));
@@ -57,13 +57,14 @@ export default function App() {
                 <Route path="/join" element={<Navigate to="/deposit" replace />} />
                 <Route path="/compound" element={<Compound />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/wallet-history" element={<WalletHistory />} />
                 <Route path="/deposit-history" element={<DepositHistory />} />
                 <Route path="/direct-team" element={<DirectTeam />} />
                 <Route path="/all-team" element={<AllTeam />} />
                 <Route path="/roi-income" element={<RoiIncome />} />
                 <Route path="/direct-income" element={<DirectIncome />} />
-                <Route path="/level-income" element={<LevelIncome />} />
+                <Route path="/level-income" element={<Navigate to="/direct-income" replace />} />
                 <Route path="/salary-income" element={<SalaryIncome />} />
                 <Route path="/rank-rewards" element={<RankRewards />} />
                 <Route path="/system-live-feed" element={<LiveFeed />} />

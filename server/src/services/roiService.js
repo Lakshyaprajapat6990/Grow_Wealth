@@ -109,7 +109,6 @@ async function creditOneDailyRoi(userDoc, day, { createdBy = 'system', backfill 
       userId: fresh.userId,
       amount,
       base,
-      levelIncome: { credited: 0, totalAmount: 0, details: [], disabled: true },
     };
   } catch (err) {
     try {
@@ -140,8 +139,6 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
   let skipped = 0;
   let failed = 0;
   let totalAmount = 0;
-  let levelCredited = 0;
-  let levelTotalAmount = 0;
   const details = [];
   const errors = [];
 
@@ -157,8 +154,6 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
       }
       credited += 1;
       totalAmount += result.amount;
-      levelCredited += result.levelIncome?.credited || 0;
-      levelTotalAmount += result.levelIncome?.totalAmount || 0;
       details.push(result);
     } catch (err) {
       failed += 1;
@@ -176,11 +171,9 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
     skipped,
     failed,
     totalAmount: Number(totalAmount.toFixed(8)),
-    levelCredited,
-    levelTotalAmount: Number(levelTotalAmount.toFixed(8)),
     details,
     errors,
-    message: `Daily ROI ${ROI_PERCENT}% done for ${day}: ${credited} users, $${totalAmount.toFixed(2)} ROI · ${levelCredited} level credits, $${levelTotalAmount.toFixed(2)}${failed ? ` · ${failed} failed` : ''}`,
+    message: `Daily ROI ${ROI_PERCENT}% done for ${day}: ${credited} users, $${totalAmount.toFixed(2)}${failed ? ` · ${failed} failed` : ''}`,
   };
 }
 

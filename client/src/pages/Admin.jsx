@@ -43,8 +43,7 @@ function IncomeCreditForm({ onDone, setMsg, setErr }) {
         <div className="field">
           <label className="label">Type</label>
           <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="direct">Direct</option>
-            <option value="level">Level</option>
+            <option value="direct">Direct (Refer & Earn)</option>
             <option value="salary">Monthly Salary</option>
             <option value="fast_track">Fast Track</option>
           </select>
@@ -354,8 +353,8 @@ export default function Admin() {
         <h3 style={{ marginTop: 0 }}>Automatic Daily ROI (1%)</h3>
         <p style={{ color: 'var(--text-muted)' }}>
           <strong>Auto:</strong> Vercel cron runs every day at 00:00 UTC — credits 1% ROI to all Joined members (cap
-          2×), then L1–L7 ROI-ka-ROI. <strong>Button:</strong> optional manual run if you need to credit today early /
-          retry. Same day will not double-pay.
+          2×). Level Income (ROI-ka-ROI) is disabled. <strong>Button:</strong> optional manual run if you need to credit
+          today early / retry. Same day will not double-pay.
         </p>
         <button className="btn btn-success" type="button" onClick={runDailyRoi} disabled={roiRunning}>
           {roiRunning ? 'Running ROI…' : 'Run Daily ROI Now'}

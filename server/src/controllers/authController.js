@@ -444,6 +444,64 @@ async function me(req, res) {
   return res.json({ success: true, user: req.user.toSafeJSON() });
 }
 
+/** Step 1: verify current login password before allowing change. */
+async function verifyPassword(req, res) {
+  const oldPassword = String(req.body.oldPassword || '');
+  if (!oldPassword) {
+    return res.status(400).json({ success: false, message: 'Current password is required' });
+  }
+
+  const user = await User.findOne({ userId: req.user.userId });
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const ok = await bcrypt.compare(oldPassword, user.password);
+  if (!ok) {
+    return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+  }
+
+  return res.json({ success: true, message: 'Password verified. You can set a new password.' });
+}
+
+/** Step 2: set new login password after re-checking the old one. */
+async function changePassword(req, res) {
+  const oldPassword = String(req.body.oldPassword || '');
+  const newPassword = String(req.body.newPassword || '');
+  const confirmPassword = String(req.body.confirmPassword || '');
+
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({ success: false, message: 'All password fields are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ success: false, message: 'New password and confirm password do not match' });
+  }
+  if (newPassword === oldPassword) {
+    return res.status(400).json({ success: false, message: 'New password must be different from the current password' });
+  }
+
+  const user = await User.findOne({ userId: req.user.userId });
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const ok = await bcrypt.compare(oldPassword, user.password);
+  if (!ok) {
+    return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
+  await user.save();
+
+  const token = signToken(user);
+  return res.json({
+    success: true,
+    message: 'Password updated successfully. Please use your new password next time you log in.',
+    token,
+    user: user.toSafeJSON(),
+  });
+}
+
 module.exports = {
   checkSponsor,
   register,
@@ -453,4 +511,6 @@ module.exports = {
   login,
   me,
   registerInfo,
+  verifyPassword,
+  changePassword,
 };

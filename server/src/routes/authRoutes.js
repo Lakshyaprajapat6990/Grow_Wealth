@@ -8,6 +8,8 @@ const {
   login,
   me,
   registerInfo,
+  verifyPassword,
+  changePassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -21,5 +23,7 @@ router.post('/register-confirm', registerConfirmPayment);
 router.get('/register-pending/:pendingId', getPendingStatus);
 router.post('/login', login);
 router.get('/me', protect, me);
+router.post('/verify-password', protect, verifyPassword);
+router.post('/change-password', protect, changePassword);
 
 module.exports = router;
