@@ -42,7 +42,7 @@ export default function Withdraw() {
     }
   }
 
-  const feeFlat = Number(info?.withdrawFeeFlat ?? 0.7);
+  const feePct = Number(info?.withdrawFeePercent ?? 10);
   const minWd = info?.withdrawMin ?? 10;
   const processHrs = info?.withdrawProcessingHours || '24-48';
   const spendablePrincipal = Number(
@@ -55,14 +55,14 @@ export default function Withdraw() {
     info?.availableBalance ??
     Number(info?.incomeBalance ?? user?.incomeBalance ?? 0) + Math.max(0, spendablePrincipal);
   const amt = Number(amount) || 0;
-  const feePreview = feeFlat;
+  const feePreview = Number(((amt * feePct) / 100).toFixed(2));
   const netPreview = Number(Math.max(0, amt - feePreview).toFixed(2));
 
   return (
     <div>
       <h1 className="page-title">Withdraw</h1>
       <p className="page-sub">
-        USDT BEP-20 · Min ${minWd} · Fee ${feeFlat.toFixed(2)} · Principal + income · Process {processHrs}h
+        USDT BEP-20 · Min ${minWd} · Fee {feePct}% · Principal + income · Process {processHrs}h
       </p>
 
       <form className="card" style={{ padding: '1.25rem', maxWidth: 520 }} onSubmit={submit}>
@@ -70,7 +70,7 @@ export default function Withdraw() {
         {msg && <div className="alert alert-success">{msg}</div>}
 
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Max 1 withdrawal request per day (UTC) · Min ${minWd} · Flat fee ${feeFlat.toFixed(2)}
+          Max 1 withdrawal request per day (UTC) · Min ${minWd} · Fee {feePct}%
         </p>
 
         <p>
@@ -109,7 +109,7 @@ export default function Withdraw() {
         </div>
         {amt >= minWd && (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Fee ${feePreview.toFixed(2)} · You receive ≈ ${netPreview.toFixed(2)}
+            Fee {feePct}% = ${feePreview.toFixed(2)} · You receive ≈ ${netPreview.toFixed(2)}
           </p>
         )}
         <div className="field">

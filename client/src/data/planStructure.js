@@ -7,7 +7,7 @@ export const PLAN_CORE = [
   { rule: 'ROI Cap', value: 'Maximum 2X of the investment' },
   { rule: 'Compounding Mode', value: 'Manual Compounding' },
   { rule: 'Withdrawal', value: 'Min $10 · Principal + income allowed · Process 24–48 hours' },
-  { rule: 'Withdrawal Fee', value: 'Flat $0.70 USDT' },
+  { rule: 'Withdrawal Fee', value: '10%' },
   {
     rule: 'Refer & Earn',
     value: 'L1 5% · L2 2% · L3 1% of joining amount (3 upline levels)',

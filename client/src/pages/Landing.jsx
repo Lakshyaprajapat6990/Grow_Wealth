@@ -6,7 +6,7 @@ import './Landing.css';
 const faqs = [
   {
     q: 'What is Grow Wealth?',
-    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn Monthly Salary from team business, 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw with a flat $0.70 fee (24–48h process).',
+    a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn Monthly Salary from team business, 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw with a 10% fee (24–48h process).',
   },
   {
     q: 'What is the Monthly Salary Plan?',
@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     q: 'What are the withdrawal rules?',
-    a: 'Minimum withdrawal is $10 with a flat $0.70 fee. Max 1 request per day (UTC). Net amount is paid to your saved wallet after admin approval (24–48h). All joined members can withdraw.',
+    a: 'Minimum withdrawal is $10 with a 10% fee. Max 1 request per day (UTC). Net amount is paid to your saved wallet after admin approval (24–48h). All joined members can withdraw.',
   },
 ];
 
@@ -116,7 +116,7 @@ export default function Landing() {
               <strong>Monthly Salary Plan</strong> — team business pays every month ($3k → $180 · $5k → $270 · $7k →
               $450 · $10k → $600 · $15k → $750 · $20k+ → $1,000). Stake from{' '}
               <strong>$10</strong> (max $50,000) · <strong>1% daily ROI</strong> (2× cap) ·{' '}
-              <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%). Manual compound · WD min $10 · fee $0.70 · 24–48h.
+              <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%). Manual compound · WD min $10 · 10% fee · 24–48h.
             </p>
             <div className="lp-hero-actions">
               <Link to="/register" className="btn btn-primary lp-btn-lg">
@@ -217,8 +217,8 @@ export default function Landing() {
                 <div>
                   <h4>Earn & Withdraw</h4>
                   <p>
-                    Monthly Salary from team business, 1% daily ROI (2× cap), manual compound. Withdraw min $10 · fee
-                    $0.70 · max 1/day.
+                    Monthly Salary from team business, 1% daily ROI (2× cap), manual compound. Withdraw min $10 · 10% fee ·
+                    max 1/day.
                   </p>
                 </div>
               </div>

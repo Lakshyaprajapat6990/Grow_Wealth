@@ -9,10 +9,7 @@ const {
 } = require('../services/joiningService');
 
 const WITHDRAW_MIN = Number(process.env.WITHDRAW_MIN || 10);
-/** Flat USDT fee per withdrawal (default $0.70). Percent kept only for old env compatibility = 0. */
-const WITHDRAW_FEE_FLAT = Number(
-  process.env.WITHDRAW_FEE_FLAT != null ? process.env.WITHDRAW_FEE_FLAT : 0.7
-);
+const WITHDRAW_FEE_PERCENT = Number(process.env.WITHDRAW_FEE_PERCENT || 10);
 const WITHDRAW_PROCESSING_HOURS = process.env.WITHDRAW_PROCESSING_HOURS || '24-48';
 const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 1);
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
@@ -44,8 +41,7 @@ async function getWalletInfo(req, res) {
     hasCompletedFirstWithdrawal: u.hasCompletedFirstWithdrawal,
     withdrawMin: WITHDRAW_MIN,
     firstWithdrawMin: WITHDRAW_MIN,
-    withdrawFeeFlat: WITHDRAW_FEE_FLAT,
-    withdrawFeePercent: 0,
+    withdrawFeePercent: WITHDRAW_FEE_PERCENT,
     withdrawProcessingHours: WITHDRAW_PROCESSING_HOURS,
     joiningAmount: JOINING_AMOUNT,
     minDeposit: MIN_DEPOSIT,
@@ -151,14 +147,6 @@ async function requestWithdraw(req, res) {
     });
   }
 
-  const fee = Number(WITHDRAW_FEE_FLAT.toFixed(8));
-  if (amount <= fee) {
-    return res.status(400).json({
-      success: false,
-      message: `Amount must be greater than the $${fee} withdrawal fee`,
-    });
-  }
-
   // Max 1 withdrawal request per UTC day for all members
   const startOfUtcDay = new Date();
   startOfUtcDay.setUTCHours(0, 0, 0, 0);
@@ -193,6 +181,7 @@ async function requestWithdraw(req, res) {
   remaining = Number((remaining - fromIncome).toFixed(8));
   const fromPrincipal = remaining;
 
+  const fee = Number(((amount * WITHDRAW_FEE_PERCENT) / 100).toFixed(8));
   const netAmount = Number((amount - fee).toFixed(8));
 
   user.incomeBalance = Number((user.incomeBalance - fromIncome).toFixed(8));
@@ -221,12 +210,11 @@ async function requestWithdraw(req, res) {
     amount,
     balanceAfter: user.incomeBalance,
     status: 'pending',
-    description: `Withdrawal $${amount} · flat fee $${fee} · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
+    description: `Withdrawal $${amount} · fee ${WITHDRAW_FEE_PERCENT}% ($${fee}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
     meta: {
       withdrawalId: withdrawal._id,
       fee,
-      feeFlat: fee,
-      feePercent: 0,
+      feePercent: WITHDRAW_FEE_PERCENT,
       netAmount,
       requestedAmount: amount,
       fromIncome,
@@ -239,7 +227,7 @@ async function requestWithdraw(req, res) {
 
   return res.json({
     success: true,
-    message: `Withdrawal submitted. Fee $${fee}. Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
+    message: `Withdrawal submitted. Fee ${WITHDRAW_FEE_PERCENT}% ($${fee}). Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
     withdrawal,
     fee,
     netAmount,

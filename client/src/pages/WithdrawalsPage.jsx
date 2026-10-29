@@ -15,7 +15,7 @@ export default function WithdrawalsPage() {
   if (showForm) {
     return (
       <div>
-        <PageHeader title="Request Withdrawal" subtitle="Min $10 · flat fee $0.70 · Principal allowed · 24–48h process" />
+        <PageHeader title="Request Withdrawal" subtitle="Min $10 · 10% fee · Principal allowed · 24–48h process" />
         <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setShowForm(false)}>
           ← Back to History
         </button>
@@ -28,7 +28,7 @@ export default function WithdrawalsPage() {
     <div>
       <PageHeader
         title="Withdrawals"
-        subtitle="Min $10 · flat fee $0.70 · max 1 request per day"
+        subtitle="Min $10 · 10% fee · max 1 request per day"
         action={
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>
             New Withdrawal

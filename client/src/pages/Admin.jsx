@@ -265,7 +265,7 @@ export default function Admin() {
             Admin Panel
           </h1>
           <p className="page-sub">
-            Live ops · Deposits · ROI 1% (2×) · Withdraw 8% · Refer L1/L2/L3 · Leader incentive
+            Live ops · Deposits · ROI 1% (2×) · Withdraw 10% · Refer L1/L2/L3 · Leader incentive
           </p>
         </div>
         <div className="admin-header-actions">
