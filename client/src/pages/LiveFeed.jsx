@@ -2,73 +2,78 @@ import { useEffect, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 
-const INDIAN_NAMES = [
-  'Rahul Sharma',
-  'Priya Patel',
-  'Amit Kumar',
-  'Sneha Reddy',
-  'Vikram Singh',
-  'Kavita Nair',
-  'Suresh Iyer',
-  'Neha Joshi',
-  'Ramesh Yadav',
-  'Sunita Devi',
-  'Manoj Tiwari',
-  'Pooja Verma',
-  'Deepak Chouhan',
-  'Rekha Pandey',
-  'Sanjay Tandan',
-  'Kushal Sahu',
-  'Gajanan Dhole',
-  'Urmila Devi',
-  'Raju Rajak',
-  'Upendra Gupta',
-  'Ashok Patel',
-  'Meena Kumari',
-  'Rajesh Gupta',
-  'Savita Sharma',
-  'Dinesh Verma',
-  'Lata Rani',
-  'Mukesh Jain',
-  'Seema Gupta',
-  'Harish Chandra',
-  'Kamla Devi',
-  'Naveen Kumar',
-  'Geeta Bai',
-  'Mahesh Sahu',
-  'Anita Yadav',
-  'Sandeep Singh',
-  'Kiran Bala',
-  'Bharat Lal',
-  'Shanti Devi',
-  'Vinod Kumar',
-  'Pushpa Rani',
-  'Jagdish Prasad',
-  'Radha Bai',
-  'Om Prakash',
-  'Sharda Devi',
-  'Ravi Shankar',
-  'Mamta Singh',
-  'Alok Mishra',
-  'Bharti Sahu',
-  'Pradeep Yadav',
-  'Nirmala Devi',
-  'Santosh Kumar',
-  'Asha Rani',
-  'Gopal Das',
-  'Hemant Sahu',
-  'Sarita Verma',
-  'Brijesh Tiwari',
-  'Indu Sharma',
-  'Yogesh Patel',
-  'Chhaya Devi',
-];
+const NAME_POOLS = {
+  INDIA: [
+    'Rahul Sharma',
+    'Priya Patel',
+    'Amit Kumar',
+    'Sneha Reddy',
+    'Vikram Singh',
+    'Kavita Nair',
+    'Suresh Iyer',
+    'Neha Joshi',
+    'Ramesh Yadav',
+    'Sunita Devi',
+    'Manoj Tiwari',
+    'Pooja Verma',
+    'Deepak Chouhan',
+    'Rekha Pandey',
+    'Ashok Patel',
+    'Meena Kumari',
+    'Rajesh Gupta',
+    'Savita Sharma',
+    'Dinesh Verma',
+    'Naveen Kumar',
+    'Mahesh Sahu',
+    'Anita Yadav',
+    'Sandeep Singh',
+    'Vinod Kumar',
+    'Jagdish Prasad',
+    'Om Prakash',
+    'Ravi Shankar',
+    'Alok Mishra',
+    'Pradeep Yadav',
+    'Santosh Kumar',
+    'Hemant Sahu',
+    'Yogesh Patel',
+  ],
+  USA: [
+    'James Miller',
+    'Emily Johnson',
+    'Michael Brown',
+    'Sarah Davis',
+    'David Wilson',
+    'Jessica Martinez',
+    'Christopher Lee',
+    'Amanda Taylor',
+  ],
+  PAKISTAN: [
+    'Ahmed Khan',
+    'Fatima Ali',
+    'Hassan Raza',
+    'Ayesha Malik',
+    'Usman Sheikh',
+    'Sana Iqbal',
+    'Bilal Ahmed',
+    'Maryam Hussain',
+  ],
+  CHINA: [
+    'Wei Chen',
+    'Li Wei',
+    'Zhang Min',
+    'Wang Fang',
+    'Liu Yang',
+    'Chen Hao',
+    'Zhao Lei',
+    'Sun Mei',
+  ],
+  UAE: ['Omar Al Hashimi', 'Layla Hassan', 'Yusuf Rahman', 'Noor Abdullah'],
+  UK: ['Oliver Smith', 'Sophie Williams', 'Harry Thompson', 'Charlotte Evans'],
+  NIGERIA: ['Chinedu Okafor', 'Amina Bello', 'Emeka Nwosu', 'Funke Adeyemi'],
+};
 
+const COUNTRIES = Object.keys(NAME_POOLS);
 const MAX_ROWS = 10;
-
-const FEATURED_MEMBERS = [
-  { name: 'Praveen Kumar Rai', userId: 'GW9869420', country: 'INDIA' },
-];
 
 const TX_TYPES = [
   { type: 'Credit', weight: 7 },
@@ -108,25 +113,12 @@ function randomAmount(min = 10, max = 5000) {
 
 function createFakeTx(now = new Date()) {
   const { type } = pickWeighted(TX_TYPES);
-  if (Math.random() < 0.4) {
-    const featured = pick(FEATURED_MEMBERS);
-    return {
-      _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
-      userId: featured.userId,
-      name: featured.name,
-      country: featured.country,
-      type,
-      amount: randomAmount(10, 5000),
-      status: 'Success',
-      createdAt: now.toISOString(),
-    };
-  }
-
+  const country = pick(COUNTRIES);
   return {
     _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: makeFakeId(),
-    name: pick(INDIAN_NAMES),
-    country: 'INDIA',
+    name: pick(NAME_POOLS[country]),
+    country,
     type,
     amount: randomAmount(10, 5000),
     status: 'Success',
@@ -139,22 +131,7 @@ function seedFeed(count = MAX_ROWS) {
   const now = Date.now();
   for (let i = 0; i < count; i += 1) {
     const at = new Date(now - (count - i) * 60_000);
-    if (i < FEATURED_MEMBERS.length) {
-      const featured = FEATURED_MEMBERS[i];
-      const { type } = pickWeighted(TX_TYPES);
-      rows.push({
-        _id: `${at.getTime()}-feat-${i}`,
-        userId: featured.userId,
-        name: featured.name,
-        country: featured.country,
-        type,
-        amount: randomAmount(10, 5000),
-        status: 'Success',
-        createdAt: at.toISOString(),
-      });
-    } else {
-      rows.push(createFakeTx(at));
-    }
+    rows.push(createFakeTx(at));
   }
   return rows.reverse();
 }
