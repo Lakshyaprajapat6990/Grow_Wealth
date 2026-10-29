@@ -18,7 +18,7 @@ export default function SalaryIncome() {
     <div>
       <PageHeader
         title="Monthly Salary"
-        subtitle="Downline team business unlocks a monthly USDT salary and daily withdrawals."
+        subtitle="Downline team business unlocks a monthly USDT salary."
       />
 
       {err && <div className="alert alert-error">{err}</div>}
@@ -38,10 +38,8 @@ export default function SalaryIncome() {
             <strong>${Number(status.monthlyAmount || 0).toFixed(0)}</strong>
           </div>
           <div className="card mp-stat">
-            <span>Daily Withdrawal</span>
-            <strong style={{ color: status.dailyWithdrawUnlocked ? '#4ade80' : 'var(--warning)' }}>
-              {status.dailyWithdrawUnlocked ? 'Unlocked' : 'Locked'}
-            </strong>
+            <span>Months Paid</span>
+            <strong>{status.salaryMonthsPaid || 0}</strong>
           </div>
         </div>
       )}
@@ -57,7 +55,6 @@ export default function SalaryIncome() {
           </strong>
           <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)' }}>
             Need ${Number(status.remainingToNext || 0).toFixed(2)} more. Paid once per month while you stay qualified.
-            Achieving Tier 1 also unlocks once-per-day withdrawals.
           </p>
         </div>
       )}

@@ -28,7 +28,7 @@ export default function WithdrawalsPage() {
     <div>
       <PageHeader
         title="Withdrawals"
-        subtitle="Min $10 · 10% fee on every withdrawal"
+        subtitle="Min $10 · 8% fee · max 1 request per day"
         action={
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>
             New Withdrawal

@@ -69,15 +69,9 @@ export default function Withdraw() {
         {err && <div className="alert alert-error">{err}</div>}
         {msg && <div className="alert alert-success">{msg}</div>}
 
-        {(info?.dailyWithdrawUnlocked ?? user?.dailyWithdrawUnlocked) ? (
-          <p style={{ color: '#4ade80', fontSize: '0.9rem' }}>
-            Daily withdrawal unlocked (Monthly Salary) · max 1 request per day (UTC)
-          </p>
-        ) : (
-          <p style={{ color: 'var(--warning)', fontSize: '0.9rem' }}>
-            Daily withdrawal locked. Reach $3,000 downline team business (Monthly Salary Tier 1) to unlock.
-          </p>
-        )}
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          Max 1 withdrawal request per day (UTC) · Min ${minWd} · Fee {feePct}%
+        </p>
 
         <p>
           Available (income + principal): <strong>${Number(available || 0).toFixed(2)}</strong>
@@ -122,12 +116,7 @@ export default function Withdraw() {
           <label className="label">Transaction Password</label>
           <input className="input" type="password" value={trx} onChange={(e) => setTrx(e.target.value)} required />
         </div>
-        <button
-          className="btn btn-primary"
-          disabled={
-            loading || !user?.isJoined || !(info?.dailyWithdrawUnlocked ?? user?.dailyWithdrawUnlocked)
-          }
-        >
+        <button className="btn btn-primary" disabled={loading || !user?.isJoined}>
           {loading ? 'Submitting…' : 'CONFIRM WITHDRAWAL'}
         </button>
         {!user?.isJoined && (

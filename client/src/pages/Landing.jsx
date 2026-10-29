@@ -10,7 +10,7 @@ const faqs = [
   },
   {
     q: 'What is the Monthly Salary Plan?',
-    a: 'Downline team business unlocks a monthly USDT salary (highest tier only): $3,000 → $180 · $5,000 → $270 · $7,000 → $450 · $10,000 → $600 · $15,000 → $750 · $20,000+ → $1,000. Achieving Tier 1 also unlocks once-per-day withdrawals.',
+    a: 'Downline team business unlocks a monthly USDT salary (highest tier only): $3,000 → $180 · $5,000 → $270 · $7,000 → $450 · $10,000 → $600 · $15,000 → $750 · $20,000+ → $1,000. Paid once per month while you stay qualified.',
   },
   {
     q: 'How do I activate my account?',
@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     q: 'What are the withdrawal rules?',
-    a: 'Minimum withdrawal is $10 with an 8% fee. Daily withdrawals unlock when you achieve Monthly Salary (team business $3,000+), then max 1 request per day (UTC). Net amount is paid to your saved wallet after admin approval (24–48h).',
+    a: 'Minimum withdrawal is $10 with an 8% fee. Max 1 request per day (UTC). Net amount is paid to your saved wallet after admin approval (24–48h). All joined members can withdraw.',
   },
 ];
 
@@ -114,7 +114,7 @@ export default function Landing() {
             </h1>
             <p className="lp-lead">
               <strong>Monthly Salary Plan</strong> — team business pays every month ($3k → $180 · $5k → $270 · $7k →
-              $450 · $10k → $600 · $15k → $750 · $20k+ → $1,000) and unlocks daily withdrawal. Stake from{' '}
+              $450 · $10k → $600 · $15k → $750 · $20k+ → $1,000). Stake from{' '}
               <strong>$10</strong> (max $50,000) · <strong>1% daily ROI</strong> (2× cap) ·{' '}
               <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%). Manual compound · WD min $10 · 8% fee · 24–48h.
             </p>
@@ -217,8 +217,8 @@ export default function Landing() {
                 <div>
                   <h4>Earn & Withdraw</h4>
                   <p>
-                    Monthly Salary from team business, 1% daily ROI (2× cap), manual compound. Daily WD unlocks at $3k
-                    team business · min $10 · 8% fee.
+                    Monthly Salary from team business, 1% daily ROI (2× cap), manual compound. Withdraw min $10 · 8% fee ·
+                    max 1/day.
                   </p>
                 </div>
               </div>
