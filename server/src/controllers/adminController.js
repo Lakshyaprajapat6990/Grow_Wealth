@@ -97,12 +97,25 @@ async function approveWithdrawal(req, res) {
   if (withdrawal.isFirstWithdrawal) user.hasCompletedFirstWithdrawal = true;
   await user.save();
 
+  const kindLabel = withdrawal.kind === 'fund_refund' ? 'Fund refund' : 'Income withdrawal';
+  const reqAmt = Number(withdrawal.requestedAmount ?? withdrawal.amount ?? 0);
+  const feeAmt = Number(withdrawal.fee || 0);
   await Transaction.updateMany(
     { 'meta.withdrawalId': withdrawal._id },
-    { $set: { status: 'success', description: 'Withdrawal paid' } }
+    {
+      $set: {
+        status: 'success',
+        description: `${kindLabel} paid · requested $${reqAmt} · fee $${feeAmt} · net $${withdrawal.amount}`,
+      },
+    }
   );
 
-  return res.json({ success: true, message: 'Withdrawal marked paid', withdrawal, user: user.toSafeJSON() });
+  return res.json({
+    success: true,
+    message: `${kindLabel} marked paid (net $${Number(withdrawal.amount).toFixed(2)})`,
+    withdrawal,
+    user: user.toSafeJSON(),
+  });
 }
 
 async function listUsers(_req, res) {

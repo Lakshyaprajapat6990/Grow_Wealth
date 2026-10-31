@@ -441,38 +441,66 @@ export default function Admin() {
       </div>
 
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1rem', overflowX: 'auto' }}>
-        <h3 style={{ marginTop: 0 }}>Pending Withdrawals</h3>
+        <h3 style={{ marginTop: 0 }}>Pending Withdrawals & Fund Refunds</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: 0 }}>
+          Fee is already deducted. Pay only the <strong>Net</strong> amount to the member wallet after review.
+        </p>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--text-muted)' }}>
               <th style={{ padding: '0.5rem' }}>User</th>
-              <th style={{ padding: '0.5rem' }}>Amount</th>
+              <th style={{ padding: '0.5rem' }}>Type</th>
+              <th style={{ padding: '0.5rem' }}>Requested</th>
+              <th style={{ padding: '0.5rem' }}>Fee</th>
+              <th style={{ padding: '0.5rem' }}>Net to pay</th>
               <th style={{ padding: '0.5rem' }}>Wallet</th>
+              <th style={{ padding: '0.5rem' }}>Date</th>
               <th style={{ padding: '0.5rem' }}>Action</th>
             </tr>
           </thead>
           <tbody>
             {withdrawals.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+                <td colSpan={8} style={{ padding: '1rem', color: 'var(--text-muted)' }}>
                   No pending withdrawals
                 </td>
               </tr>
             )}
-            {withdrawals.map((w) => (
-              <tr key={w._id} style={{ borderTop: '1px solid var(--border)' }}>
-                <td style={{ padding: '0.65rem' }}>{w.userId}</td>
-                <td style={{ padding: '0.65rem' }}>${Number(w.amount).toFixed(2)}</td>
-                <td style={{ padding: '0.65rem', maxWidth: 160, wordBreak: 'break-all', fontSize: '0.8rem' }}>
-                  {w.walletAddress}
-                </td>
-                <td style={{ padding: '0.65rem' }}>
-                  <button className="btn btn-success" type="button" onClick={() => approve(w._id)}>
-                    Mark Paid
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {withdrawals.map((w) => {
+              const isRefund = w.kind === 'fund_refund';
+              const requested = Number(w.requestedAmount ?? w.amount ?? 0);
+              const fee = Number(w.fee || 0);
+              const net = Number(w.amount || 0);
+              const feePct =
+                requested > 0 ? Number(((fee / requested) * 100).toFixed(0)) : isRefund ? 20 : 10;
+              return (
+                <tr key={w._id} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td style={{ padding: '0.65rem' }}>{w.userId}</td>
+                  <td style={{ padding: '0.65rem' }}>
+                    <span style={{ color: isRefund ? '#fbbf24' : '#4ade80', fontWeight: 600 }}>
+                      {isRefund ? 'Fund Refund' : 'Income'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.65rem' }}>${requested.toFixed(2)}</td>
+                  <td style={{ padding: '0.65rem' }}>
+                    ${fee.toFixed(2)}
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}> ({feePct}%)</span>
+                  </td>
+                  <td style={{ padding: '0.65rem', fontWeight: 700 }}>${net.toFixed(2)}</td>
+                  <td style={{ padding: '0.65rem', maxWidth: 160, wordBreak: 'break-all', fontSize: '0.8rem' }}>
+                    {w.walletAddress}
+                  </td>
+                  <td style={{ padding: '0.65rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                    {w.createdAt ? new Date(w.createdAt).toLocaleString() : '—'}
+                  </td>
+                  <td style={{ padding: '0.65rem' }}>
+                    <button className="btn btn-success" type="button" onClick={() => approve(w._id)}>
+                      Mark Paid
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
