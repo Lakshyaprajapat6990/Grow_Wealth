@@ -30,6 +30,7 @@ const Support = lazy(() => import('./pages/Support'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const WithdrawalsPage = lazy(() => import('./pages/WithdrawalsPage'));
 const Compound = lazy(() => import('./pages/Compound'));
+const RefundFund = lazy(() => import('./pages/RefundFund'));
 
 function RouteFallback() {
   return (
@@ -75,6 +76,7 @@ export default function App() {
                 <Route path="/support" element={<Support />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/withdrawals" element={<WithdrawalsPage />} />
+                <Route path="/refund-fund" element={<RefundFund />} />
                 <Route path="/withdraw" element={<Navigate to="/withdrawals" replace />} />
                 <Route path="/team" element={<Navigate to="/direct-team" replace />} />
               </Route>

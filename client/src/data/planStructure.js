@@ -6,8 +6,8 @@ export const PLAN_CORE = [
   { rule: 'Daily ROI', value: '1% Daily (All 7 Days)' },
   { rule: 'ROI Cap', value: 'Maximum 2X of the investment' },
   { rule: 'Compounding Mode', value: 'Manual Compounding' },
-  { rule: 'Withdrawal', value: 'Min $10 · Principal + income allowed · Process 24–48 hours' },
-  { rule: 'Withdrawal Fee', value: '10%' },
+  { rule: 'Income Withdrawal', value: 'Min $10 · Income only · Fee 10% · Process 24–48 hours' },
+  { rule: 'Fund Refund', value: 'Min $10 · Fund Balance only · Fee 20% · Gift not refundable' },
   {
     rule: 'Refer & Earn',
     value: 'L1 5% · L2 2% · L3 1% of joining amount (3 upline levels)',

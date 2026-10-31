@@ -3,23 +3,36 @@ import api from '../api';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 import Withdraw from './Withdraw';
+import RefundFund from './RefundFund';
 
 export default function WithdrawalsPage() {
   const [rows, setRows] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [mode, setMode] = useState(null); // null | 'income' | 'refund'
 
   useEffect(() => {
     api.get('/wallet/withdrawals').then((r) => setRows(r.data.withdrawals || [])).catch(() => {});
-  }, [showForm]);
+  }, [mode]);
 
-  if (showForm) {
+  if (mode === 'income') {
     return (
       <div>
-        <PageHeader title="Request Withdrawal" subtitle="Min $10 · 10% fee · Principal allowed · 24–48h process" />
-        <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setShowForm(false)}>
+        <PageHeader title="Withdraw Income" subtitle="Income only · Min $10 · 10% fee · 24–48h process" />
+        <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setMode(null)}>
           ← Back to History
         </button>
         <Withdraw />
+      </div>
+    );
+  }
+
+  if (mode === 'refund') {
+    return (
+      <div>
+        <PageHeader title="Refund Fund" subtitle="Fund Balance only · Min $10 · 20% fee · 24–48h process" />
+        <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setMode(null)}>
+          ← Back to History
+        </button>
+        <RefundFund />
       </div>
     );
   }
@@ -28,15 +41,25 @@ export default function WithdrawalsPage() {
     <div>
       <PageHeader
         title="Withdrawals"
-        subtitle="Min $10 · 10% fee · max 1 request per day"
+        subtitle="Income 10% · Fund refund 20% · max 1 request per day"
         action={
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-            New Withdrawal
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={() => setMode('income')}>
+              Withdraw Income
+            </button>
+            <button className="btn btn-ghost" onClick={() => setMode('refund')}>
+              Refund Fund
+            </button>
+          </div>
         }
       />
       <DataTable
         columns={[
+          {
+            key: 'kind',
+            label: 'Type',
+            render: (r) => (r.kind === 'fund_refund' ? 'Fund Refund' : 'Income'),
+          },
           {
             key: 'requested',
             label: 'Requested',

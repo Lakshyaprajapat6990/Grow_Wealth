@@ -45,24 +45,16 @@ export default function Withdraw() {
   const feePct = Number(info?.withdrawFeePercent ?? 10);
   const minWd = info?.withdrawMin ?? 10;
   const processHrs = info?.withdrawProcessingHours || '24-48';
-  const spendablePrincipal = Number(
-    info?.principalBalance ??
-      user?.principalBalance ??
-      Number(info?.fundBalance ?? user?.fundBalance ?? 0) -
-        Number(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0)
-  );
-  const available =
-    info?.availableBalance ??
-    Number(info?.incomeBalance ?? user?.incomeBalance ?? 0) + Math.max(0, spendablePrincipal);
+  const incomeAvail = Number(info?.incomeBalance ?? user?.incomeBalance ?? 0);
   const amt = Number(amount) || 0;
   const feePreview = Number(((amt * feePct) / 100).toFixed(2));
   const netPreview = Number(Math.max(0, amt - feePreview).toFixed(2));
 
   return (
     <div>
-      <h1 className="page-title">Withdraw</h1>
+      <h1 className="page-title">Withdraw Income</h1>
       <p className="page-sub">
-        USDT BEP-20 · Min ${minWd} · Fee {feePct}% · Principal + income · Process {processHrs}h
+        Income balance only · Min ${minWd} · Fee {feePct}% · Process {processHrs}h
       </p>
 
       <form className="card" style={{ padding: '1.25rem', maxWidth: 520 }} onSubmit={submit}>
@@ -70,29 +62,17 @@ export default function Withdraw() {
         {msg && <div className="alert alert-success">{msg}</div>}
 
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Max 1 withdrawal request per day (UTC) · Min ${minWd} · Fee {feePct}%
+          For Fund Balance principal use <strong>Refund Fund</strong> (20% fee). Max 1 withdraw/refund per day (UTC).
         </p>
 
         <p>
-          Available (income + principal): <strong>${Number(available || 0).toFixed(2)}</strong>
-        </p>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Income ${(info?.incomeBalance ?? user?.incomeBalance ?? 0).toFixed(2)} · Spendable principal $
-          {spendablePrincipal.toFixed(2)}
-          {(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0) > 0 && (
-            <>
-              {' '}
-              · Fund Balance $
-              {(info?.fundBalance ?? user?.fundBalance ?? 0).toFixed(2)} (includes $
-              {Number(info?.leaderIncentiveAmount ?? user?.leaderIncentiveAmount ?? 0).toFixed(0)} locked gift)
-            </>
-          )}
+          Income available: <strong>${incomeAvail.toFixed(2)}</strong>
         </p>
         <p style={{ color: 'var(--text-muted)', wordBreak: 'break-all' }}>
           Payout wallet: {user?.walletAddress}
         </p>
         <p style={{ color: 'var(--warning)', fontSize: '0.85rem' }}>
-          Requests are processed in {processHrs} hours. Locked gift in Fund Balance cannot be withdrawn.
+          Requests are processed in {processHrs} hours.
         </p>
 
         <div className="field">

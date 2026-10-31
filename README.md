@@ -17,7 +17,7 @@ USDT BEP-20 investment & member platform — **full stack deployable on Vercel**
 
 | Role | User ID | Password |
 |------|---------|----------|
-| Super Admin | `GW0000001` | `dev.lakshya@6990?<>` |
+| Super Admin | `GW0000001` | `Kapil6990@<?>R@!` |
 | Demo Client | `GW9999999` | `Client@123` |
 
 Admin sessions expire after **24 hours** (members stay on the normal JWT lifetime).

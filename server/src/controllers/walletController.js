@@ -10,6 +10,8 @@ const {
 
 const WITHDRAW_MIN = Number(process.env.WITHDRAW_MIN || 10);
 const WITHDRAW_FEE_PERCENT = Number(process.env.WITHDRAW_FEE_PERCENT || 10);
+/** Fund Balance refund / principal exit fee */
+const FUND_REFUND_FEE_PERCENT = Number(process.env.FUND_REFUND_FEE_PERCENT || 20);
 const WITHDRAW_PROCESSING_HOURS = process.env.WITHDRAW_PROCESSING_HOURS || '24-48';
 const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 1);
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
@@ -42,6 +44,7 @@ async function getWalletInfo(req, res) {
     withdrawMin: WITHDRAW_MIN,
     firstWithdrawMin: WITHDRAW_MIN,
     withdrawFeePercent: WITHDRAW_FEE_PERCENT,
+    fundRefundFeePercent: FUND_REFUND_FEE_PERCENT,
     withdrawProcessingHours: WITHDRAW_PROCESSING_HOURS,
     joiningAmount: JOINING_AMOUNT,
     minDeposit: MIN_DEPOSIT,
@@ -162,11 +165,11 @@ async function requestWithdraw(req, res) {
     });
   }
 
-  const available = withdrawableBalance(user);
-  if (available < amount) {
+  const incomeAvail = Number(user.incomeBalance || 0);
+  if (incomeAvail < amount) {
     return res.status(400).json({
       success: false,
-      message: `Insufficient balance. Available (income + principal): $${available.toFixed(2)}`,
+      message: `Insufficient income balance. Available: $${incomeAvail.toFixed(2)}. Use Refund Fund for Fund Balance (20% fee).`,
     });
   }
 
@@ -175,21 +178,10 @@ async function requestWithdraw(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid Transaction Password' });
   }
 
-  // Deduct income first, then principal (fund)
-  let remaining = amount;
-  const fromIncome = Math.min(Number(user.incomeBalance || 0), remaining);
-  remaining = Number((remaining - fromIncome).toFixed(8));
-  const fromPrincipal = remaining;
-
   const fee = Number(((amount * WITHDRAW_FEE_PERCENT) / 100).toFixed(8));
   const netAmount = Number((amount - fee).toFixed(8));
 
-  user.incomeBalance = Number((user.incomeBalance - fromIncome).toFixed(8));
-  if (fromPrincipal > 0) {
-    user.fundBalance = Number((user.fundBalance - fromPrincipal).toFixed(8));
-    user.totalDeposited = Number(Math.max(0, (user.totalDeposited || 0) - fromPrincipal).toFixed(8));
-    user.joiningAmount = Number(Math.max(0, (user.joiningAmount || 0) - fromPrincipal).toFixed(8));
-  }
+  user.incomeBalance = Number((user.incomeBalance - amount).toFixed(8));
   user.pendingWithdrawals = Number((user.pendingWithdrawals + netAmount).toFixed(8));
   await user.save();
 
@@ -201,7 +193,8 @@ async function requestWithdraw(req, res) {
     isFirstWithdrawal: !user.hasCompletedFirstWithdrawal,
     fee,
     requestedAmount: amount,
-    adminNote: `Processing window ${WITHDRAW_PROCESSING_HOURS}h`,
+    kind: 'income',
+    adminNote: `Income withdraw · ${WITHDRAW_FEE_PERCENT}% fee · process ${WITHDRAW_PROCESSING_HOURS}h`,
   });
 
   await Transaction.create({
@@ -210,29 +203,129 @@ async function requestWithdraw(req, res) {
     amount,
     balanceAfter: user.incomeBalance,
     status: 'pending',
-    description: `Withdrawal $${amount} · fee ${WITHDRAW_FEE_PERCENT}% ($${fee}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
+    description: `Income withdrawal $${amount} · fee ${WITHDRAW_FEE_PERCENT}% ($${fee}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
     meta: {
       withdrawalId: withdrawal._id,
+      kind: 'income',
       fee,
       feePercent: WITHDRAW_FEE_PERCENT,
       netAmount,
       requestedAmount: amount,
-      fromIncome,
-      fromPrincipal,
+      fromIncome: amount,
+      fromPrincipal: 0,
       processingHours: WITHDRAW_PROCESSING_HOURS,
-      principalAllowed: true,
     },
     createdBy: user.userId,
   });
 
   return res.json({
     success: true,
-    message: `Withdrawal submitted. Fee ${WITHDRAW_FEE_PERCENT}% ($${fee}). Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
+    message: `Income withdrawal submitted. Fee ${WITHDRAW_FEE_PERCENT}% ($${fee}). Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
     withdrawal,
     fee,
     netAmount,
-    fromIncome,
-    fromPrincipal,
+    fromIncome: amount,
+    fromPrincipal: 0,
+    processingHours: WITHDRAW_PROCESSING_HOURS,
+    user: user.toSafeJSON(),
+  });
+}
+
+/**
+ * Separate Refund Fund — withdraw spendable Fund Balance (principal) only.
+ * Locked gift cannot be refunded. Fee = 20%.
+ */
+async function requestFundRefund(req, res) {
+  const amount = Number(req.body.amount);
+  const { transactionPassword } = req.body;
+  const user = req.user;
+
+  if (!user.isJoined) {
+    return res.status(400).json({ success: false, message: 'Activate joining first' });
+  }
+  if (!amount || amount < WITHDRAW_MIN) {
+    return res.status(400).json({
+      success: false,
+      message: `Minimum Fund refund is $${WITHDRAW_MIN}`,
+    });
+  }
+
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
+  const alreadyToday = await Withdrawal.findOne({
+    userId: user.userId,
+    createdAt: { $gte: startOfUtcDay },
+    status: { $in: ['pending', 'paid'] },
+  }).lean();
+  if (alreadyToday) {
+    return res.status(400).json({
+      success: false,
+      message: 'Daily withdrawal limit reached. You can withdraw or refund once per day (UTC).',
+    });
+  }
+
+  const principal = Number(user.fundBalance || 0);
+  if (principal < amount) {
+    return res.status(400).json({
+      success: false,
+      message: `Insufficient Fund Balance. Spendable principal: $${principal.toFixed(2)} (locked gift cannot be refunded)`,
+    });
+  }
+
+  const trxOk = await bcrypt.compare(transactionPassword || '', user.transactionPassword);
+  if (!trxOk) {
+    return res.status(400).json({ success: false, message: 'Invalid Transaction Password' });
+  }
+
+  const fee = Number(((amount * FUND_REFUND_FEE_PERCENT) / 100).toFixed(8));
+  const netAmount = Number((amount - fee).toFixed(8));
+
+  user.fundBalance = Number((user.fundBalance - amount).toFixed(8));
+  user.totalDeposited = Number(Math.max(0, (user.totalDeposited || 0) - amount).toFixed(8));
+  user.joiningAmount = Number(Math.max(0, (user.joiningAmount || 0) - amount).toFixed(8));
+  user.pendingWithdrawals = Number((user.pendingWithdrawals + netAmount).toFixed(8));
+  await user.save();
+
+  const withdrawal = await Withdrawal.create({
+    userId: user.userId,
+    amount: netAmount,
+    walletAddress: user.walletAddress,
+    status: 'pending',
+    isFirstWithdrawal: !user.hasCompletedFirstWithdrawal,
+    fee,
+    requestedAmount: amount,
+    kind: 'fund_refund',
+    adminNote: `Fund refund · ${FUND_REFUND_FEE_PERCENT}% fee · process ${WITHDRAW_PROCESSING_HOURS}h`,
+  });
+
+  await Transaction.create({
+    userId: user.userId,
+    type: 'withdraw',
+    amount,
+    balanceAfter: user.fundBalance,
+    status: 'pending',
+    description: `Fund Balance refund $${amount} · fee ${FUND_REFUND_FEE_PERCENT}% ($${fee}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
+    meta: {
+      withdrawalId: withdrawal._id,
+      kind: 'fund_refund',
+      fee,
+      feePercent: FUND_REFUND_FEE_PERCENT,
+      netAmount,
+      requestedAmount: amount,
+      fromIncome: 0,
+      fromPrincipal: amount,
+      processingHours: WITHDRAW_PROCESSING_HOURS,
+    },
+    createdBy: user.userId,
+  });
+
+  return res.json({
+    success: true,
+    message: `Fund refund submitted. Fee ${FUND_REFUND_FEE_PERCENT}% ($${fee}). Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
+    withdrawal,
+    fee,
+    netAmount,
+    fromPrincipal: amount,
     processingHours: WITHDRAW_PROCESSING_HOURS,
     user: user.toSafeJSON(),
   });
@@ -365,6 +458,7 @@ module.exports = {
   requestDeposit,
   activateJoining,
   requestWithdraw,
+  requestFundRefund,
   compoundIncome,
   walletHistory,
   getDepositAddress,

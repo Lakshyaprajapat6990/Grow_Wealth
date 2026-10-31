@@ -4,6 +4,7 @@ const {
   creditDeposit,
   activateJoining,
   requestWithdraw,
+  requestFundRefund,
   walletHistory,
   getDepositAddress,
   getWithdrawals,
@@ -21,6 +22,7 @@ router.get('/deposit-address', protect, getDepositAddress);
 router.post('/deposit', protect, creditDeposit);
 router.post('/join', protect, activateJoining);
 router.post('/withdraw', protect, requestWithdraw);
+router.post('/refund-fund', protect, requestFundRefund);
 router.post('/transfer', protect, transferFunds);
 router.post('/compound', protect, compoundIncome);
 
