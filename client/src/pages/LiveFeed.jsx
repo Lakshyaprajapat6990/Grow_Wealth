@@ -36,6 +36,22 @@ const NAME_POOLS = {
     'Santosh Kumar',
     'Hemant Sahu',
     'Yogesh Patel',
+    'Anirudh Mishra',
+    'Umesh Panda',
+    'Gajanan Dhole',
+    'Durgesh Singh',
+    'Upendra Gupta',
+    'Kiran Deshmukh',
+    'Rohit Chauhan',
+    'Shweta Agarwal',
+    'Abhishek Jain',
+    'Nikita Bansal',
+    'Harish Chandra',
+    'Geeta Rani',
+    'Suresh Pal',
+    'Bhavna Mehta',
+    'Kapil Dev',
+    'Manish Thakur',
   ],
   USA: [
     'James Miller',
@@ -72,8 +88,12 @@ const NAME_POOLS = {
   NIGERIA: ['Chinedu Okafor', 'Amina Bello', 'Emeka Nwosu', 'Funke Adeyemi'],
 };
 
-const COUNTRIES = Object.keys(NAME_POOLS);
+const OTHER_COUNTRIES = Object.keys(NAME_POOLS).filter((c) => c !== 'INDIA');
 const MAX_ROWS = 10;
+const AMOUNT_MIN = 10;
+const AMOUNT_MAX = 1500;
+/** ~80% Indian names */
+const INDIA_NAME_WEIGHT = 0.8;
 
 const TX_TYPES = [
   { type: 'Credit', weight: 7 },
@@ -104,23 +124,28 @@ function makeFakeId() {
   return `GW${n}`;
 }
 
-/** Random $10 – $5,000 USDT */
-function randomAmount(min = 10, max = 5000) {
+/** Random $10 – $1,500 USDT */
+function randomAmount(min = AMOUNT_MIN, max = AMOUNT_MAX) {
   const raw = randInt(min, max);
   const modes = [raw, Math.round(raw / 10) * 10, Math.round(raw / 50) * 50, Math.round(raw / 100) * 100];
   return Number(Math.min(max, Math.max(min, pick(modes))).toFixed(2));
 }
 
+function pickCountry() {
+  if (Math.random() < INDIA_NAME_WEIGHT) return 'INDIA';
+  return pick(OTHER_COUNTRIES);
+}
+
 function createFakeTx(now = new Date()) {
   const { type } = pickWeighted(TX_TYPES);
-  const country = pick(COUNTRIES);
+  const country = pickCountry();
   return {
     _id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: makeFakeId(),
     name: pick(NAME_POOLS[country]),
     country,
     type,
-    amount: randomAmount(10, 5000),
+    amount: randomAmount(AMOUNT_MIN, AMOUNT_MAX),
     status: 'Success',
     createdAt: now.toISOString(),
   };
@@ -136,15 +161,18 @@ function seedFeed(count = MAX_ROWS) {
   return rows.reverse();
 }
 
-/** Same for all members on a given UTC day; random within $30,000–$50,000 */
+/**
+ * Same for all members on a given UTC day.
+ * Scaled for $10–$1,500 packages (~8–20 credits/hour avg ≈ $4.5k–$18k/day).
+ */
 function todayTotalForDate(date = new Date()) {
   const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
   let hash = 0;
   for (let i = 0; i < key.length; i += 1) {
     hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   }
-  const min = 30000;
-  const max = 50000;
+  const min = 4500;
+  const max = 18000;
   return min + (hash % (max - min + 1));
 }
 
