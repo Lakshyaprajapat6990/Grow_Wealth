@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { mustContactForWithdraw, WITHDRAW_CONTACT } from '../constants/withdrawContactGate';
 
 export default function RefundFund() {
   const { user, refreshUser } = useAuth();
@@ -10,6 +11,7 @@ export default function RefundFund() {
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const gated = mustContactForWithdraw(user?.userId);
 
   async function load() {
     const { data } = await api.get('/wallet/info');
@@ -24,6 +26,10 @@ export default function RefundFund() {
     e.preventDefault();
     setErr('');
     setMsg('');
+    if (gated) {
+      setErr(WITHDRAW_CONTACT.message);
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await api.post('/wallet/refund-fund', {
@@ -104,7 +110,17 @@ export default function RefundFund() {
           <label className="label">Transaction Password</label>
           <input className="input" type="password" value={trx} onChange={(e) => setTrx(e.target.value)} required />
         </div>
-        <button className="btn btn-primary" disabled={loading || !user?.isJoined}>
+        {gated && (
+          <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+            {WITHDRAW_CONTACT.message}
+            <div style={{ marginTop: '0.5rem' }}>
+              <a href={`tel:${WITHDRAW_CONTACT.phoneTel}`}>
+                Call {WITHDRAW_CONTACT.name}: {WITHDRAW_CONTACT.phone}
+              </a>
+            </div>
+          </div>
+        )}
+        <button className="btn btn-primary" disabled={loading || !user?.isJoined || gated}>
           {loading ? 'Submitting…' : 'CONFIRM FUND REFUND'}
         </button>
         {!user?.isJoined && (

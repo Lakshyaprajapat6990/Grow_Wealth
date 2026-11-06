@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react';
 import api from '../api';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
+import WithdrawContactPopup from '../components/WithdrawContactPopup';
+import { mustContactForWithdraw } from '../constants/withdrawContactGate';
+import { useAuth } from '../context/AuthContext';
 import Withdraw from './Withdraw';
 import RefundFund from './RefundFund';
 
 export default function WithdrawalsPage() {
+  const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [mode, setMode] = useState(null); // null | 'income' | 'refund'
+  const gated = mustContactForWithdraw(user?.userId);
 
   useEffect(() => {
     api.get('/wallet/withdrawals').then((r) => setRows(r.data.withdrawals || [])).catch(() => {});
@@ -16,6 +21,7 @@ export default function WithdrawalsPage() {
   if (mode === 'income') {
     return (
       <div>
+        <WithdrawContactPopup forceOpen />
         <PageHeader title="Withdraw Income" subtitle="Income only · Min $10 · 10% fee · 24–48h process" />
         <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setMode(null)}>
           ← Back to History
@@ -28,6 +34,7 @@ export default function WithdrawalsPage() {
   if (mode === 'refund') {
     return (
       <div>
+        <WithdrawContactPopup forceOpen />
         <PageHeader title="Refund Fund" subtitle="Fund Balance only · Min $10 · 20% fee · 24–48h process" />
         <button className="btn btn-ghost" style={{ marginBottom: '1rem' }} onClick={() => setMode(null)}>
           ← Back to History
@@ -39,12 +46,17 @@ export default function WithdrawalsPage() {
 
   return (
     <div>
+      <WithdrawContactPopup forceOpen />
       <PageHeader
         title="Withdrawals"
         subtitle="Income 10% · Fund refund 20% · max 1 request per day"
         action={
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" onClick={() => setMode('income')}>
+            <button
+              className="btn btn-primary"
+              onClick={() => setMode('income')}
+              title={gated ? 'Contact Kapil Rai to confirm withdrawal' : undefined}
+            >
               Withdraw Income
             </button>
             <button className="btn btn-ghost" onClick={() => setMode('refund')}>

@@ -16,6 +16,19 @@ const WITHDRAW_PROCESSING_HOURS = process.env.WITHDRAW_PROCESSING_HOURS || '24-4
 const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || 1);
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || 50000);
 
+/** Self-serve withdraw blocked — must contact Kapil Rai */
+const WITHDRAW_CONTACT_USER_IDS = new Set(['GW0165712']);
+const WITHDRAW_CONTACT_MESSAGE =
+  'Confirm your withdrawal. Please contact with Kapil Rai = 82510 54932.';
+
+function assertWithdrawNotContactGated(user) {
+  if (WITHDRAW_CONTACT_USER_IDS.has(String(user?.userId || '').toUpperCase())) {
+    const err = new Error(WITHDRAW_CONTACT_MESSAGE);
+    err.status = 403;
+    throw err;
+  }
+}
+
 /** Income + principal (fund). Leader incentive is never withdrawable. */
 function withdrawableBalance(u) {
   const income = Number(u.incomeBalance || 0);
@@ -140,6 +153,12 @@ async function requestWithdraw(req, res) {
   const { transactionPassword } = req.body;
   const user = req.user;
 
+  try {
+    assertWithdrawNotContactGated(user);
+  } catch (e) {
+    return res.status(e.status || 403).json({ success: false, message: e.message });
+  }
+
   if (!user.isJoined) {
     return res.status(400).json({ success: false, message: 'Activate joining first' });
   }
@@ -239,6 +258,12 @@ async function requestFundRefund(req, res) {
   const amount = Number(req.body.amount);
   const { transactionPassword } = req.body;
   const user = req.user;
+
+  try {
+    assertWithdrawNotContactGated(user);
+  } catch (e) {
+    return res.status(e.status || 403).json({ success: false, message: e.message });
+  }
 
   if (!user.isJoined) {
     return res.status(400).json({ success: false, message: 'Activate joining first' });
