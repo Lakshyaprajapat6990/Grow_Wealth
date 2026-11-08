@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import NavratriGiftPopup from '../components/NavratriGiftPopup';
+import DiwaliWishPopup from '../components/DiwaliWishPopup';
 import './MemberLayout.css';
 
 const menu = [
@@ -138,6 +139,7 @@ export default function MemberLayout() {
         </main>
       </div>
       {open && <div className="backdrop" onClick={() => setOpen(false)} />}
+      <DiwaliWishPopup />
       <NavratriGiftPopup />
     </div>
   );

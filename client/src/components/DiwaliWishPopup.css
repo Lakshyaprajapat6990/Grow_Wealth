@@ -1,0 +1,318 @@
+.diwali-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 230;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 140, 0, 0.35), transparent 42%),
+    radial-gradient(circle at 85% 15%, rgba(255, 215, 0, 0.28), transparent 38%),
+    radial-gradient(circle at 50% 90%, rgba(180, 30, 30, 0.25), transparent 45%),
+    rgba(12, 8, 4, 0.62);
+  backdrop-filter: blur(5px);
+  animation: diwali-fade 0.4s ease;
+}
+
+@keyframes diwali-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.diwali-modal {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 1.5rem 1.35rem 1.4rem;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(165deg, #2a1208 0%, #4a1c0a 40%, #1a0c06 100%);
+  border: 1px solid rgba(255, 196, 80, 0.45);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 215, 0, 0.2) inset,
+    0 0 40px rgba(255, 140, 0, 0.25);
+  text-align: center;
+  animation: diwali-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  color: #fff8e7;
+}
+
+@keyframes diwali-pop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.diwali-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffe7b0;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.diwali-badge {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4a1c0a;
+  background: linear-gradient(90deg, #ffd54f, #ff9800, #ffd54f);
+  background-size: 200% 100%;
+  animation: diwali-shimmer 2.4s linear infinite;
+  border: 1px solid rgba(255, 213, 79, 0.6);
+}
+
+@keyframes diwali-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.diwali-media {
+  position: relative;
+  margin: 0 auto 0.9rem;
+  width: min(100%, 320px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 196, 80, 0.35);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.diwali-gif {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  animation: diwali-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes diwali-glow {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.12) saturate(1.15);
+  }
+}
+
+.diwali-diyas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.55rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.diya {
+  width: 14px;
+  height: 18px;
+  border-radius: 40% 40% 45% 45%;
+  background: linear-gradient(180deg, #ff9800 0%, #e65100 70%, #5d1a00 100%);
+  position: relative;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.55);
+}
+
+.diya::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 8px;
+  height: 12px;
+  border-radius: 50% 50% 40% 40%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 40% 30%, #fff59d, #ff9800 55%, transparent 70%);
+  animation: diya-flame 0.7s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 6px #ffb300);
+}
+
+.diya:nth-child(2)::before,
+.diya:nth-child(4)::before {
+  animation-delay: 0.15s;
+}
+.diya:nth-child(3)::before {
+  animation-delay: 0.3s;
+}
+
+@keyframes diya-flame {
+  from {
+    transform: translateX(-50%) scale(0.9) rotate(-4deg);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(-50%) scale(1.15) rotate(4deg);
+    opacity: 1;
+  }
+}
+
+.diwali-fireworks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.diwali-fireworks i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffd54f;
+  box-shadow: 0 0 12px 4px rgba(255, 213, 79, 0.8);
+  animation: fw-burst 2.2s ease-out infinite;
+}
+
+.diwali-fireworks i:nth-child(1) {
+  top: 18%;
+  left: 20%;
+  animation-delay: 0s;
+}
+.diwali-fireworks i:nth-child(2) {
+  top: 12%;
+  right: 18%;
+  background: #ff7043;
+  animation-delay: 0.7s;
+}
+.diwali-fireworks i:nth-child(3) {
+  top: 28%;
+  left: 55%;
+  background: #fff176;
+  animation-delay: 1.3s;
+}
+
+@keyframes fw-burst {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3.5);
+    opacity: 0;
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+.diwali-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.diwali-sparkles span {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffe082;
+  opacity: 0;
+  animation: sparkle-fall 3.5s linear infinite;
+}
+
+.diwali-sparkles span:nth-child(1) {
+  left: 12%;
+  animation-delay: 0s;
+}
+.diwali-sparkles span:nth-child(2) {
+  left: 28%;
+  animation-delay: 0.5s;
+}
+.diwali-sparkles span:nth-child(3) {
+  left: 45%;
+  animation-delay: 1s;
+}
+.diwali-sparkles span:nth-child(4) {
+  left: 62%;
+  animation-delay: 1.4s;
+}
+.diwali-sparkles span:nth-child(5) {
+  left: 78%;
+  animation-delay: 1.9s;
+}
+.diwali-sparkles span:nth-child(6) {
+  left: 90%;
+  animation-delay: 2.3s;
+}
+
+@keyframes sparkle-fall {
+  0% {
+    top: -8%;
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+    transform: scale(1.2) rotate(180deg);
+  }
+}
+
+.diwali-modal h2 {
+  margin: 0 0 0.45rem;
+  font-family: var(--display, Georgia, serif);
+  font-size: 1.7rem;
+  background: linear-gradient(90deg, #ffe082, #ffb300, #ffecb3, #ffb300);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: diwali-shimmer 2.8s linear infinite;
+}
+
+.diwali-lead {
+  margin: 0 0 0.45rem;
+  color: rgba(255, 248, 225, 0.92);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.diwali-sub {
+  margin: 0 0 1.1rem;
+  color: rgba(255, 213, 79, 0.85);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.diwali-cta {
+  width: 100%;
+  background: linear-gradient(90deg, #ff9800, #ffc107) !important;
+  color: #3e1c00 !important;
+  border: none !important;
+  font-weight: 800 !important;
+}
