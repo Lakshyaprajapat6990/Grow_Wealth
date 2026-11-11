@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { referralLink } from '../constants/site';
 
 export default function Team() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function Team() {
       .catch(() => setTeam([]));
   }, [user?.userId]);
 
-  const refLink = `${window.location.origin}/register?ref=${user?.userId || ''}`;
+  const refLink = referralLink(user?.userId);
 
   return (
     <div>

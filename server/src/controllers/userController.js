@@ -3,6 +3,9 @@ const Transaction = require('../models/Transaction');
 const { getRankStatus, RANK_PLAN } = require('../services/rankRewardService');
 const { getSalaryStatus, SALARY_PLAN } = require('../services/salaryIncomeService');
 
+/** Always use public .co.uk domain for member referral links (not Vercel preview URL) */
+const PUBLIC_SITE_URL = (process.env.PUBLIC_SITE_URL || 'https://grow-wealth.co.uk').replace(/\/$/, '');
+
 async function getProfile(req, res) {
   const { userId } = req.params;
   if (req.user.role !== 'admin' && req.user.userId !== userId) {
@@ -102,7 +105,7 @@ async function getDashboardSummary(req, res) {
       remainingToNextRank: rank?.remainingToNext || 0,
       nextRank: rank?.nextRank || null,
       ranks: rank?.ranks || [],
-      referralLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/register?ref=${u.userId}`,
+      referralLink: `${PUBLIC_SITE_URL}/register?ref=${u.userId}`,
     },
     recentTransactions: recent,
     rankPlan: RANK_PLAN,

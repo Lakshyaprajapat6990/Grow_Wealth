@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
+import { referralLink } from '../constants/site';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function Dashboard() {
 
   const s = summary?.summary || user || {};
   const rankPlan = summary?.rankPlan || [];
-  const refLink = `${window.location.origin}/register?ref=${user?.userId}`;
+  const refLink = referralLink(user?.userId);
   const teamBusiness = Number(s.teamBusiness || 0);
   const next = s.nextRank;
   const nextProgress =

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
+import { referralLink } from '../constants/site';
 
 export default function DirectTeam() {
   const { user } = useAuth();
@@ -13,7 +14,7 @@ export default function DirectTeam() {
     api.get(`/user/direct-team/${user.userId}`).then((r) => setTeam(r.data.team || [])).catch(() => {});
   }, [user?.userId]);
 
-  const refLink = `${window.location.origin}/register?ref=${user?.userId}`;
+  const refLink = referralLink(user?.userId);
 
   return (
     <div>
