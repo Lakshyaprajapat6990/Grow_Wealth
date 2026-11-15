@@ -123,9 +123,53 @@ async function listUsers(_req, res) {
     .select('-password -transactionPassword')
     .sort({ createdAt: -1 })
     .limit(500);
+
+  // In-memory mapping of sponsor -> children for fast downline business calculation
+  const allForVolume = await User.find({ role: { $ne: 'admin' } })
+    .select('userId sponsorId totalDeposited joiningAmount')
+    .lean();
+
+  const childrenMap = new Map();
+  const directBusinessMap = new Map();
+
+  for (const u of allForVolume) {
+    const sid = u.sponsorId || '';
+    if (!childrenMap.has(sid)) childrenMap.set(sid, []);
+    childrenMap.get(sid).push(u);
+
+    const dep = Number(u.totalDeposited || u.joiningAmount || 0);
+    directBusinessMap.set(sid, (directBusinessMap.get(sid) || 0) + dep);
+  }
+
+  function calcDownlineBusiness(userId) {
+    let total = 0;
+    const queue = childrenMap.get(userId) ? [...childrenMap.get(userId)] : [];
+    const seen = new Set();
+    while (queue.length > 0) {
+      const child = queue.shift();
+      if (seen.has(child.userId)) continue;
+      seen.add(child.userId);
+      total += Number(child.totalDeposited || child.joiningAmount || 0);
+      const grandKids = childrenMap.get(child.userId);
+      if (grandKids) {
+        for (const gk of grandKids) {
+          if (!seen.has(gk.userId)) queue.push(gk);
+        }
+      }
+    }
+    return Number(total.toFixed(2));
+  }
+
+  const safeUsers = users.map((u) => {
+    const json = u.toSafeJSON();
+    json.teamBusiness = calcDownlineBusiness(u.userId);
+    json.directBusiness = Number((directBusinessMap.get(u.userId) || 0).toFixed(2));
+    return json;
+  });
+
   return res.json({
     success: true,
-    users: users.map((u) => u.toSafeJSON()),
+    users: safeUsers,
   });
 }
 
@@ -162,6 +206,14 @@ async function getTeamHierarchy(req, res) {
     return n;
   }
 
+  function sumDescendantsBusiness(nodes) {
+    let vol = 0;
+    for (const node of nodes) {
+      vol += Number(node.totalDeposited || node.joiningAmount || 0) + sumDescendantsBusiness(node.children || []);
+    }
+    return Number(vol.toFixed(2));
+  }
+
   function buildNode(user, depth = 0, pathSet = new Set()) {
     if (!user || pathSet.has(user.userId) || depth > 25) return null;
     const nextPath = new Set(pathSet);
@@ -187,6 +239,8 @@ async function getTeamHierarchy(req, res) {
       joiningAmount: user.joiningAmount || 0,
       directCount: kids.length,
       teamCount: countDescendants(kids),
+      teamBusiness: sumDescendantsBusiness(kids),
+      directBusiness: Number(kids.reduce((sum, k) => sum + Number(k.totalDeposited || k.joiningAmount || 0), 0).toFixed(2)),
       mobile: user.mobile || '',
       email: user.email || '',
       createdAt: user.createdAt,

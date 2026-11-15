@@ -142,25 +142,36 @@ async function runDailyRoi({ createdBy = 'system', day: dayOverride } = {}) {
   const details = [];
   const errors = [];
 
-  for (const user of users) {
-    try {
-      const result = await creditOneDailyRoi(user, day, {
-        createdBy,
-        backfill: Boolean(dayOverride),
-      });
-      if (result.skipped) {
-        skipped += 1;
-        continue;
-      }
-      credited += 1;
-      totalAmount += result.amount;
-      details.push(result);
-    } catch (err) {
-      failed += 1;
-      const msg = err?.message || String(err);
-      console.error(`[daily-roi] failed for ${user.userId}:`, msg);
-      errors.push({ userId: user.userId, message: msg });
-    }
+  const CONCURRENCY = 5;
+  for (let i = 0; i < users.length; i += CONCURRENCY) {
+    const chunk = users.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (user) => {
+        try {
+          const joinedDateStr = (user.joinedAt || user.createdAt || new Date()).toISOString().slice(0, 10);
+          if (joinedDateStr > day) {
+            skipped += 1;
+            return;
+          }
+          const result = await creditOneDailyRoi(user, day, {
+            createdBy,
+            backfill: Boolean(dayOverride),
+          });
+          if (result.skipped) {
+            skipped += 1;
+            return;
+          }
+          credited += 1;
+          totalAmount += result.amount;
+          details.push(result);
+        } catch (err) {
+          failed += 1;
+          const msg = err?.message || String(err);
+          console.error(`[daily-roi] failed for ${user.userId}:`, msg);
+          errors.push({ userId: user.userId, message: msg });
+        }
+      })
+    );
   }
 
   return {

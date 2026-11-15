@@ -24,6 +24,8 @@ function TreeNode({ node, defaultOpen = false }) {
         <div className="th-meta">
           <span>Direct: {node.directCount}</span>
           <span>Team: {node.teamCount}</span>
+          <span style={{ color: '#4ade80', fontWeight: 600 }}>Team Biz: ${Number(node.teamBusiness || 0).toFixed(2)}</span>
+          <span>Direct Biz: ${Number(node.directBusiness || 0).toFixed(2)}</span>
           <span>Fund: ${Number(node.fundBalance || 0).toFixed(2)}</span>
           <span>Dep: ${Number(node.totalDeposited || 0).toFixed(2)}</span>
         </div>

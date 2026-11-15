@@ -127,6 +127,8 @@ export default function Admin() {
   const [historyRows, setHistoryRows] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [roiRunning, setRoiRunning] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [sortMode, setSortMode] = useState('newest');
 
   async function load() {
     const [d, u, w, dep] = await Promise.all([
@@ -506,7 +508,42 @@ export default function Admin() {
       </div>
 
       <div className="card" style={{ padding: '1.25rem', overflowX: 'auto' }}>
-        <h3 style={{ marginTop: 0 }}>Users (all details except password)</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Users (all details except password)</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
+              Showing {users.filter((u) => {
+                if (!userSearch) return true;
+                const q = userSearch.toLowerCase().trim();
+                return (
+                  (u.userId && u.userId.toLowerCase().includes(q)) ||
+                  (u.name && u.name.toLowerCase().includes(q)) ||
+                  (u.mobile && u.mobile.toLowerCase().includes(q)) ||
+                  (u.sponsorId && u.sponsorId.toLowerCase().includes(q)) ||
+                  (u.email && u.email.toLowerCase().includes(q))
+                );
+              }).length} of {users.length} members · View total downline business, direct business, and deposits.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              className="input"
+              style={{ width: '220px', padding: '0.4rem 0.75rem', fontSize: '0.9rem' }}
+              placeholder="Search user, ID, mobile…"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+            />
+            <button
+              className={`btn ${sortMode === 'business' ? 'btn-success' : 'btn-ghost'}`}
+              type="button"
+              style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              onClick={() => setSortMode((m) => (m === 'business' ? 'newest' : 'business'))}
+            >
+              {sortMode === 'business' ? '✓ Sorted: Top Business' : 'Sort by Downline Business'}
+            </button>
+          </div>
+        </div>
+
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--text-muted)' }}>
@@ -515,27 +552,51 @@ export default function Admin() {
               <th style={{ padding: '0.5rem' }}>Mobile</th>
               <th style={{ padding: '0.5rem' }}>Email</th>
               <th style={{ padding: '0.5rem' }}>Sponsor</th>
-              <th style={{ padding: '0.5rem' }}>Country</th>
               <th style={{ padding: '0.5rem' }}>Wallet</th>
               <th style={{ padding: '0.5rem' }}>Joined</th>
+              <th style={{ padding: '0.5rem' }}>Own Deposit</th>
+              <th style={{ padding: '0.5rem', color: '#4ade80', fontWeight: 700 }}>Total Downline Business</th>
+              <th style={{ padding: '0.5rem' }}>Direct Business</th>
               <th style={{ padding: '0.5rem' }}>Fund</th>
               <th style={{ padding: '0.5rem' }}>Income</th>
               <th style={{ padding: '0.5rem' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {users
+              .filter((u) => {
+                if (!userSearch) return true;
+                const q = userSearch.toLowerCase().trim();
+                return (
+                  (u.userId && u.userId.toLowerCase().includes(q)) ||
+                  (u.name && u.name.toLowerCase().includes(q)) ||
+                  (u.mobile && u.mobile.toLowerCase().includes(q)) ||
+                  (u.sponsorId && u.sponsorId.toLowerCase().includes(q)) ||
+                  (u.email && u.email.toLowerCase().includes(q))
+                );
+              })
+              .sort((a, b) => {
+                if (sortMode === 'business') {
+                  return Number(b.teamBusiness || 0) - Number(a.teamBusiness || 0);
+                }
+                return 0;
+              })
+              .map((u) => (
               <tr key={u.userId} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '0.65rem' }}>{u.userId}</td>
                 <td style={{ padding: '0.65rem' }}>{u.name}</td>
                 <td style={{ padding: '0.65rem' }}>{u.mobile || '—'}</td>
                 <td style={{ padding: '0.65rem', fontSize: '0.85rem' }}>{u.email || '—'}</td>
                 <td style={{ padding: '0.65rem' }}>{u.sponsorId || '—'}</td>
-                <td style={{ padding: '0.65rem' }}>{u.country || '—'}</td>
                 <td style={{ padding: '0.65rem', maxWidth: 120, wordBreak: 'break-all', fontSize: '0.75rem' }}>
                   {u.walletAddress || '—'}
                 </td>
                 <td style={{ padding: '0.65rem' }}>{u.isJoined ? 'Yes' : 'No'}</td>
+                <td style={{ padding: '0.65rem' }}>${Number(u.totalDeposited || 0).toFixed(2)}</td>
+                <td style={{ padding: '0.65rem', fontWeight: 700, color: '#4ade80' }}>
+                  ${Number(u.teamBusiness || 0).toFixed(2)}
+                </td>
+                <td style={{ padding: '0.65rem' }}>${Number(u.directBusiness || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.fundBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>${Number(u.incomeBalance || 0).toFixed(2)}</td>
                 <td style={{ padding: '0.65rem' }}>
