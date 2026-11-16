@@ -54,4 +54,18 @@ transactionSchema.index(
   }
 );
 
+// One successful auto daily salary installment per member per calendar day (blocks double pay)
+transactionSchema.index(
+  { userId: 1, type: 1, 'meta.salaryDay': 1 },
+  {
+    unique: true,
+    name: 'uniq_auto_daily_salary_per_day',
+    partialFilterExpression: {
+      type: 'salary_income',
+      status: 'success',
+      'meta.autoDaily': true,
+    },
+  }
+);
+
 module.exports = mongoose.model('Transaction', transactionSchema);

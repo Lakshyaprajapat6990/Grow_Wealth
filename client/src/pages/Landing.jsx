@@ -9,8 +9,8 @@ const faqs = [
     a: 'Grow Wealth is a crypto staking & referral platform on USDT BEP-20. Stake from $10 (up to $50,000), earn Monthly Salary from team business, 1% daily ROI (capped at 2× investment), Refer & Earn on joins (L1 5% · L2 2% · L3 1%), and withdraw with a 10% fee (24–48h process).',
   },
   {
-    q: 'What is the Monthly Salary Plan?',
-    a: 'Downline team business unlocks a monthly USDT salary (highest tier only): $3,000 → $180 · $5,000 → $270 · $7,000 → $450 · $10,000 → $600 · $15,000 → $750 · $20,000+ → $1,000. Paid once per month while you stay qualified.',
+    q: 'What is the Salary Plan?',
+    a: 'Downline team business unlocks a salary divided and paid daily (highest tier only): $3,000 → $6/day ($180/mo) · $5,000 → $9/day ($270/mo) · $7,000 → $15/day ($450/mo) · $10,000 → $20/day ($600/mo) · $15,000 → $25/day ($750/mo) · $20,000+ → $33.33/day ($1,000/mo). Paid daily while you stay qualified.',
   },
   {
     q: 'How do I activate my account?',
@@ -113,8 +113,8 @@ export default function Landing() {
               <span>WEALTH</span>
             </h1>
             <p className="lp-lead">
-              <strong>Monthly Salary Plan</strong> — team business pays every month ($3k → $180 · $5k → $270 · $7k →
-              $450 · $10k → $600 · $15k → $750 · $20k+ → $1,000). Stake from{' '}
+              <strong>Salary Plan</strong> — team business pays daily installments ($3k → $6/day · $5k → $9/day · $7k →
+              $15/day · $10k → $20/day · $15k → $25/day · $20k+ → $33.33/day). Stake from{' '}
               <strong>$10</strong> (max $50,000) · <strong>1% daily ROI</strong> (2× cap) ·{' '}
               <strong>Refer & Earn</strong> (L1 5% · L2 2% · L3 1%). Manual compound · WD min $10 · 10% fee · 24–48h.
             </p>

@@ -3,18 +3,23 @@ const Transaction = require('../models/Transaction');
 const { getTeamVolume } = require('./rankRewardService');
 
 /**
- * Monthly Salary — based on downline Team Business (sum of totalDeposited).
- * Highest matching tier only (not stacked). Paid once per calendar month (UTC)
- * while volume still qualifies. Achieving any tier unlocks daily withdrawals.
+ * Daily Salary (Divided Monthly Salary) — based on downline Team Business (sum of totalDeposited).
+ * Highest matching tier only (not stacked). The monthly salary is divided across 30 days and paid daily
+ * (e.g. $180 / 30 = $6.00 USDT/day) while team volume still qualifies.
+ * Achieving any tier unlocks daily withdrawals.
  */
 const SALARY_PLAN = [
-  { tier: 1, target: 3000, monthly: 180 },
-  { tier: 2, target: 5000, monthly: 270 },
-  { tier: 3, target: 7000, monthly: 450 },
-  { tier: 4, target: 10000, monthly: 600 },
-  { tier: 5, target: 15000, monthly: 750 },
-  { tier: 6, target: 20000, monthly: 1000 },
+  { tier: 1, target: 3000, monthly: 180, daily: 6.0 },
+  { tier: 2, target: 5000, monthly: 270, daily: 9.0 },
+  { tier: 3, target: 7000, monthly: 450, daily: 15.0 },
+  { tier: 4, target: 10000, monthly: 600, daily: 20.0 },
+  { tier: 5, target: 15000, monthly: 750, daily: 25.0 },
+  { tier: 6, target: 20000, monthly: 1000, daily: 33.33 },
 ];
+
+function todayKey(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
 
 function currentPeriodKey(date = new Date()) {
   const y = date.getUTCFullYear();
@@ -32,15 +37,19 @@ function resolveSalaryTier(volume) {
   return { current, next, unlocked: !!current };
 }
 
-async function creditMonthlySalary(user, tierCfg, teamVolume, period) {
-  const amt = Number(tierCfg.monthly);
+/**
+ * Credit one daily installment of salary (e.g. $6.00/day for Tier 1).
+ * Idempotent: exactly once per calendar day per member.
+ */
+async function creditDailySalary(user, tierCfg, teamVolume, day = todayKey()) {
+  const amt = Number(tierCfg.daily || Number((tierCfg.monthly / 30).toFixed(8)));
   if (amt <= 0) return null;
 
-  // Idempotent: never pay same period twice
+  // Idempotent: never pay same day twice
   const already = await Transaction.findOne({
     userId: user.userId,
     type: 'salary_income',
-    'meta.salaryPeriod': period,
+    'meta.salaryDay': day,
     status: 'success',
   }).lean();
   if (already) return null;
@@ -50,9 +59,9 @@ async function creditMonthlySalary(user, tierCfg, teamVolume, period) {
   user.incomeBalance = Number((user.incomeBalance + amt).toFixed(8));
   user.totalEarnings = Number((user.totalEarnings + amt).toFixed(8));
   user.salaryTier = Math.max(Number(user.salaryTier || 0), tierCfg.tier);
-  user.lastSalaryPeriod = period;
+  user.lastSalaryDay = day;
+  user.lastSalaryPeriod = currentPeriodKey();
   user.lastSalaryPaidAt = new Date();
-  user.salaryMonthsPaid = Number(user.salaryMonthsPaid || 0) + 1;
   user.dailyWithdrawUnlocked = true;
   await user.save();
 
@@ -62,24 +71,32 @@ async function creditMonthlySalary(user, tierCfg, teamVolume, period) {
     amount: amt,
     balanceAfter: user.incomeBalance,
     status: 'success',
-    description: `Monthly Salary tier ${tierCfg.tier}: ${amt} USDT (team business $${teamVolume}, period ${period})`,
+    description: `Daily Salary tier ${tierCfg.tier}: ${amt} USDT/day ($${tierCfg.monthly}/mo) · team business $${teamVolume} (day ${day})`,
     meta: {
       salaryTier: tierCfg.tier,
       target: tierCfg.target,
-      monthly: amt,
+      monthly: tierCfg.monthly,
+      daily: amt,
       teamVolume,
-      salaryPeriod: period,
+      salaryDay: day,
+      salaryPeriod: currentPeriodKey(),
+      autoDaily: true,
     },
     createdBy: 'system',
   });
 
-  return { tier: tierCfg.tier, amount: amt, teamVolume, period };
+  return { tier: tierCfg.tier, amount: amt, monthly: tierCfg.monthly, teamVolume, day };
+}
+
+/** Backwards-compatible alias */
+async function creditMonthlySalary(user, tierCfg, teamVolume, period) {
+  return creditDailySalary(user, tierCfg, teamVolume);
 }
 
 /**
- * Unlock daily WD if volume qualifies; credit this month's salary if due.
+ * Unlock daily WD if volume qualifies; credit today's daily salary installment if due.
  */
-async function evaluateSalaryForUser(userId, { paySalary = true } = {}) {
+async function evaluateSalaryForUser(userId, { paySalary = true, day = todayKey() } = {}) {
   if (!userId || userId === 'GW0000001' || userId === 'ADMIN') {
     return { paid: null, volume: 0, unlocked: false };
   }
@@ -103,9 +120,8 @@ async function evaluateSalaryForUser(userId, { paySalary = true } = {}) {
 
   let paid = null;
   if (paySalary && current) {
-    const period = currentPeriodKey();
-    if (user.lastSalaryPeriod !== period) {
-      paid = await creditMonthlySalary(user, current, volume, period);
+    if (user.lastSalaryDay !== day) {
+      paid = await creditDailySalary(user, current, volume, day);
     }
   }
 
@@ -120,8 +136,8 @@ async function evaluateSalaryForUser(userId, { paySalary = true } = {}) {
   };
 }
 
-/** After a deposit/join, re-check all uplines for salary unlock (pay if month due). */
-async function evaluateSalaryUpChain(memberUserId) {
+/** After a deposit/join, re-check all uplines for salary unlock (pay today if qualified). */
+async function evaluateSalaryUpChain(memberUserId, { day = todayKey() } = {}) {
   const member = await User.findOne({ userId: memberUserId }).select('sponsorId');
   if (!member?.sponsorId) return { chain: [] };
 
@@ -131,7 +147,7 @@ async function evaluateSalaryUpChain(memberUserId) {
 
   while (sid && sid !== 'GW0000001' && sid !== 'ADMIN' && !seen.has(sid)) {
     seen.add(sid);
-    const result = await evaluateSalaryForUser(sid, { paySalary: true });
+    const result = await evaluateSalaryForUser(sid, { paySalary: true, day });
     chain.push({ userId: sid, ...result });
     const up = await User.findOne({ userId: sid }).select('sponsorId');
     sid = up?.sponsorId || null;
@@ -140,21 +156,20 @@ async function evaluateSalaryUpChain(memberUserId) {
   return { chain };
 }
 
-/** Daily cron helper: pay monthly salary for all qualified members (once per period). */
-async function runMonthlySalaryPass({ createdBy = 'cron' } = {}) {
-  const period = currentPeriodKey();
+/** Daily cron pass: pay daily salary installment for all qualified members (once per calendar day). */
+async function runDailySalaryPass({ createdBy = 'cron', day = todayKey() } = {}) {
   const users = await User.find({
     role: { $ne: 'admin' },
     isBlocked: false,
     isJoined: true,
   }).select('userId');
 
-  const results = { period, checked: 0, paid: 0, unlocked: 0, errors: [] };
+  const results = { day, checked: 0, paid: 0, unlocked: 0, errors: [] };
 
   for (const row of users) {
     try {
       results.checked += 1;
-      const r = await evaluateSalaryForUser(row.userId, { paySalary: true });
+      const r = await evaluateSalaryForUser(row.userId, { paySalary: true, day });
       if (r.paid) results.paid += 1;
       if (r.dailyWithdrawUnlocked) results.unlocked += 1;
     } catch (err) {
@@ -166,14 +181,18 @@ async function runMonthlySalaryPass({ createdBy = 'cron' } = {}) {
   return { success: true, ...results };
 }
 
+/** Backwards-compatible alias for existing cron callers */
+const runMonthlySalaryPass = runDailySalaryPass;
+
 async function getSalaryStatus(userId) {
   const user = await User.findOne({ userId });
   if (!user) return null;
 
   const { volume, teamSize } = await getTeamVolume(userId);
   const { current, next, unlocked } = resolveSalaryTier(volume);
+  const day = todayKey();
   const period = currentPeriodKey();
-  const paidThisMonth = user.lastSalaryPeriod === period;
+  const paidToday = user.lastSalaryDay === day;
 
   const tiers = SALARY_PLAN.map((t) => {
     const hit = volume >= t.target;
@@ -191,14 +210,17 @@ async function getSalaryStatus(userId) {
     teamSize,
     totalSalaryIncome: user.totalSalaryIncome || 0,
     salaryMonthsPaid: user.salaryMonthsPaid || 0,
-    lastSalaryPeriod: user.lastSalaryPeriod || null,
+    lastSalaryDay: user.lastSalaryDay || null,
     lastSalaryPaidAt: user.lastSalaryPaidAt || null,
+    currentDay: day,
     currentPeriod: period,
-    paidThisMonth,
+    paidToday,
+    paidThisMonth: paidToday, // compatibility
     dailyWithdrawUnlocked: !!(user.dailyWithdrawUnlocked || unlocked),
     currentTier: current,
     nextTier: next,
     remainingToNext: next ? Math.max(0, Number((next.target - volume).toFixed(2))) : 0,
+    dailyAmount: current?.daily || 0,
     monthlyAmount: current?.monthly || 0,
     tiers,
   };
@@ -206,10 +228,14 @@ async function getSalaryStatus(userId) {
 
 module.exports = {
   SALARY_PLAN,
+  todayKey,
   currentPeriodKey,
   resolveSalaryTier,
+  creditDailySalary,
+  creditMonthlySalary,
   evaluateSalaryForUser,
   evaluateSalaryUpChain,
+  runDailySalaryPass,
   runMonthlySalaryPass,
   getSalaryStatus,
 };

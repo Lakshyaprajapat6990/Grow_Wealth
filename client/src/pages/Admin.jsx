@@ -44,7 +44,7 @@ function IncomeCreditForm({ onDone, setMsg, setErr }) {
           <label className="label">Type</label>
           <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
             <option value="direct">Direct (Refer & Earn)</option>
-            <option value="salary">Monthly Salary</option>
+            <option value="salary">Salary Income</option>
             <option value="fast_track">Fast Track</option>
           </select>
         </div>

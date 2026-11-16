@@ -17,8 +17,8 @@ export default function SalaryIncome() {
   return (
     <div>
       <PageHeader
-        title="Monthly Salary"
-        subtitle="Downline team business unlocks a monthly USDT salary."
+        title="Salary Income"
+        subtitle="Downline team business unlocks a daily salary installment (monthly reward divided across 30 days)."
       />
 
       {err && <div className="alert alert-error">{err}</div>}
@@ -34,12 +34,14 @@ export default function SalaryIncome() {
             <strong>${Number(status.teamVolume || 0).toFixed(2)}</strong>
           </div>
           <div className="card mp-stat">
-            <span>Monthly Amount</span>
-            <strong>${Number(status.monthlyAmount || 0).toFixed(0)}</strong>
+            <span>Daily Payout</span>
+            <strong style={{ color: '#4ade80' }}>
+              ${Number(status.dailyAmount || 0).toFixed(2)} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ day</span>
+            </strong>
           </div>
           <div className="card mp-stat">
-            <span>Months Paid</span>
-            <strong>{status.salaryMonthsPaid || 0}</strong>
+            <span>Monthly Equivalent</span>
+            <strong>${Number(status.monthlyAmount || 0).toFixed(0)} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ mo</span></strong>
           </div>
         </div>
       )}
@@ -51,17 +53,18 @@ export default function SalaryIncome() {
         >
           <strong style={{ color: 'var(--accent)' }}>
             Next: Tier {status.nextTier.tier} at ${status.nextTier.target.toLocaleString()} team business → $
-            {status.nextTier.monthly}/month
+            {Number(status.nextTier.daily || status.nextTier.monthly / 30).toFixed(2)}/day (${status.nextTier.monthly}/mo)
           </strong>
           <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)' }}>
-            Need ${Number(status.remainingToNext || 0).toFixed(2)} more. Paid once per month while you stay qualified.
+            Need ${Number(status.remainingToNext || 0).toFixed(2)} more team business. Paid daily while you stay qualified.
           </p>
         </div>
       )}
 
-      {status?.currentTier && status.paidThisMonth && (
+      {status?.currentTier && status.paidToday && (
         <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
-          Salary for {status.currentPeriod} already credited (${status.currentTier.monthly} USDT).
+          ✓ Today's salary installment ({status.currentDay}) already credited ($
+          {Number(status.dailyAmount || status.currentTier.daily || 6).toFixed(2)} USDT).
         </div>
       )}
 
@@ -72,7 +75,8 @@ export default function SalaryIncome() {
               <tr>
                 <th>Tier</th>
                 <th>Team Business</th>
-                <th>Monthly Salary</th>
+                <th>Daily Payout</th>
+                <th>Monthly Total</th>
                 <th>Progress</th>
                 <th>Status</th>
               </tr>
@@ -82,7 +86,10 @@ export default function SalaryIncome() {
                 <tr key={t.tier}>
                   <td>Tier {t.tier}{t.tier === 6 ? ' (Top)' : ''}</td>
                   <td>${t.target.toLocaleString()}</td>
-                  <td>${t.monthly} USDT</td>
+                  <td style={{ color: '#4ade80', fontWeight: 'bold' }}>
+                    ${Number(t.daily || t.monthly / 30).toFixed(2)} USDT / day
+                  </td>
+                  <td>${t.monthly} USDT / mo</td>
                   <td>{t.progressPercent}%</td>
                   <td
                     style={{
@@ -100,7 +107,7 @@ export default function SalaryIncome() {
 
       <IncomeReport
         title="Salary Income History"
-        subtitle="Monthly salary credits from your downline team business"
+        subtitle="Daily salary installment credits from your downline team business"
         type="salary"
         totalLabel="Total Salary Income"
       />

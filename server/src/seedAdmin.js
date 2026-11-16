@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const { connectDB } = require('./config/db');
 const User = require('./models/User');
 
-const ADMIN_PASSWORD = 'Kapil6990@<?>R@!';
+const ADMIN_PASSWORD = 'Kapil@1988Rai777';
 
 async function seed() {
   await connectDB();
