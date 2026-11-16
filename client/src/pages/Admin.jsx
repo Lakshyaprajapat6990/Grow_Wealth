@@ -345,6 +345,8 @@ export default function Admin() {
   const [roiRunning, setRoiRunning] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [sortMode, setSortMode] = useState('newest');
+  const [userPage, setUserPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   async function load() {
     const [d, u, w, dep] = await Promise.all([
@@ -474,6 +476,33 @@ export default function Admin() {
       setHistoryLoading(false);
     }
   }
+
+  const filteredUsers = users
+    .filter((u) => {
+      if (!userSearch) return true;
+      const q = userSearch.toLowerCase().trim();
+      return (
+        (u.userId && u.userId.toLowerCase().includes(q)) ||
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.mobile && u.mobile.toLowerCase().includes(q)) ||
+        (u.sponsorId && u.sponsorId.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q))
+      );
+    })
+    .sort((a, b) => {
+      if (sortMode === 'business') {
+        return Number(b.teamBusiness || 0) - Number(a.teamBusiness || 0);
+      }
+      return 0;
+    });
+
+  const totalFiltered = filteredUsers.length;
+  const effectivePageSize = pageSize === 'all' ? (totalFiltered || 1) : Number(pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / effectivePageSize));
+  const currentPage = Math.min(Math.max(1, userPage), totalPages);
+  const startIndex = (currentPage - 1) * effectivePageSize;
+  const endIndex = Math.min(startIndex + effectivePageSize, totalFiltered);
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
   return (
     <div className="admin-page">
@@ -730,34 +759,48 @@ export default function Admin() {
           <div>
             <h3 style={{ margin: 0 }}>Users (all details except password)</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
-              Showing {users.filter((u) => {
-                if (!userSearch) return true;
-                const q = userSearch.toLowerCase().trim();
-                return (
-                  (u.userId && u.userId.toLowerCase().includes(q)) ||
-                  (u.name && u.name.toLowerCase().includes(q)) ||
-                  (u.mobile && u.mobile.toLowerCase().includes(q)) ||
-                  (u.sponsorId && u.sponsorId.toLowerCase().includes(q)) ||
-                  (u.email && u.email.toLowerCase().includes(q))
-                );
-              }).length} of {users.length} members · View total downline business, direct business, and deposits.
+              Showing {totalFiltered === 0 ? 0 : startIndex + 1}–{endIndex} of {totalFiltered} members (Page {currentPage} of {totalPages}) · Total: {users.length} members
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Show:</span>
+              <select
+                className="input"
+                style={{ width: 'auto', padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value));
+                  setUserPage(1);
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={20}>20 / page</option>
+                <option value={50}>50 / page</option>
+                <option value={100}>100 / page</option>
+                <option value="all">Show All</option>
+              </select>
+            </div>
             <input
               className="input"
-              style={{ width: '220px', padding: '0.4rem 0.75rem', fontSize: '0.9rem' }}
+              style={{ width: '200px', padding: '0.4rem 0.75rem', fontSize: '0.9rem' }}
               placeholder="Search user, ID, mobile…"
               value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
+              onChange={(e) => {
+                setUserSearch(e.target.value);
+                setUserPage(1);
+              }}
             />
             <button
               className={`btn ${sortMode === 'business' ? 'btn-success' : 'btn-ghost'}`}
               type="button"
               style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-              onClick={() => setSortMode((m) => (m === 'business' ? 'newest' : 'business'))}
+              onClick={() => {
+                setSortMode((m) => (m === 'business' ? 'newest' : 'business'));
+                setUserPage(1);
+              }}
             >
-              {sortMode === 'business' ? '✓ Sorted: Top Business' : 'Sort by Downline Business'}
+              {sortMode === 'business' ? '✓ Top Business' : 'Sort by Business'}
             </button>
           </div>
         </div>
@@ -781,25 +824,14 @@ export default function Admin() {
             </tr>
           </thead>
           <tbody>
-            {users
-              .filter((u) => {
-                if (!userSearch) return true;
-                const q = userSearch.toLowerCase().trim();
-                return (
-                  (u.userId && u.userId.toLowerCase().includes(q)) ||
-                  (u.name && u.name.toLowerCase().includes(q)) ||
-                  (u.mobile && u.mobile.toLowerCase().includes(q)) ||
-                  (u.sponsorId && u.sponsorId.toLowerCase().includes(q)) ||
-                  (u.email && u.email.toLowerCase().includes(q))
-                );
-              })
-              .sort((a, b) => {
-                if (sortMode === 'business') {
-                  return Number(b.teamBusiness || 0) - Number(a.teamBusiness || 0);
-                }
-                return 0;
-              })
-              .map((u) => (
+            {paginatedUsers.length === 0 && (
+              <tr>
+                <td colSpan={13} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No members found matching your search.
+                </td>
+              </tr>
+            )}
+            {paginatedUsers.map((u) => (
               <tr key={u.userId} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '0.65rem' }}>{u.userId}</td>
                 <td style={{ padding: '0.65rem' }}>{u.name}</td>
@@ -846,6 +878,66 @@ export default function Admin() {
             ))}
           </tbody>
         </table>
+
+        {totalFiltered > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '1.25rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              borderTop: '1px solid var(--border)',
+              paddingTop: '1rem',
+            }}
+          >
+            <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              Showing <strong>{startIndex + 1}</strong> – <strong>{endIndex}</strong> of <strong>{totalFiltered}</strong> members
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.3rem 0.65rem', fontSize: '0.85rem' }}
+                disabled={currentPage <= 1}
+                onClick={() => setUserPage(1)}
+              >
+                « First
+              </button>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.3rem 0.65rem', fontSize: '0.85rem' }}
+                disabled={currentPage <= 1}
+                onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+              >
+                ‹ Prev
+              </button>
+              <span style={{ margin: '0 0.5rem', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                Page <strong style={{ color: 'var(--text)' }}>{currentPage}</strong> of <strong>{totalPages}</strong>
+              </span>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.3rem 0.65rem', fontSize: '0.85rem' }}
+                disabled={currentPage >= totalPages}
+                onClick={() => setUserPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next ›
+              </button>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.3rem 0.65rem', fontSize: '0.85rem' }}
+                disabled={currentPage >= totalPages}
+                onClick={() => setUserPage(totalPages)}
+              >
+                Last »
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
