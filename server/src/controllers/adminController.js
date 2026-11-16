@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Withdrawal = require('../models/Withdrawal');
@@ -6,6 +7,7 @@ const { autoJoinOnPayment, forceJoinUsers } = require('../services/joiningServic
 const { getUsdtTransferFromTx } = require('../utils/bscUsdt');
 const { evaluateRanksUpChain } = require('../services/rankRewardService');
 const { evaluateSalaryUpChain } = require('../services/salaryIncomeService');
+const { generateUniqueUserId, generateTrxPassword, isValidBep20Address } = require('../utils/helpers');
 
 const ROI_PERCENT = Number(process.env.ROI_PERCENT || 1);
 
@@ -463,27 +465,44 @@ async function rejectDeposit(req, res) {
 /** Admin credit or debit member fund balance */
 async function adjustFund(req, res) {
   const { userId, amount, action, remark } = req.body;
-  const amt = Number(amount);
-  if (!userId || !amt || amt <= 0 || !['credit', 'debit'].includes(action)) {
+  if (!userId || !amount || !action) {
     return res.status(400).json({
       success: false,
       message: 'userId, amount, and action (credit|debit) required',
     });
   }
 
-  const user = await User.findOne({ userId: String(userId).toUpperCase() });
+  const amt = Number(Number(amount).toFixed(8));
+  if (amt <= 0) {
+    return res.status(400).json({ success: false, message: 'Amount must be greater than 0' });
+  }
+
+  const user = await User.findOne({ userId: String(userId).trim().toUpperCase() });
   if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-  if (action === 'debit' && user.fundBalance < amt) {
-    return res.status(400).json({ success: false, message: 'Insufficient fund balance' });
-  }
+  if (action === 'debit') {
+    if ((user.fundBalance || 0) < amt) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient fund balance. Current balance is $${Number(user.fundBalance || 0).toFixed(2)}`,
+      });
+    }
 
-  if (action === 'credit') {
+    user.fundBalance = Number(Math.max(0, user.fundBalance - amt).toFixed(8));
+    user.totalDeposited = Number(Math.max(0, (user.totalDeposited || 0) - amt).toFixed(8));
+    user.joiningAmount = Number(Math.max(0, (user.joiningAmount || 0) - amt).toFixed(8));
+    user.usdtBep20Balance = Number(Math.max(0, (user.usdtBep20Balance || 0) - amt).toFixed(8));
+    if (user.fundBalance === 0) {
+      user.isJoined = false;
+    }
+  } else if (action === 'credit') {
     user.fundBalance = Number((user.fundBalance + amt).toFixed(8));
     user.totalDeposited = Number((user.totalDeposited + amt).toFixed(8));
+    user.usdtBep20Balance = Number(((user.usdtBep20Balance || 0) + amt).toFixed(8));
   } else {
-    user.fundBalance = Number((user.fundBalance - amt).toFixed(8));
+    return res.status(400).json({ success: false, message: 'Invalid action: must be credit or debit' });
   }
+
   await user.save();
 
   await Transaction.create({
@@ -492,7 +511,13 @@ async function adjustFund(req, res) {
     amount: amt,
     balanceAfter: user.fundBalance,
     status: 'success',
-    description: remark || `Admin ${action} $${amt}`,
+    description: remark || `Admin ${action === 'credit' ? 'fund credit (+)' : 'fund debit (-)'} $${amt}`,
+    meta: {
+      action,
+      amount: amt,
+      remark: remark || null,
+      balanceAfter: user.fundBalance,
+    },
     createdBy: req.user.userId,
   });
 
@@ -514,14 +539,165 @@ async function adjustFund(req, res) {
     rankRewards = rankEval.chain || [];
     salaryRewards = salaryEval.chain || [];
   }
+
   return res.json({
     success: true,
     message: joinResult.joined
-      ? `Fund credit $${amt} for ${user.userId} · auto joined`
-      : `Fund ${action} $${amt} for ${user.userId}`,
+      ? `Successfully credited $${amt} to ${user.userId} · auto-joined & activated!`
+      : `Successfully ${action === 'credit' ? 'credited (+' : 'debited (-'}${amt}$) for ${user.userId}. New Balance: $${Number(fresh.fundBalance).toFixed(2)}`,
     user: fresh.toSafeJSON(),
     rankRewards,
     salaryRewards,
+  });
+}
+
+/** Admin: create a new member ID with all details and optional deposit amount */
+async function createMemberAdmin(req, res) {
+  const {
+    name,
+    email,
+    mobile,
+    password,
+    transactionPassword,
+    sponsorId,
+    walletAddress,
+    depositAmount = 0,
+    country = 'INDIA',
+  } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, message: 'Member name is required' });
+  }
+  if (!mobile || !String(mobile).trim()) {
+    return res.status(400).json({ success: false, message: 'Mobile number is required' });
+  }
+
+  // Resolve sponsor
+  let resolvedSponsorId = 'GW0000001';
+  let sponsorDoc = null;
+  const sid = (sponsorId || '').trim().toUpperCase();
+  if (sid && sid !== 'ADMIN' && sid !== 'GW0000001') {
+    sponsorDoc = await User.findOne({ userId: sid, isBlocked: false });
+    if (!sponsorDoc) {
+      return res.status(400).json({ success: false, message: `Sponsor ${sid} not found` });
+    }
+    resolvedSponsorId = sponsorDoc.userId;
+  } else {
+    sponsorDoc = await User.findOne({ userId: 'GW0000001' });
+  }
+
+  // Email handling: use provided or generate unique fallback
+  let emailClean = (email || '').trim().toLowerCase();
+  if (emailClean) {
+    const emailExists = await User.findOne({ email: emailClean });
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: `Email already registered (${emailClean})` });
+    }
+  } else {
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const mobileLast4 = String(mobile).trim().slice(-4);
+    let candidate = `${slug}${mobileLast4}@gmail.com`;
+    let count = 1;
+    while (await User.exists({ email: candidate })) {
+      candidate = `${slug}${mobileLast4}${count}@gmail.com`;
+      count += 1;
+    }
+    emailClean = candidate;
+  }
+
+  // Passwords
+  const cleanFirstName = name.trim().split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'member';
+  const passwordPlain = (password || '').trim() || `${cleanFirstName}@123`;
+  const trxPlain = (transactionPassword || '').trim() || generateTrxPassword();
+  const passwordHash = await bcrypt.hash(passwordPlain, 10);
+  const trxHash = await bcrypt.hash(trxPlain, 10);
+
+  // Wallet address
+  let wallet = (walletAddress || '').trim().toLowerCase();
+  if (!wallet || !isValidBep20Address(wallet)) {
+    wallet = '0x789074a9649f4d09c255a9c0c21df4306a6fd9e4';
+  }
+
+  const userId = await generateUniqueUserId();
+
+  const user = await User.create({
+    userId,
+    name: name.trim(),
+    email: emailClean,
+    mobile: String(mobile).trim(),
+    password: passwordHash,
+    transactionPassword: trxHash,
+    country: country || 'INDIA',
+    role: 'user',
+    sponsorId: resolvedSponsorId,
+    walletAddress: wallet,
+    isJoined: false,
+    registrationPaid: true,
+    fundBalance: 0,
+    totalDeposited: 0,
+  });
+
+  if (sponsorDoc) {
+    sponsorDoc.directCount = (sponsorDoc.directCount || 0) + 1;
+    sponsorDoc.teamCount = (sponsorDoc.teamCount || 0) + 1;
+    await sponsorDoc.save();
+  }
+
+  const dep = Number(Number(depositAmount || 0).toFixed(8));
+  let joinResult = { joined: false };
+
+  if (dep > 0) {
+    user.fundBalance = dep;
+    user.usdtBep20Balance = dep;
+    user.totalDeposited = dep;
+    await user.save();
+
+    await Transaction.create({
+      userId: user.userId,
+      type: 'deposit',
+      amount: dep,
+      balanceAfter: user.fundBalance,
+      status: 'success',
+      description: `Admin deposit $${dep} USDT on member creation (sponsor ${resolvedSponsorId})`,
+      meta: {
+        method: 'admin_create_member',
+        network: 'BEP-20',
+        purpose: 'package',
+        note: `Created by admin with deposit $${dep}`,
+      },
+      createdBy: req.user.userId,
+    });
+
+    joinResult = await autoJoinOnPayment(user, {
+      paymentAmount: dep,
+      createdBy: req.user.userId,
+      source: 'admin_create_member',
+    });
+
+    await evaluateRanksUpChain(user.userId);
+    await evaluateSalaryUpChain(user.userId);
+  }
+
+  const fresh = await User.findOne({ userId });
+
+  return res.json({
+    success: true,
+    message: `Member ${fresh.userId} (${fresh.name}) created successfully!`,
+    member: {
+      userId: fresh.userId,
+      name: fresh.name,
+      email: fresh.email,
+      mobile: fresh.mobile,
+      passwordPlain,
+      transactionPasswordPlain: trxPlain,
+      sponsorId: fresh.sponsorId,
+      sponsorName: sponsorDoc ? sponsorDoc.name : 'Grow Wealth Admin',
+      walletAddress: fresh.walletAddress,
+      depositAmount: dep,
+      isJoined: fresh.isJoined,
+      fundBalance: fresh.fundBalance,
+      referEarnPaid: joinResult?.referChain?.levels || [],
+    },
   });
 }
 
@@ -649,6 +825,7 @@ module.exports = {
   approveDeposit,
   rejectDeposit,
   adjustFund,
+  createMemberAdmin,
   forceJoinUsersAdmin,
   getUserHistory,
   grantLeaderIncentiveAdmin,

@@ -11,6 +11,7 @@ const {
   approveDeposit,
   rejectDeposit,
   adjustFund,
+  createMemberAdmin,
   forceJoinUsersAdmin,
   getUserHistory,
   grantLeaderIncentiveAdmin,
@@ -26,6 +27,7 @@ const router = express.Router();
 router.use(protect, adminOnly);
 router.get('/dashboard', dashboard);
 router.get('/users', listUsers);
+router.post('/users/create', createMemberAdmin);
 router.get('/users/:userId/history', getUserHistory);
 router.get('/team-hierarchy', getTeamHierarchy);
 router.post('/users/force-join', forceJoinUsersAdmin);

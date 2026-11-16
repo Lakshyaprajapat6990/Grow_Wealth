@@ -54,16 +54,166 @@ function IncomeCreditForm({ onDone, setMsg, setErr }) {
   );
 }
 
-function FundAdjustForm({ onDone, setMsg, setErr }) {
-  const [userId, setUserId] = useState('');
-  const [amount, setAmount] = useState('');
-  const [action, setAction] = useState('credit');
-  const [remark, setRemark] = useState('');
+function CreateMemberAdminForm({ onDone, setMsg, setErr }) {
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [sponsorId, setSponsorId] = useState('');
+  const [password, setPassword] = useState('');
+  const [trxPassword, setTrxPassword] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
+  const [depositAmount, setDepositAmount] = useState('10');
+  const [loading, setLoading] = useState(false);
+  const [createdMember, setCreatedMember] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
     setErr('');
     setMsg('');
+    setLoading(true);
+    setCreatedMember(null);
+    setCopied(false);
+    try {
+      const { data } = await api.post('/admin/users/create', {
+        name,
+        mobile,
+        email: email.trim(),
+        sponsorId: sponsorId.trim().toUpperCase(),
+        password,
+        transactionPassword: trxPassword,
+        walletAddress: walletAddress.trim(),
+        depositAmount: Number(depositAmount) || 0,
+      });
+
+      setMsg(data.message);
+      setCreatedMember(data.member);
+      setName('');
+      setMobile('');
+      setEmail('');
+      setSponsorId('');
+      setPassword('');
+      setTrxPassword('');
+      setWalletAddress('');
+      setDepositAmount('10');
+      await onDone();
+    } catch (error) {
+      setErr(error.response?.data?.message || 'Failed to create member');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copyCredentials() {
+    if (!createdMember) return;
+    const text =
+      `🎉 Grow Wealth Account Created!\n` +
+      `User ID: ${createdMember.userId}\n` +
+      `Name: ${createdMember.name}\n` +
+      `Login Password: ${createdMember.passwordPlain}\n` +
+      `Transaction Password: ${createdMember.transactionPasswordPlain}\n` +
+      `Sponsor: ${createdMember.sponsorId} (${createdMember.sponsorName})\n` +
+      `Deposit Package: $${createdMember.depositAmount} USDT\n` +
+      `Login URL: https://grow-wealth-neon.vercel.app/login`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  }
+
+  return (
+    <div className="card" style={{ padding: '1.25rem', marginBottom: '1.25rem', borderLeft: '4px solid var(--accent)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <h3 style={{ margin: 0, color: 'var(--accent)' }}>Create New Member ID</h3>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+            Directly register and activate an ID under any sponsor with custom deposit amount.
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={submit}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="field">
+            <label className="label">Full Name *</label>
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rahul Sharma" required />
+          </div>
+
+          <div className="field">
+            <label className="label">Mobile Number *</label>
+            <input className="input" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="e.g. 9876543210" required />
+          </div>
+
+          <div className="field">
+            <label className="label">Sponsor ID (optional)</label>
+            <input className="input" value={sponsorId} onChange={(e) => setSponsorId(e.target.value)} placeholder="Default: GW0000001 (Admin)" />
+          </div>
+
+          <div className="field">
+            <label className="label">Initial Package / Deposit ($)</label>
+            <input className="input" type="number" min="0" step="1" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="e.g. 10, 40, 100" />
+          </div>
+
+          <div className="field">
+            <label className="label">Registered Email (optional)</label>
+            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Auto-generated if empty" />
+          </div>
+
+          <div className="field">
+            <label className="label">Login Password (optional)</label>
+            <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Default: name@123" />
+          </div>
+
+          <div className="field">
+            <label className="label">Transaction Password (optional)</label>
+            <input className="input" value={trxPassword} onChange={(e) => setTrxPassword(e.target.value)} placeholder="Default: 6-digit PIN" />
+          </div>
+
+          <div className="field">
+            <label className="label">BEP-20 Wallet Address (optional)</label>
+            <input className="input" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} placeholder="0x... (auto-filled if empty)" />
+          </div>
+        </div>
+
+        <button className="btn btn-primary" type="submit" disabled={loading} style={{ fontWeight: 'bold' }}>
+          {loading ? 'Creating Member ID…' : '+ Create & Activate Member ID'}
+        </button>
+      </form>
+
+      {createdMember && (
+        <div style={{ marginTop: '1.25rem', padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h4 style={{ margin: 0, color: '#4ade80' }}>✓ Member Created Successfully!</h4>
+            <button className="btn btn-ghost" type="button" onClick={copyCredentials} style={{ fontSize: '0.85rem' }}>
+              {copied ? '✓ Copied to Clipboard!' : '📋 Copy All Details'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', fontSize: '0.9rem' }}>
+            <div><span style={{ color: 'var(--text-muted)' }}>User ID:</span> <strong>{createdMember.userId}</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Name:</span> <strong>{createdMember.name}</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Login Password:</span> <strong>{createdMember.passwordPlain}</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Trx Password:</span> <strong>{createdMember.transactionPasswordPlain}</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Sponsor ID:</span> <strong>{createdMember.sponsorId}</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Deposit:</span> <strong>${createdMember.depositAmount} USDT</strong></div>
+            <div><span style={{ color: 'var(--text-muted)' }}>Status:</span> <strong style={{ color: createdMember.isJoined ? '#4ade80' : '#fbbf24' }}>{createdMember.isJoined ? 'Joined & Active' : 'Not Joined'}</strong></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FundAdjustForm({ onDone, setMsg, setErr }) {
+  const [userId, setUserId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [action, setAction] = useState('credit');
+  const [remark, setRemark] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setErr('');
+    setMsg('');
+    setLoading(true);
     try {
       const { data } = await api.post('/admin/fund/adjust', {
         userId: userId.trim().toUpperCase(),
@@ -78,35 +228,101 @@ function FundAdjustForm({ onDone, setMsg, setErr }) {
       await onDone();
     } catch (error) {
       setErr(error.response?.data?.message || 'Fund adjust failed');
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <form className="card" style={{ padding: '1.25rem', marginBottom: '1rem' }} onSubmit={submit}>
-      <h3 style={{ marginTop: 0 }}>Fund Credit / Debit</h3>
+    <form className="card" style={{ padding: '1.25rem', marginBottom: '1.25rem' }} onSubmit={submit}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <h3 style={{ margin: 0 }}>Direct Add / Deduct Fund Balance</h3>
+          <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+            Directly top-up (+ credit) or reduce (− debit) any member's fund balance with live audit tracking.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className={`btn ${action === 'credit' ? 'btn-success' : 'btn-ghost'}`}
+            style={{ fontWeight: action === 'credit' ? 'bold' : 'normal' }}
+            onClick={() => setAction('credit')}
+          >
+            + Add Fund (Credit)
+          </button>
+          <button
+            type="button"
+            className={`btn ${action === 'debit' ? 'btn-danger' : 'btn-ghost'}`}
+            style={{
+              fontWeight: action === 'debit' ? 'bold' : 'normal',
+              background: action === 'debit' ? '#ef4444' : undefined,
+              color: action === 'debit' ? '#fff' : undefined,
+            }}
+            onClick={() => setAction('debit')}
+          >
+            − Deduct Fund (Debit)
+          </button>
+        </div>
+      </div>
+
       <div className="form-grid-3">
         <div className="field">
-          <label className="label">User ID</label>
-          <input className="input" value={userId} onChange={(e) => setUserId(e.target.value)} required />
+          <label className="label">Target Member User ID *</label>
+          <input
+            className="input"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value.toUpperCase())}
+            placeholder="e.g. GW1234567"
+            required
+          />
         </div>
         <div className="field">
-          <label className="label">Amount ($)</label>
-          <input className="input" type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          <label className="label">Amount ($ USDT) *</label>
+          <input
+            className="input"
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="e.g. 50"
+            required
+          />
         </div>
         <div className="field">
-          <label className="label">Action</label>
+          <label className="label">Action Type</label>
           <select className="input" value={action} onChange={(e) => setAction(e.target.value)}>
-            <option value="credit">Credit (+)</option>
-            <option value="debit">Debit (−)</option>
+            <option value="credit">+ Add / Credit Fund (+)</option>
+            <option value="debit">− Deduct / Debit Fund (−)</option>
           </select>
         </div>
       </div>
-      <div className="field">
-        <label className="label">Remark</label>
-        <input className="input" value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="Optional note" />
+      <div className="field" style={{ marginTop: '0.5rem' }}>
+        <label className="label">Reason / Remark (optional)</label>
+        <input
+          className="input"
+          value={remark}
+          onChange={(e) => setRemark(e.target.value)}
+          placeholder={action === 'credit' ? 'e.g. Direct top-up / package addition' : 'e.g. Admin withdrawal / correction'}
+        />
       </div>
-      <button className={`btn ${action === 'credit' ? 'btn-success' : 'btn-primary'}`}>
-        {action === 'credit' ? 'Credit Fund' : 'Debit Fund'}
+      <button
+        className="btn"
+        type="submit"
+        disabled={loading}
+        style={{
+          marginTop: '0.75rem',
+          fontWeight: 'bold',
+          background: action === 'credit' ? '#22c55e' : '#ef4444',
+          color: '#fff',
+        }}
+      >
+        {loading
+          ? 'Processing…'
+          : action === 'credit'
+          ? `+ Credit $${amount || '0'} USDT to ${userId || 'User'}`
+          : `− Deduct $${amount || '0'} USDT from ${userId || 'User'}`}
       </button>
     </form>
   );
@@ -348,6 +564,8 @@ export default function Admin() {
           </tbody>
         </table>
       </div>
+
+      <CreateMemberAdminForm onDone={load} setMsg={setMsg} setErr={setErr} />
 
       <FundAdjustForm onDone={load} setMsg={setMsg} setErr={setErr} />
 
