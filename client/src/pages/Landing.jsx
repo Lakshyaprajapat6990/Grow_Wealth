@@ -75,12 +75,35 @@ export default function Landing() {
             <button type="button" onClick={() => go('faq')}>
               FAQ
             </button>
+            <a href="/GrowWealth.apk" download="GrowWealth.apk" onClick={() => setMenuOpen(false)} style={{ color: '#4ade80', fontWeight: 600 }}>
+              📱 Download App
+            </a>
             <Link to="/login" onClick={() => setMenuOpen(false)}>
               Login
             </Link>
           </nav>
 
           <div className="lp-nav-cta">
+            <a
+              href="/GrowWealth.apk"
+              download="GrowWealth.apk"
+              className="btn btn-ghost lp-btn-app"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                borderColor: 'rgba(34, 197, 94, 0.4)',
+                color: '#4ade80',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+              title="Download Grow Wealth Android App (APK)"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003 0-.5517.4482-1.0003.9993-1.0003.5517 0 .9993.4486.9993 1.0003 0 .5517-.4476 1.0003-.9993 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003 0-.5517.4482-1.0003.9993-1.0003.5517 0 .9993.4486.9993 1.0003 0 .5517-.4476 1.0003-.9993 1.0003m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8 12 8s-3.5902.4116-5.1368.9507L4.841 5.4478a.416.416 0 00-.5676-.1521.416.416 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/>
+              </svg>
+              <span>Download App</span>
+            </a>
             <Link to="/login" className="btn btn-ghost lp-btn-login">
               Login
             </Link>
