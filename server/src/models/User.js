@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema(
     lastSalaryPeriod: { type: String, default: null },
     lastSalaryDay: { type: String, default: null },
     lastSalaryPaidAt: { type: Date, default: null },
+    salaryPopupDismissed: { type: Boolean, default: false },
     rankReward: { type: Number, default: 0 },
     totalRankReward: { type: Number, default: 0 },
     currentRank: { type: Number, default: 0 },

@@ -8,15 +8,39 @@ import { referralLink } from '../constants/site';
 export default function Dashboard() {
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
+  const [showSalaryModal, setShowSalaryModal] = useState(false);
 
   useEffect(() => {
-    api.get('/user/dashboard/summary').then((r) => setSummary(r.data)).catch(() => {});
-  }, []);
+    api
+      .get('/user/dashboard/summary')
+      .then((r) => {
+        setSummary(r.data);
+        const sum = r.data?.summary;
+        if (sum?.salaryPopupEligible && !sum?.salaryPopupDismissed) {
+          const dismissed = sessionStorage.getItem(`gw_sal_popup_${user?.userId}`);
+          if (!dismissed) {
+            setShowSalaryModal(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [user?.userId]);
+
+  function handleDismissSalaryPopup() {
+    setShowSalaryModal(false);
+    try {
+      sessionStorage.setItem(`gw_sal_popup_${user?.userId}`, '1');
+    } catch {
+      /* ignore */
+    }
+    api.post('/user/salary-popup/dismiss').catch(() => {});
+  }
 
   const s = summary?.summary || user || {};
   const rankPlan = summary?.rankPlan || [];
   const refLink = referralLink(user?.userId);
   const teamBusiness = Number(s.teamBusiness || 0);
+  const directBusiness = Number(s.directBusiness || 0);
   const next = s.nextRank;
   const nextProgress =
     next && next.target > 0 ? Math.min(100, Number(((teamBusiness / next.target) * 100).toFixed(1))) : 100;
@@ -31,6 +55,12 @@ export default function Dashboard() {
     },
     { label: 'Income Balance', value: `$${(s.incomeBalance || 0).toFixed(2)}`, cls: 'green' },
     { label: 'Team Business', value: `$${teamBusiness.toFixed(2)}`, cls: 'gold' },
+    {
+      label: 'Direct Business',
+      value: `$${directBusiness.toFixed(2)}`,
+      cls: directBusiness >= 500 ? 'green' : 'gold',
+      hint: directBusiness >= 500 ? '✓ Salary Unlocked' : 'Min $500 for Salary',
+    },
     { label: 'Current Rank', value: s.currentRank || 0, cls: '' },
     { label: 'Total Deposited', value: `$${(s.totalDeposited || 0).toFixed(2)}`, cls: '' },
     { label: 'Total ROI', value: `$${(s.totalRoiIncome || 0).toFixed(2)}`, cls: 'gold' },
@@ -231,6 +261,163 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Salary Unlocked Milestone Pop-Up Modal */}
+      {showSalaryModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(5, 9, 18, 0.85)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '1.25rem',
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              background: 'linear-gradient(145deg, #182234, #0b101b)',
+              border: '2px solid #f7c02b',
+              borderRadius: '20px',
+              boxShadow: '0 25px 60px -10px rgba(247, 192, 43, 0.45)',
+              padding: '2.25rem 1.75rem',
+              textAlign: 'center',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '3.6rem',
+                lineHeight: 1,
+                marginBottom: '0.75rem',
+                filter: 'drop-shadow(0 0 18px rgba(247,192,43,0.55))',
+              }}
+            >
+              🎉 🏆
+            </div>
+            <h2
+              style={{
+                color: '#f7c02b',
+                margin: '0 0 0.4rem',
+                fontSize: '1.75rem',
+                fontFamily: 'var(--display)',
+                fontWeight: 800,
+              }}
+            >
+              Congratulations!
+            </h2>
+            <h4
+              style={{
+                color: '#ffffff',
+                margin: '0 0 1rem',
+                fontSize: '1.15rem',
+                fontWeight: 600,
+              }}
+            >
+              Daily Salary & Withdrawals Unlocked!
+            </h4>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+              You have completed both required milestones:
+            </p>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '0.75rem',
+                marginBottom: '1.25rem',
+                textAlign: 'left',
+              }}
+            >
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(74, 222, 128, 0.35)',
+                  borderRadius: '12px',
+                  padding: '0.85rem',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                  ✓ Completed
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff', marginTop: '0.2rem' }}>
+                  ${teamBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  Downline Team Business (Min $3,000)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(74, 222, 128, 0.35)',
+                  borderRadius: '12px',
+                  padding: '0.85rem',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                  ✓ Completed
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff', marginTop: '0.2rem' }}>
+                  ${directBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  Direct Refer Link (Min $500)
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'linear-gradient(90deg, rgba(247,192,43,0.15), rgba(74,222,128,0.15))',
+                border: '1px solid rgba(247,192,43,0.35)',
+                borderRadius: '12px',
+                padding: '0.9rem',
+                marginBottom: '1.5rem',
+                color: '#fff',
+                fontSize: '0.92rem',
+                lineHeight: 1.6,
+              }}
+            >
+              🌟 <strong>Tier 1 Daily Salary:</strong>{' '}
+              <span style={{ color: '#4ade80', fontWeight: 800 }}>$6.00 USDT / day</span> ($180 / month)
+              <br />
+              ⚡ <strong>Daily Withdrawals:</strong>{' '}
+              <span style={{ color: '#4ade80', fontWeight: 800 }}>Unlocked & Active</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link
+                to="/salary-income"
+                className="btn btn-primary"
+                style={{ padding: '0.65rem 1.4rem', fontWeight: 700 }}
+                onClick={handleDismissSalaryPopup}
+              >
+                View Salary Income →
+              </Link>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.65rem 1.25rem' }}
+                onClick={handleDismissSalaryPopup}
+              >
+                Great, Continue!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

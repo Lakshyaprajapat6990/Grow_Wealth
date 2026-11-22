@@ -77,6 +77,7 @@ async function getDashboardSummary(req, res) {
   const u = req.user;
   const recent = await Transaction.find({ userId: u.userId }).sort({ createdAt: -1 }).limit(5);
   const rank = await getRankStatus(u.userId);
+  const salary = await getSalaryStatus(u.userId);
 
   const principal = Number(u.fundBalance || 0);
   const gift = Number(u.leaderIncentiveAmount || 0);
@@ -94,14 +95,21 @@ async function getDashboardSummary(req, res) {
       totalRankReward: u.totalRankReward || 0,
       currentRank: u.currentRank || 0,
       totalSalaryIncome: u.totalSalaryIncome || 0,
-      salaryTier: u.salaryTier || 0,
-      dailyWithdrawUnlocked: !!u.dailyWithdrawUnlocked,
+      salaryTier: salary?.salaryTier || u.salaryTier || 0,
+      dailyWithdrawUnlocked: !!salary?.dailyWithdrawUnlocked,
       totalEarnings: u.totalEarnings,
       isJoined: u.isJoined,
       directCount: u.directCount,
       teamCount: u.teamCount,
       teamBusiness: rank?.teamVolume || 0,
       teamSize: rank?.teamSize || 0,
+      directBusiness: salary?.directVolume || 0,
+      directSalaryRequired: salary?.directRequired || 500,
+      directSalaryQualified: !!salary?.directQualified,
+      directSalaryRemaining: salary?.directRemaining || 0,
+      salaryUnlocked: !!salary?.unlocked,
+      salaryPopupEligible: !!salary?.salaryPopupEligible,
+      salaryPopupDismissed: !!u.salaryPopupDismissed,
       remainingToNextRank: rank?.remainingToNext || 0,
       nextRank: rank?.nextRank || null,
       ranks: rank?.ranks || [],
@@ -125,6 +133,11 @@ async function getMySalaryStatus(req, res) {
   return res.json({ success: true, ...status, plan: SALARY_PLAN });
 }
 
+async function dismissSalaryPopup(req, res) {
+  await User.updateOne({ userId: req.user.userId }, { $set: { salaryPopupDismissed: true } });
+  return res.json({ success: true, message: 'Salary popup dismissed' });
+}
+
 module.exports = {
   getProfile,
   getDirectTeam,
@@ -132,4 +145,5 @@ module.exports = {
   getDashboardSummary,
   getMyRankStatus,
   getMySalaryStatus,
+  dismissSalaryPopup,
 };

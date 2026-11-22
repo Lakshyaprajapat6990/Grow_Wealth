@@ -6,12 +6,14 @@ const {
   getDashboardSummary,
   getMyRankStatus,
   getMySalaryStatus,
+  dismissSalaryPopup,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.get('/dashboard/summary', protect, getDashboardSummary);
+router.post('/salary-popup/dismiss', protect, dismissSalaryPopup);
 router.get('/rank-status', protect, getMyRankStatus);
 router.get('/salary-status', protect, getMySalaryStatus);
 router.get('/direct-team/:userId', protect, getDirectTeam);
