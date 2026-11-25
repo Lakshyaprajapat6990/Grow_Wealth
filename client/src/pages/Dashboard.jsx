@@ -154,12 +154,12 @@ export default function Dashboard() {
           <div style={{ marginTop: '1.1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
               <strong style={{ color: 'var(--text)' }}>
-                Next reward: Rank {next.rank} at ${Number(next.target).toLocaleString()} business
+                Next reward: Rank {next.rank} (${Number(next.target).toLocaleString()} Team + ${Number(next.directTarget || 0).toLocaleString()} Direct)
               </strong>
               <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{next.reward} USDT</span>
             </div>
             <p style={{ margin: '0.35rem 0 0.65rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-              Need ${Number(s.remainingToNextRank || 0).toFixed(2)} more team business to unlock this reward.
+              Need ${Number(s.remainingToNextRank ?? (next.target - teamBusiness)).toFixed(2)} team business & ${Math.max(0, (next.directTarget || 0) - directBusiness).toFixed(2)} direct business.
             </p>
             <div
               style={{
@@ -179,7 +179,7 @@ export default function Dashboard() {
               />
             </div>
             <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Progress: {nextProgress}% toward ${Number(next.target).toLocaleString()}
+              Team: {nextProgress}% (${teamBusiness.toLocaleString()} / ${Number(next.target).toLocaleString()}) &bull; Direct: {next.directTarget ? Math.min(100, Number(((directBusiness / next.directTarget) * 100).toFixed(1))) : 100}% (${directBusiness.toLocaleString()} / ${Number(next.directTarget || 0).toLocaleString()})
             </div>
           </div>
         ) : (
@@ -200,14 +200,15 @@ export default function Dashboard() {
         <div style={{ padding: '1rem 1.25rem 0.5rem' }}>
           <h3 style={{ margin: 0, color: 'var(--accent)' }}>Rank Rewards Guide</h3>
           <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-            When your team builds this much business, you get this USDT reward (one-time per rank).
+            Dual qualification: Achieve Team Business + Direct Referral Business (13%) to claim each one-time USDT reward.
           </p>
         </div>
         <table className="mp-table">
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Team Business Target</th>
+              <th>Team Target</th>
+              <th>Direct Target (13%)</th>
               <th>Your Reward</th>
               <th>Your Status</th>
             </tr>
@@ -215,14 +216,26 @@ export default function Dashboard() {
           <tbody>
             {(s.ranks && s.ranks.length ? s.ranks : rankPlan).map((r) => {
               const paid = r.paid ?? (s.ranksClaimed || []).includes?.(r.rank);
-              const unlocked = r.unlocked ?? teamBusiness >= r.target;
+              const teamHit = r.teamHit ?? (teamBusiness >= r.target);
+              const directHit = r.directHit ?? (directBusiness >= (r.directTarget || 0));
+              const unlocked = r.unlocked ?? (teamHit && directHit);
+              const pendingDirect = r.pendingDirect ?? (teamHit && !directHit && !paid);
+              const statusText = paid
+                ? 'Paid'
+                : unlocked
+                ? 'Ready'
+                : pendingDirect
+                ? `Need $${Math.max(0, (r.directTarget || 0) - directBusiness).toLocaleString()} Direct`
+                : 'Locked';
+              const statusColor = paid ? '#4ade80' : unlocked ? '#4ade80' : pendingDirect ? '#fbbf24' : 'var(--text-muted)';
               return (
                 <tr key={r.rank}>
                   <td>Rank {r.rank}{r.rank === 10 ? ' (Top)' : ''}</td>
                   <td>${Number(r.target).toLocaleString()}</td>
-                  <td style={{ color: 'var(--accent)', fontWeight: 700 }}>{r.reward} USDT</td>
-                  <td style={{ color: paid ? '#4ade80' : unlocked ? '#fbbf24' : 'var(--text-muted)' }}>
-                    {paid ? 'Paid' : unlocked ? 'Ready' : 'Locked'}
+                  <td style={{ color: 'var(--accent)' }}>${Number(r.directTarget || 0).toLocaleString()}</td>
+                  <td style={{ color: '#4ade80', fontWeight: 700 }}>{r.reward} USDT</td>
+                  <td style={{ color: statusColor, fontWeight: 600 }}>
+                    {statusText}
                   </td>
                 </tr>
               );
@@ -230,7 +243,7 @@ export default function Dashboard() {
           </tbody>
         </table>
         <div style={{ padding: '0.75rem 1.25rem 1rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-          Example: if your team business reaches $5,000, you receive Rank 1 reward of 150 USDT.
+          Example: Rank 1 unlocks 150 USDT when team hits $5,000 and direct business hits $650.
         </div>
       </div>
 
