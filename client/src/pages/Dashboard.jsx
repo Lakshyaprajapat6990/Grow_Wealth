@@ -215,11 +215,11 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {(s.ranks && s.ranks.length ? s.ranks : rankPlan).map((r) => {
-              const paid = r.paid ?? (s.ranksClaimed || []).includes?.(r.rank);
               const teamHit = r.teamHit ?? (teamBusiness >= r.target);
               const directHit = r.directHit ?? (directBusiness >= (r.directTarget || 0));
+              const paid = r.paid ?? ((s.ranksClaimed || []).includes?.(r.rank) && directHit);
               const unlocked = r.unlocked ?? (teamHit && directHit);
-              const pendingDirect = r.pendingDirect ?? (teamHit && !directHit && !paid);
+              const pendingDirect = r.pendingDirect ?? (teamHit && !directHit);
               const statusText = paid
                 ? 'Paid'
                 : unlocked

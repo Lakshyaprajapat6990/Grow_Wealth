@@ -136,13 +136,27 @@ async function evaluateRanksForUser(userId) {
     }
   }
 
+  // Under Strict Option 2: Ensure user.currentRank accurately reflects ranks where BOTH team and direct are satisfied
+  let activeRank = 0;
+  for (const cfg of RANK_PLAN) {
+    const teamHit = volume >= cfg.target;
+    const directHit = directVolume >= (cfg.directTarget || 0);
+    if (teamHit && directHit && claimed.has(cfg.rank)) {
+      activeRank = Math.max(activeRank, cfg.rank);
+    }
+  }
+  if (user.currentRank !== activeRank) {
+    user.currentRank = activeRank;
+    await user.save();
+  }
+
   return {
     awarded,
     volume,
     teamSize,
     directVolume,
     directCount,
-    currentRank: user.currentRank || 0,
+    currentRank: activeRank,
     ranksClaimed: user.ranksClaimed || [],
   };
 }
@@ -181,9 +195,10 @@ async function getRankStatus(userId) {
   const ranks = RANK_PLAN.map((r) => {
     const teamHit = volume >= r.target;
     const directHit = directVolume >= (r.directTarget || 0);
-    const paid = claimed.includes(r.rank);
-    const unlocked = paid || (teamHit && directHit);
-    const pendingDirect = teamHit && !directHit && !paid;
+    // Strict Option 2: rank is only active/paid if directHit is satisfied
+    const paid = claimed.includes(r.rank) && directHit;
+    const unlocked = teamHit && directHit;
+    const pendingDirect = teamHit && !directHit;
     return {
       ...r,
       unlocked,
@@ -199,10 +214,19 @@ async function getRankStatus(userId) {
     };
   });
 
-  const next = RANK_PLAN.find((r) => !claimed.includes(r.rank));
+  // Calculate active qualified rank (where both team and direct are satisfied)
+  let activeRank = 0;
+  for (const r of ranks) {
+    if (r.unlocked && (r.paid || claimed.includes(r.rank))) {
+      activeRank = Math.max(activeRank, r.rank);
+    }
+  }
+
+  // Next rank is the first rank that is not fully unlocked/active
+  const next = ranks.find((r) => !r.unlocked) || null;
 
   return {
-    currentRank,
+    currentRank: activeRank,
     ranksClaimed: claimed,
     teamVolume: volume,
     teamSize,
