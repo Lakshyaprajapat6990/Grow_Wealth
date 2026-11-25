@@ -9,6 +9,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [showSalaryModal, setShowSalaryModal] = useState(false);
+  const [showPendingDirectModal, setShowPendingDirectModal] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     api
@@ -16,10 +18,22 @@ export default function Dashboard() {
       .then((r) => {
         setSummary(r.data);
         const sum = r.data?.summary;
+        const teamB = Number(sum?.teamBusiness || 0);
+        const directB = Number(sum?.directBusiness || 0);
+
         if (sum?.salaryPopupEligible && !sum?.salaryPopupDismissed) {
           const dismissed = sessionStorage.getItem(`gw_sal_popup_${user?.userId}`);
           if (!dismissed) {
             setShowSalaryModal(true);
+            return;
+          }
+        }
+
+        // 2-Task Milestone check: Task 1 (Team Business >= $3000) completed, but Task 2 (Direct Business) pending
+        if (teamB >= 3000 && (directB < 500 || (teamB >= 5000 && directB < 650))) {
+          const taskDismissed = sessionStorage.getItem(`gw_task_milestone_${user?.userId}`);
+          if (!taskDismissed) {
+            setShowPendingDirectModal(true);
           }
         }
       })
@@ -34,6 +48,21 @@ export default function Dashboard() {
       /* ignore */
     }
     api.post('/user/salary-popup/dismiss').catch(() => {});
+  }
+
+  function handleDismissPendingDirectModal() {
+    setShowPendingDirectModal(false);
+    try {
+      sessionStorage.setItem(`gw_task_milestone_${user?.userId}`, '1');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function handleCopyReferralLink() {
+    navigator.clipboard.writeText(refLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
   }
 
   const s = summary?.summary || user || {};
@@ -426,6 +455,230 @@ export default function Dashboard() {
                 onClick={handleDismissSalaryPopup}
               >
                 Great, Continue!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2-Task Milestone Modal: Task 1 Completed, Task 2 (Direct Referral Business) Pending */}
+      {showPendingDirectModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(5, 9, 17, 0.88)',
+            backdropFilter: 'blur(10px)',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 560,
+              width: '100%',
+              background: 'linear-gradient(155deg, #151f32 0%, #0c1322 100%)',
+              border: '2px solid rgba(247, 192, 43, 0.65)',
+              borderRadius: '20px',
+              boxShadow: '0 25px 60px -10px rgba(247, 192, 43, 0.35)',
+              padding: '2rem 1.6rem',
+              textAlign: 'center',
+              position: 'relative',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleDismissPendingDirectModal}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                color: '#aaa',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                cursor: 'pointer',
+                fontSize: '1.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+
+            <div
+              style={{
+                fontSize: '3.2rem',
+                lineHeight: 1,
+                marginBottom: '0.65rem',
+                filter: 'drop-shadow(0 0 16px rgba(247,192,43,0.5))',
+              }}
+            >
+              🎯 🏆
+            </div>
+
+            <h2
+              style={{
+                color: '#f7c02b',
+                margin: '0 0 0.35rem',
+                fontSize: '1.65rem',
+                fontFamily: 'var(--display)',
+                fontWeight: 800,
+              }}
+            >
+              Task 1 Completed!
+            </h2>
+            <h4
+              style={{
+                color: '#ffffff',
+                margin: '0 0 1rem',
+                fontSize: '1.08rem',
+                fontWeight: 600,
+              }}
+            >
+              Now Complete Task 2 to Unlock Rank Reward & Daily Salary
+            </h4>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+              Congratulations on building your team business! You have completed the first milestone. Complete the second task below to unlock your bonuses:
+            </p>
+
+            {/* 2 Tasks Visualizer */}
+            <div style={{ display: 'grid', gap: '0.85rem', marginBottom: '1.25rem', textAlign: 'left' }}>
+              {/* Task 1 */}
+              <div
+                style={{
+                  background: 'rgba(74, 222, 128, 0.06)',
+                  border: '1px solid rgba(74, 222, 128, 0.45)',
+                  borderRadius: '12px',
+                  padding: '0.9rem 1rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                    ✓ Task 1: Downline Team Business
+                  </span>
+                  <span style={{ fontSize: '0.78rem', background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', padding: '0.15rem 0.5rem', borderRadius: 999, fontWeight: 700 }}>
+                    COMPLETED
+                  </span>
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#fff', marginTop: '0.35rem' }}>
+                  ${teamBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  Target Met: Min $3,000 for Daily Salary &bull; Min $5,000 for Rank 1
+                </div>
+              </div>
+
+              {/* Task 2 */}
+              <div
+                style={{
+                  background: 'rgba(247, 192, 43, 0.08)',
+                  border: '1px solid rgba(247, 192, 43, 0.55)',
+                  borderRadius: '12px',
+                  padding: '0.9rem 1rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase' }}>
+                    ⏳ Task 2: Personal Direct Referral Business
+                  </span>
+                  <span style={{ fontSize: '0.78rem', background: 'rgba(247, 192, 43, 0.2)', color: '#fbbf24', padding: '0.15rem 0.5rem', borderRadius: 999, fontWeight: 700 }}>
+                    IN PROGRESS
+                  </span>
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#fbbf24', marginTop: '0.35rem' }}>
+                  ${directBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                </div>
+                <div style={{ fontSize: '0.84rem', color: '#e2e8f0', marginTop: '0.35rem', lineHeight: 1.45 }}>
+                  {directBusiness < 500 && (
+                    <div>• Daily Salary: Need <strong>${Math.max(0, 500 - directBusiness).toFixed(2)}</strong> more direct business (Target: $500)</div>
+                  )}
+                  {directBusiness < 650 && (
+                    <div>• Rank 1 (150 USDT): Need <strong>${Math.max(0, 650 - directBusiness).toFixed(2)}</strong> more direct business (Target: $650)</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Unlocks Upon Completion */}
+            <div
+              style={{
+                background: 'linear-gradient(90deg, rgba(247,192,43,0.12), rgba(74,222,128,0.12))',
+                border: '1px solid rgba(247,192,43,0.3)',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                marginBottom: '1.25rem',
+                textAlign: 'left',
+                fontSize: '0.86rem',
+                lineHeight: 1.6,
+                color: '#e2e8f0',
+              }}
+            >
+              <div style={{ color: '#f7c02b', fontWeight: 700, marginBottom: '0.25rem' }}>
+                🎁 Complete Task 2 to immediately unlock:
+              </div>
+              <div>💰 <strong>150 USDT Rank 1 Reward</strong> credited directly to Income Balance</div>
+              <div>📅 <strong>Daily Salary Income</strong> ($6.00/day = $180/month)</div>
+              <div>⚡ <strong>Daily Withdrawals</strong> unlocked on your earnings</div>
+            </div>
+
+            {/* Referral Link Quick Sharing */}
+            <div style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                Share your personal referral link with new members:
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(0,0,0,0.35)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 8,
+                  padding: '0.45rem 0.65rem',
+                  gap: '0.5rem',
+                }}
+              >
+                <code style={{ flex: 1, fontSize: '0.8rem', color: '#fbbf24', wordBreak: 'break-all' }}>
+                  {refLink}
+                </code>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  onClick={handleCopyReferralLink}
+                >
+                  {copiedLink ? '✓ Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Join Grow Wealth with my link: ${refLink}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-primary"
+                style={{ padding: '0.65rem 1.25rem', fontWeight: 700 }}
+              >
+                Share on WhatsApp 🚀
+              </a>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                style={{ padding: '0.65rem 1.25rem' }}
+                onClick={handleDismissPendingDirectModal}
+              >
+                Got it, I&apos;ll Complete Task 2!
               </button>
             </div>
           </div>
