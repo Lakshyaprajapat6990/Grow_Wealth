@@ -405,11 +405,38 @@ async function login(req, res) {
     });
   }
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) {
-    return res.status(401).json({ success: false, message: 'Invalid User ID or password' });
+  // Brute-force lockout check
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    const remainingMin = Math.ceil((user.lockUntil.getTime() - Date.now()) / 60000);
+    return res.status(429).json({
+      success: false,
+      message: `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMin} minute${remainingMin > 1 ? 's' : ''}.`,
+    });
   }
 
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) {
+    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+    if (user.failedLoginAttempts >= 5) {
+      user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 min lockout
+      user.failedLoginAttempts = 0;
+      await user.save();
+      return res.status(429).json({
+        success: false,
+        message: 'Account locked for 30 minutes due to 5 consecutive failed login attempts.',
+      });
+    }
+    await user.save();
+    const attemptsLeft = 5 - user.failedLoginAttempts;
+    return res.status(401).json({
+      success: false,
+      message: `Invalid User ID or password. (${attemptsLeft} attempt${attemptsLeft > 1 ? 's' : ''} left before lockout)`,
+    });
+  }
+
+  // Reset failed attempts on success
+  user.failedLoginAttempts = 0;
+  user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
 

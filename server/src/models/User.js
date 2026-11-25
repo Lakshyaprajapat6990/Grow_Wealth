@@ -80,6 +80,9 @@ const userSchema = new mongoose.Schema(
 
     isBlocked: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: null },
+    /** Brute-force protection: lock account after repeated failed logins */
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
     /** Bumped to invalidate all existing JWT sessions for this user */
     tokenVersion: { type: Number, default: 0 },
   },
