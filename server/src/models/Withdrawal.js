@@ -12,6 +12,7 @@ const withdrawalSchema = new mongoose.Schema(
     },
     isFirstWithdrawal: { type: Boolean, default: false },
     fee: { type: Number, default: 0 },
+    roiDeducted: { type: Number, default: 0 },
     requestedAmount: { type: Number, default: null },
     /** income = income withdraw (10%); fund_refund = Fund Balance refund (20%) */
     kind: { type: String, enum: ['income', 'fund_refund'], default: 'income' },

@@ -734,6 +734,11 @@ export default function Admin() {
                   <td style={{ padding: '0.65rem' }}>
                     ${fee.toFixed(2)}
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}> ({feePct}%)</span>
+                    {isRefund && Number(w.roiDeducted || 0) > 0 && (
+                      <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.15rem' }}>
+                        +${Number(w.roiDeducted).toFixed(2)} ROI clawback
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '0.65rem', fontWeight: 700 }}>${net.toFixed(2)}</td>
                   <td style={{ padding: '0.65rem', maxWidth: 160, wordBreak: 'break-all', fontSize: '0.8rem' }}>

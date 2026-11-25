@@ -58,6 +58,7 @@ async function getWalletInfo(req, res) {
     firstWithdrawMin: WITHDRAW_MIN,
     withdrawFeePercent: WITHDRAW_FEE_PERCENT,
     fundRefundFeePercent: FUND_REFUND_FEE_PERCENT,
+    totalRoiIncome: Number(u.totalRoiIncome || 0),
     withdrawProcessingHours: WITHDRAW_PROCESSING_HOURS,
     joiningAmount: JOINING_AMOUNT,
     minDeposit: MIN_DEPOSIT,
@@ -303,12 +304,26 @@ async function requestFundRefund(req, res) {
   }
 
   const fee = Number(((amount * FUND_REFUND_FEE_PERCENT) / 100).toFixed(8));
-  const netAmount = Number((amount - fee).toFixed(8));
+  const roiDeducted = Number(Number(user.totalRoiIncome || 0).toFixed(8));
+  const totalDeductions = Number((fee + roiDeducted).toFixed(8));
+
+  if (amount <= totalDeductions) {
+    return res.status(400).json({
+      success: false,
+      message: `Refund amount ($${amount.toFixed(2)}) must exceed total deductions (20% fee $${fee.toFixed(2)} + all-days ROI received $${roiDeducted.toFixed(2)} = $${totalDeductions.toFixed(2)}). Net refund cannot be zero or negative.`,
+    });
+  }
+
+  const netAmount = Number((amount - totalDeductions).toFixed(8));
 
   user.fundBalance = Number((user.fundBalance - amount).toFixed(8));
   user.totalDeposited = Number(Math.max(0, (user.totalDeposited || 0) - amount).toFixed(8));
   user.joiningAmount = Number(Math.max(0, (user.joiningAmount || 0) - amount).toFixed(8));
+  user.totalRoiIncome = Number(Math.max(0, (user.totalRoiIncome || 0) - roiDeducted).toFixed(8));
   user.pendingWithdrawals = Number((user.pendingWithdrawals + netAmount).toFixed(8));
+  if (user.fundBalance === 0) {
+    user.isJoined = false;
+  }
   await user.save();
 
   const withdrawal = await Withdrawal.create({
@@ -318,9 +333,10 @@ async function requestFundRefund(req, res) {
     status: 'pending',
     isFirstWithdrawal: !user.hasCompletedFirstWithdrawal,
     fee,
+    roiDeducted,
     requestedAmount: amount,
     kind: 'fund_refund',
-    adminNote: `Fund refund · ${FUND_REFUND_FEE_PERCENT}% fee · process ${WITHDRAW_PROCESSING_HOURS}h`,
+    adminNote: `Fund refund · ${FUND_REFUND_FEE_PERCENT}% fee ($${fee.toFixed(2)}) · ROI clawback ($${roiDeducted.toFixed(2)}) · process ${WITHDRAW_PROCESSING_HOURS}h`,
   });
 
   await Transaction.create({
@@ -329,12 +345,13 @@ async function requestFundRefund(req, res) {
     amount,
     balanceAfter: user.fundBalance,
     status: 'pending',
-    description: `Fund Balance refund $${amount} · fee ${FUND_REFUND_FEE_PERCENT}% ($${fee}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
+    description: `Fund Balance refund $${amount} · fee ${FUND_REFUND_FEE_PERCENT}% ($${fee.toFixed(2)}) · ROI deducted ($${roiDeducted.toFixed(2)}) · net $${netAmount} · process ${WITHDRAW_PROCESSING_HOURS}h`,
     meta: {
       withdrawalId: withdrawal._id,
       kind: 'fund_refund',
       fee,
       feePercent: FUND_REFUND_FEE_PERCENT,
+      roiDeducted,
       netAmount,
       requestedAmount: amount,
       fromIncome: 0,
@@ -346,9 +363,10 @@ async function requestFundRefund(req, res) {
 
   return res.json({
     success: true,
-    message: `Fund refund submitted. Fee ${FUND_REFUND_FEE_PERCENT}% ($${fee}). Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
+    message: `Fund refund submitted. Fee ${FUND_REFUND_FEE_PERCENT}% ($${fee.toFixed(2)}) & all-days ROI received ($${roiDeducted.toFixed(2)}) deducted. Net $${netAmount}. Processing ${WITHDRAW_PROCESSING_HOURS} hours.`,
     withdrawal,
     fee,
+    roiDeducted,
     netAmount,
     fromPrincipal: amount,
     processingHours: WITHDRAW_PROCESSING_HOURS,
