@@ -72,7 +72,7 @@ export default function App() {
                 <Route path="/trading" element={<Trading />} />
                 <Route path="/plan-details" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/my-account" element={<MyAccount />} />
-                <Route path="/transfer" element={<Transfer />} />
+                <Route path="/transfer" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/withdrawals" element={<WithdrawalsPage />} />

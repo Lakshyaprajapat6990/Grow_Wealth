@@ -102,7 +102,6 @@ export default function Dashboard() {
     { to: '/deposit', icon: '💰', label: 'Deposit' },
     { to: '/withdrawals', icon: '💸', label: 'Withdraw' },
     { to: '/compound', icon: '♻️', label: 'Compound' },
-    { to: '/transfer', icon: '🔄', label: 'Transfer' },
     { to: '/direct-team', icon: '👥', label: 'My Team' },
     { to: '/rank-rewards', icon: '🏆', label: 'Rank Rewards' },
     { to: '/roi-income', icon: '📈', label: 'ROI Income' },

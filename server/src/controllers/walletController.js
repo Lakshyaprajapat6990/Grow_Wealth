@@ -433,65 +433,9 @@ async function getWithdrawals(req, res) {
 }
 
 async function transferFunds(req, res) {
-  const { receiverUserId, amount, transactionPassword } = req.body;
-  const sender = req.user;
-
-  if (!sender.isJoined) {
-    return res.status(400).json({ success: false, message: 'Activate joining first' });
-  }
-
-  const amt = Number(amount);
-  if (!receiverUserId || !amt || amt < 5) {
-    return res.status(400).json({ success: false, message: 'Invalid transfer details. Min $5.' });
-  }
-
-  const receiver = await User.findOne({ userId: String(receiverUserId).trim().toUpperCase() });
-  if (!receiver) return res.status(404).json({ success: false, message: 'Receiver User ID not found' });
-  if (receiver.userId === sender.userId) {
-    return res.status(400).json({ success: false, message: 'Cannot transfer to yourself' });
-  }
-
-  if (sender.fundBalance < amt) {
-    return res.status(400).json({ success: false, message: 'Insufficient fund balance' });
-  }
-
-  const trxOk = await bcrypt.compare(transactionPassword || '', sender.transactionPassword);
-  if (!trxOk) {
-    return res.status(400).json({ success: false, message: 'Invalid Transaction Password' });
-  }
-
-  sender.fundBalance = Number((sender.fundBalance - amt).toFixed(8));
-  receiver.fundBalance = Number((receiver.fundBalance + amt).toFixed(8));
-  await sender.save();
-  await receiver.save();
-
-  await Transaction.create([
-    {
-      userId: sender.userId,
-      type: 'transfer_out',
-      amount: amt,
-      balanceAfter: sender.fundBalance,
-      status: 'success',
-      description: `Transfer to ${receiver.userId}`,
-      meta: { toUserId: receiver.userId },
-      createdBy: sender.userId,
-    },
-    {
-      userId: receiver.userId,
-      type: 'transfer_in',
-      amount: amt,
-      balanceAfter: receiver.fundBalance,
-      status: 'success',
-      description: `Transfer from ${sender.userId}`,
-      meta: { fromUserId: sender.userId },
-      createdBy: sender.userId,
-    },
-  ]);
-
-  return res.json({
-    success: true,
-    message: 'Transfer successful',
-    user: sender.toSafeJSON(),
+  return res.status(403).json({
+    success: false,
+    message: 'P2P Fund Transfer feature has been disabled by admin.',
   });
 }
 

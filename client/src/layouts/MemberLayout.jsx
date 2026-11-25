@@ -42,7 +42,6 @@ const menu = [
       { to: '/withdrawals', label: 'Withdrawals' },
       { to: '/refund-fund', label: 'Refund Fund' },
       { to: '/compound', label: 'Manual Compound' },
-      { to: '/transfer', label: 'Fund Transfer' },
       { to: '/support', label: 'Support Ticket' },
       { to: '/notifications', label: 'Notifications' },
     ],
