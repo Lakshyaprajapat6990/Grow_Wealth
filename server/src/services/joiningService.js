@@ -169,13 +169,14 @@ async function autoJoinOnPayment(user, { paymentAmount = 0, createdBy = 'system'
     referChain = await creditReferEarnChain(user.userId, investBase);
   }
 
+  const cleanSource = String(source || 'package activation').replace(/admin_/gi, '').replace(/_/g, ' ');
   await Transaction.create({
     userId: user.userId,
     type: 'joining',
     amount: investBase,
     balanceAfter: user.fundBalance,
     status: 'success',
-    description: `Auto joined on ${source} (invest $${investBase})`,
+    description: `Auto joined on ${cleanSource} (invest $${investBase})`,
     meta: {
       autoJoin: true,
       paymentAmount: paid,

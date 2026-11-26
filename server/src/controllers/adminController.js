@@ -511,7 +511,7 @@ async function adjustFund(req, res) {
     amount: amt,
     balanceAfter: user.fundBalance,
     status: 'success',
-    description: remark || `Admin ${action === 'credit' ? 'fund credit (+)' : 'fund debit (-)'} $${amt}`,
+    description: remark || `${action === 'credit' ? 'Fund credit (+)' : 'Fund debit (-)'} $${amt}`,
     meta: {
       action,
       amount: amt,
@@ -526,7 +526,7 @@ async function adjustFund(req, res) {
     joinResult = await autoJoinOnPayment(user, {
       paymentAmount: amt,
       createdBy: req.user.userId,
-      source: 'admin_fund_credit',
+      source: 'fund_credit',
     });
   }
 
@@ -658,12 +658,12 @@ async function createMemberAdmin(req, res) {
       amount: dep,
       balanceAfter: user.fundBalance,
       status: 'success',
-      description: `Admin deposit $${dep} USDT on member creation (sponsor ${resolvedSponsorId})`,
+      description: `Package deposit $${dep} USDT on member creation (sponsor ${resolvedSponsorId})`,
       meta: {
-        method: 'admin_create_member',
+        method: 'member_creation',
         network: 'BEP-20',
         purpose: 'package',
-        note: `Created by admin with deposit $${dep}`,
+        note: `Deposit $${dep} on member creation`,
       },
       createdBy: req.user.userId,
     });
@@ -671,7 +671,7 @@ async function createMemberAdmin(req, res) {
     joinResult = await autoJoinOnPayment(user, {
       paymentAmount: dep,
       createdBy: req.user.userId,
-      source: 'admin_create_member',
+      source: 'member_creation',
     });
 
     await evaluateRanksUpChain(user.userId);

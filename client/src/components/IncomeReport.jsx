@@ -41,7 +41,15 @@ export default function IncomeReport({ title, subtitle, type, totalLabel }) {
           },
           { key: 'amount', label: 'Amount', render: (r) => `$${Number(r.amount).toFixed(2)}` },
           { key: 'status', label: 'Status' },
-          { key: 'description', label: 'Description' },
+          {
+            key: 'description',
+            label: 'Description',
+            render: (r) =>
+              String(r.description || '')
+                .replace(/admin fund credit/gi, 'Fund credit')
+                .replace(/admin fund debit/gi, 'Fund debit')
+                .replace(/admin/gi, 'system'),
+          },
         ]}
         rows={rows}
         emptyText={`No ${title.toLowerCase()} records yet`}

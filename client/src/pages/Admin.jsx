@@ -304,7 +304,7 @@ function FundAdjustForm({ onDone, setMsg, setErr }) {
           className="input"
           value={remark}
           onChange={(e) => setRemark(e.target.value)}
-          placeholder={action === 'credit' ? 'e.g. Direct top-up / package addition' : 'e.g. Admin withdrawal / correction'}
+          placeholder={action === 'credit' ? 'e.g. Direct top-up / package addition' : 'e.g. Fund withdrawal / correction'}
         />
       </div>
       <button
