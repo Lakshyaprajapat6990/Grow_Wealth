@@ -5,16 +5,22 @@ const { getTeamVolume } = require('./rankRewardService');
 /** Minimum direct referral business required to unlock salary (Option 1). */
 const DIRECT_SALARY_REQUIRED = 500;
 
-/** Sum of totalDeposited by direct referrals (where sponsorId === userId). */
+/**
+ * Direct Referral Business: strictly the sum of initial joining/activation package amounts
+ * (joiningAmount) of directly sponsored members. Subsequent top-ups and extra deposits are excluded.
+ */
 async function getDirectVolume(userId) {
-  const directs = await User.find({ sponsorId: userId, role: { $ne: 'admin' } })
-    .select('userId totalDeposited isJoined')
+  const directs = await User.find({ sponsorId: userId, role: { $ne: 'admin' }, isJoined: true })
+    .select('userId joiningAmount totalDeposited isJoined')
     .lean();
-  const volume = directs.reduce((sum, u) => sum + Number(u.totalDeposited || 0), 0);
+  const volume = directs.reduce((sum, u) => {
+    const amt = Number(u.joiningAmount ?? (u.isJoined ? 10 : 0));
+    return sum + (amt > 0 ? amt : 0);
+  }, 0);
   return {
     volume: Number(volume.toFixed(8)),
     directCount: directs.length,
-    activeDirectCount: directs.filter((u) => u.isJoined && Number(u.totalDeposited || 0) > 0).length,
+    activeDirectCount: directs.filter((u) => u.isJoined && (Number(u.joiningAmount || 0) > 0 || Number(u.totalDeposited || 0) > 0)).length,
   };
 }
 
@@ -151,8 +157,9 @@ async function evaluateSalaryForUser(userId, { paySalary = true, day = todayKey(
     await user.save();
   } else {
     // If not direct qualified ($500), salary is locked and daily withdraw is locked
-    if (user.dailyWithdrawUnlocked && !directQualified) {
+    if ((user.dailyWithdrawUnlocked || user.salaryTier > 0) && !directQualified) {
       user.dailyWithdrawUnlocked = false;
+      user.salaryTier = 0;
       await user.save();
     }
   }
