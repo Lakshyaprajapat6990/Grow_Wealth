@@ -21,7 +21,7 @@ export default function Dashboard() {
         const teamB = Number(sum?.teamBusiness || 0);
         const directB = Number(sum?.directBusiness || 0);
 
-        if (sum?.salaryPopupEligible && !sum?.salaryPopupDismissed) {
+        if (sum?.salaryPopupEligible) {
           const dismissed = sessionStorage.getItem(`gw_sal_popup_${user?.userId}`);
           if (!dismissed) {
             setShowSalaryModal(true);
@@ -115,6 +115,87 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle={`Welcome, ${user?.name} · Status: ${user?.isJoined ? 'Joined' : 'Not Joined — deposit to activate'}`}
       />
+
+      {/* Quick Access Certificate Banner for Qualified Leaders */}
+      {s?.salaryPopupEligible && (
+        <div
+          className="card"
+          style={{
+            background: 'linear-gradient(90deg, rgba(247,192,43,0.18), rgba(74,222,128,0.12))',
+            border: '1px solid rgba(247,192,43,0.45)',
+            borderRadius: '14px',
+            padding: '0.85rem 1.25rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <img
+              src="/logo.png"
+              alt="Grow Wealth"
+              width="38"
+              height="38"
+              style={{ filter: 'drop-shadow(0 0 8px rgba(247,192,43,0.6))', display: 'block' }}
+            />
+            <div>
+              <div style={{ color: '#f7c02b', fontWeight: 800, fontSize: '0.98rem' }}>
+                🎉 Daily Salary Milestone Achieved!
+              </div>
+              <div style={{ color: '#cbd5e1', fontSize: '0.82rem' }}>
+                Tier 1 Daily Salary: <strong>$6.00 USDT/day</strong> &bull; <strong>Daily Withdrawals Active</strong>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ padding: '0.5rem 1.15rem', fontSize: '0.84rem', fontWeight: 700 }}
+            onClick={() => setShowSalaryModal(true)}
+          >
+            🎖️ View Certificate of Achievement
+          </button>
+        </div>
+      )}
+
+      {/* Milestone Progress Banner for Members with Team >= $3000 Pending Direct */}
+      {!s?.salaryPopupEligible && teamBusiness >= 3000 && (directBusiness < 500 || (teamBusiness >= 5000 && directBusiness < 650)) && (
+        <div
+          className="card"
+          style={{
+            background: 'rgba(247,192,43,0.08)',
+            border: '1px solid rgba(247,192,43,0.4)',
+            borderRadius: '14px',
+            padding: '0.85rem 1.25rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
+          <div>
+            <div style={{ color: '#fbbf24', fontWeight: 800, fontSize: '0.96rem' }}>
+              🎯 Milestone 1 Done (${teamBusiness.toFixed(2)} Team Business) — Complete Milestone 2!
+            </div>
+            <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
+              Need ${Math.max(0, 500 - directBusiness).toFixed(2)} more in direct referral business to unlock daily salary.
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ padding: '0.5rem 1.1rem', fontSize: '0.84rem', borderColor: 'rgba(247,192,43,0.5)', color: '#f7c02b' }}
+            onClick={() => setShowPendingDirectModal(true)}
+          >
+            View Milestone Progress
+          </button>
+        </div>
+      )}
 
       {!user?.isJoined && (
         <div
@@ -303,7 +384,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Salary Unlocked Milestone Pop-Up Modal */}
+      {/* Salary Unlocked Certificate of Achievement Modal */}
       {showSalaryModal && (
         <div
           role="dialog"
@@ -311,70 +392,176 @@ export default function Dashboard() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(5, 9, 18, 0.85)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            background: 'rgba(5, 9, 18, 0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 99999,
-            padding: '1.25rem',
+            padding: '1rem',
           }}
         >
           <div
             className="card"
             style={{
-              maxWidth: '520px',
+              maxWidth: '620px',
               width: '100%',
-              background: 'linear-gradient(145deg, #182234, #0b101b)',
+              background: 'radial-gradient(ellipse at top, #162544 0%, #0a1120 70%, #050a14 100%)',
               border: '2px solid #f7c02b',
-              borderRadius: '20px',
-              boxShadow: '0 25px 60px -10px rgba(247, 192, 43, 0.45)',
-              padding: '2.25rem 1.75rem',
+              borderRadius: '24px',
+              boxShadow: '0 30px 80px -10px rgba(247, 192, 43, 0.45), inset 0 0 0 2px rgba(247, 192, 43, 0.3)',
+              padding: '2.4rem 1.85rem',
               textAlign: 'center',
               position: 'relative',
+              maxHeight: '94vh',
+              overflowY: 'auto',
             }}
           >
-            <div
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={handleDismissSalaryPopup}
               style={{
-                fontSize: '3.6rem',
-                lineHeight: 1,
-                marginBottom: '0.75rem',
-                filter: 'drop-shadow(0 0 18px rgba(247,192,43,0.55))',
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                color: '#aaa',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                cursor: 'pointer',
+                fontSize: '1.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              🎉 🏆
+              ✕
+            </button>
+
+            {/* Top Center: Official Grow Wealth Logo */}
+            <div style={{ textAlign: 'center', marginBottom: '0.85rem' }}>
+              <div
+                style={{
+                  display: 'inline-block',
+                  padding: '6px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(247, 192, 43, 0.25) 0%, rgba(247, 192, 43, 0.02) 70%)',
+                  boxShadow: '0 0 25px rgba(247, 192, 43, 0.45)',
+                }}
+              >
+                <img
+                  src="/logo.png"
+                  alt="Grow Wealth"
+                  style={{
+                    width: 76,
+                    height: 76,
+                    objectFit: 'contain',
+                    display: 'block',
+                    margin: '0 auto',
+                    filter: 'drop-shadow(0 0 10px rgba(247,192,43,0.65))',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  fontSize: '0.74rem',
+                  color: '#f7c02b',
+                  letterSpacing: '0.22em',
+                  fontWeight: 800,
+                  marginTop: '0.5rem',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Grow Wealth Global
+              </div>
+            </div>
+
+            {/* Certificate Header */}
+            <div
+              style={{
+                fontSize: '0.82rem',
+                color: '#e2e8f0',
+                letterSpacing: '0.25em',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                marginBottom: '0.2rem',
+              }}
+            >
+              Official Recognition
             </div>
             <h2
               style={{
                 color: '#f7c02b',
-                margin: '0 0 0.4rem',
-                fontSize: '1.75rem',
-                fontFamily: 'var(--display)',
-                fontWeight: 800,
+                margin: '0 0 0.5rem',
+                fontSize: '1.9rem',
+                fontFamily: "'Georgia', 'Times New Roman', serif",
+                letterSpacing: '0.08em',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                textShadow: '0 0 20px rgba(247, 192, 43, 0.5)',
               }}
             >
-              Congratulations!
+              Certificate of Achievement
             </h2>
-            <h4
-              style={{
-                color: '#ffffff',
-                margin: '0 0 1rem',
-                fontSize: '1.15rem',
-                fontWeight: 600,
-              }}
-            >
-              Daily Salary & Withdrawals Unlocked!
-            </h4>
-
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
-              You have completed both required milestones:
-            </p>
 
             <div
               style={{
+                fontSize: '0.92rem',
+                fontStyle: 'italic',
+                color: '#cbd5e1',
+                marginBottom: '0.35rem',
+                fontFamily: "'Georgia', serif",
+              }}
+            >
+              Proudly Presented to :
+            </div>
+
+            <div
+              style={{
+                fontSize: '1.65rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                fontFamily: "'Georgia', serif",
+                textShadow: '0 0 14px rgba(247, 192, 43, 0.45)',
+                marginBottom: '0.2rem',
+              }}
+            >
+              {user?.name || 'Valued Member'}
+            </div>
+            <div
+              style={{
+                fontSize: '0.85rem',
+                color: '#f7c02b',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                marginBottom: '1rem',
+              }}
+            >
+              User ID: {user?.userId}
+            </div>
+
+            <p
+              style={{
+                color: '#cbd5e1',
+                fontSize: '0.88rem',
+                lineHeight: 1.55,
+                margin: '0 auto 1.35rem',
+                maxWidth: 480,
+              }}
+            >
+              In recognition of your outstanding leadership, dedication, and dedication in successfully completing
+              both milestones to unlock the <strong>Grow Wealth Daily Salary Program</strong> and <strong>Daily Withdrawals</strong>.
+            </p>
+
+            {/* Milestone Verification Cards */}
+            <div
+              style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: '0.75rem',
                 marginBottom: '1.25rem',
                 textAlign: 'left',
@@ -382,67 +569,116 @@ export default function Dashboard() {
             >
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(74, 222, 128, 0.35)',
+                  background: 'rgba(74, 222, 128, 0.08)',
+                  border: '1px solid rgba(74, 222, 128, 0.45)',
                   borderRadius: '12px',
-                  padding: '0.85rem',
+                  padding: '0.85rem 1rem',
                 }}
               >
-                <div style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
-                  ✓ Completed
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                    ✓ Milestone 1
+                  </span>
+                  <span style={{ fontSize: '0.7rem', background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', padding: '0.1rem 0.45rem', borderRadius: 999, fontWeight: 700 }}>
+                    COMPLETED
+                  </span>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff', marginTop: '0.2rem' }}>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#fff', marginTop: '0.25rem' }}>
                   ${teamBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                <div style={{ fontSize: '0.76rem', color: '#94a3b8', marginTop: '0.15rem' }}>
                   Downline Team Business (Min $3,000)
                 </div>
               </div>
 
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(74, 222, 128, 0.35)',
+                  background: 'rgba(74, 222, 128, 0.08)',
+                  border: '1px solid rgba(74, 222, 128, 0.45)',
                   borderRadius: '12px',
-                  padding: '0.85rem',
+                  padding: '0.85rem 1rem',
                 }}
               >
-                <div style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
-                  ✓ Completed
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#4ade80', fontWeight: 800, textTransform: 'uppercase' }}>
+                    ✓ Milestone 2
+                  </span>
+                  <span style={{ fontSize: '0.7rem', background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', padding: '0.1rem 0.45rem', borderRadius: 999, fontWeight: 700 }}>
+                    COMPLETED
+                  </span>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff', marginTop: '0.2rem' }}>
+                <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#fff', marginTop: '0.25rem' }}>
                   ${directBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                  Direct Refer Link (Min $500)
+                <div style={{ fontSize: '0.76rem', color: '#94a3b8', marginTop: '0.15rem' }}>
+                  Direct Referral Business (Min $500)
                 </div>
               </div>
             </div>
 
+            {/* Salary Benefit Box */}
             <div
               style={{
-                background: 'linear-gradient(90deg, rgba(247,192,43,0.15), rgba(74,222,128,0.15))',
-                border: '1px solid rgba(247,192,43,0.35)',
-                borderRadius: '12px',
-                padding: '0.9rem',
-                marginBottom: '1.5rem',
-                color: '#fff',
-                fontSize: '0.92rem',
-                lineHeight: 1.6,
+                background: 'linear-gradient(90deg, rgba(247,192,43,0.16), rgba(74,222,128,0.16))',
+                border: '1px solid rgba(247,192,43,0.45)',
+                borderRadius: '14px',
+                padding: '0.95rem 1.1rem',
+                marginBottom: '1.35rem',
+                textAlign: 'left',
               }}
             >
-              🌟 <strong>Tier 1 Daily Salary:</strong>{' '}
-              <span style={{ color: '#4ade80', fontWeight: 800 }}>$6.00 USDT / day</span> ($180 / month)
-              <br />
-              ⚡ <strong>Daily Withdrawals:</strong>{' '}
-              <span style={{ color: '#4ade80', fontWeight: 800 }}>Unlocked & Active</span>
+              <div style={{ color: '#f7c02b', fontWeight: 800, fontSize: '0.86rem', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                🌟 Privileges & Salary Unlocked:
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', color: '#fff', fontSize: '0.94rem' }}>
+                <div>
+                  💰 <strong>Daily Salary:</strong> <span style={{ color: '#4ade80', fontWeight: 800 }}>$6.00 USDT / day</span> ($180 / mo)
+                </div>
+                <div>
+                  ⚡ <strong>Daily Withdrawals:</strong> <span style={{ color: '#4ade80', fontWeight: 800 }}>Active 24/7</span>
+                </div>
+              </div>
             </div>
 
+            {/* Certification Footer */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTop: '1px solid rgba(247, 192, 43, 0.25)',
+                paddingTop: '0.85rem',
+                marginBottom: '1.35rem',
+                fontSize: '0.78rem',
+                color: '#94a3b8',
+                textAlign: 'left',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+              }}
+            >
+              <div>
+                <span style={{ color: '#f7c02b', fontWeight: 700 }}>Certified By:</span> Grow Wealth Global Management
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ color: '#4ade80', fontWeight: 700 }}>BEP-20 Verified</span> &bull; Smart Contract Active
+              </div>
+            </div>
+
+            {/* Actions */}
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`🏆 *CERTIFICATE OF ACHIEVEMENT — GROW WEALTH* 🏆\n\nI have officially unlocked the *Daily Salary Program* ($6.00 USDT/day = $180/Month) and *Daily Withdrawals* at Grow Wealth!\n\n👥 Downline Team: $${teamBusiness.toFixed(2)} USDT\n🎯 Direct Business: $${directBusiness.toFixed(2)} USDT\n\nJoin my winning team: ${refLink}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-primary"
+                style={{ padding: '0.65rem 1.35rem', fontWeight: 700 }}
+              >
+                Share on WhatsApp 🚀
+              </a>
               <Link
                 to="/salary-income"
-                className="btn btn-primary"
-                style={{ padding: '0.65rem 1.4rem', fontWeight: 700 }}
+                className="btn btn-success"
+                style={{ padding: '0.65rem 1.35rem', fontWeight: 700 }}
                 onClick={handleDismissSalaryPopup}
               >
                 View Salary Income →
@@ -450,10 +686,10 @@ export default function Dashboard() {
               <button
                 className="btn btn-ghost"
                 type="button"
-                style={{ padding: '0.65rem 1.25rem' }}
+                style={{ padding: '0.65rem 1.15rem' }}
                 onClick={handleDismissSalaryPopup}
               >
-                Great, Continue!
+                Continue to Dashboard
               </button>
             </div>
           </div>
